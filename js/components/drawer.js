@@ -26,6 +26,10 @@
         const resetRosterBtn = document.getElementById('drawer-reset-roster-btn');
         const studentNumberToggle = document.getElementById('drawer-student-number-toggle');
         const toggleDebuggerBtn = document.getElementById('drawer-toggle-debugger-btn');
+        const drawerCardHeader = drawer.querySelector('.drawer-card-header');
+        const classModal = document.getElementById('class-modal');
+        const classModalCloseBtn = document.getElementById('class-modal-close-btn');
+        const classListBody = document.getElementById('class-list-body');
 
         const rosterModal = document.getElementById('roster-modal');
         const rosterModalContainer = rosterModal ? rosterModal.querySelector('.roster-modal-container') : null;
@@ -62,6 +66,67 @@
                 window.TWS3.showToast(msg, duration);
             }
         }
+        function escapeHtml(value) {
+            return String(value === null || value === undefined ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function openClassModal() {
+            renderClassList();
+            if (classModal) classModal.classList.add('show');
+        }
+
+        function closeClassModal() {
+            if (classModal) classModal.classList.remove('show');
+        }
+
+        function renderClassList() {
+            if (!classListBody) return;
+            const classes = store.getClasses();
+            const currentClassId = store.getCurrentClassId();
+
+            classListBody.innerHTML = '';
+            const frag = document.createDocumentFragment();
+
+            classes.forEach(c => {
+                const item = document.createElement('div');
+                const isCurrent = c.id === currentClassId;
+                item.className = `class-card-item ${isCurrent ? 'active' : ''}`;
+                item.dataset.id = c.id;
+
+                item.innerHTML = `
+                    <div class="class-card-left">
+                        <div class="class-card-header-row">
+                            <span class="class-card-name">${escapeHtml(c.name)}</span>
+                            ${isCurrent ? '<span class="class-active-badge">当前班级</span>' : ''}
+                        </div>
+                        <div class="class-card-meta">
+                            <span>在籍学生：${c.studentCount} 人</span>
+                            <span class="class-card-meta-dot">·</span>
+                            <span>作业任务：${c.taskCount} 项</span>
+                        </div>
+                    </div>
+                    <div class="class-card-actions">
+                        <button type="button" class="class-rename-btn" data-id="${c.id}" title="重命名班级">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            <span>重命名</span>
+                        </button>
+                    </div>
+                `;
+
+                frag.appendChild(item);
+            });
+
+            classListBody.appendChild(frag);
+        }
+
 
         function saveBlob(blob, fileName) {
             if (window.AndroidFiles && typeof window.AndroidFiles.saveFile === 'function') {
@@ -118,24 +183,75 @@
 
         // 1. 切换班级
         if (switchClassBtn) {
-            switchClassBtn.addEventListener('click', async () => {
+            switchClassBtn.addEventListener('click', () => {
                 toggleDrawer(false);
-                const current = store.getState().currentClass;
-                const modal = window.TWS3.modal;
-                const newClass = modal
-                    ? await modal.prompt({
-                        title: '切换班级',
-                        placeholder: '班级名称',
-                        defaultValue: current
-                    })
-                    : prompt('班级名称：', current);
+                openClassModal();
+            });
+        }
 
-                if (newClass && newClass.trim()) {
-                    store.switchClass(newClass.trim());
-                    showToast(`已切换至 ${newClass.trim()}`);
+        if (drawerCardHeader) {
+            drawerCardHeader.style.cursor = 'pointer';
+            drawerCardHeader.title = '点击切换班级';
+            drawerCardHeader.addEventListener('click', () => {
+                toggleDrawer(false);
+                openClassModal();
+            });
+        }
+
+        if (classModalCloseBtn) {
+            classModalCloseBtn.addEventListener('click', closeClassModal);
+        }
+
+        if (classModal) {
+            classModal.addEventListener('click', (e) => {
+                if (e.target === classModal) {
+                    closeClassModal();
                 }
             });
         }
+
+        if (classListBody) {
+            classListBody.addEventListener('click', async (e) => {
+                const renameBtn = e.target.closest('.class-rename-btn');
+                if (renameBtn) {
+                    e.stopPropagation();
+                    const classId = renameBtn.dataset.id;
+                    const classes = store.getClasses();
+                    const targetCls = classes.find(c => c.id === classId);
+                    if (!targetCls) return;
+                    const modal = window.TWS3.modal;
+                    const newName = modal
+                        ? await modal.prompt({
+                            title: '重命名班级',
+                            placeholder: '班级名称',
+                            defaultValue: targetCls.name
+                        })
+                        : prompt('班级名称：', targetCls.name);
+                    if (newName && newName.trim() && newName.trim() !== targetCls.name) {
+                        store.renameClass(classId, newName.trim());
+                        renderClassList();
+                        renderHeader();
+                        showToast(`已重命名为 ${newName.trim()}`);
+                    }
+                    return;
+                }
+
+                const cardItem = e.target.closest('.class-card-item');
+                if (cardItem) {
+                    const classId = cardItem.dataset.id;
+                    if (classId !== store.getCurrentClassId()) {
+                        const target = store.switchClass(classId);
+                        closeClassModal();
+                        if (target) {
+                            showToast(`已切换至 ${target.name}`);
+                        }
+                    } else {
+                        closeClassModal();
+                    }
+                }
+            });
+        }
+
 
         if (importSeatBtn) {
             importSeatBtn.addEventListener('click', () => {
@@ -241,14 +357,6 @@
         }
 
         // 3. 导入标准记分册 (.xlsx)
-        function escapeHtml(value) {
-            return String(value === null || value === undefined ? '' : value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
 
         function formatDiffTime(value) {
             if (!value) return '时间未知';
@@ -1000,6 +1108,9 @@
                 renderHeader();
                 if (rosterModal && rosterModal.classList.contains('show')) {
                     renderRosterList();
+                }
+                if (classModal && classModal.classList.contains('show')) {
+                    renderClassList();
                 }
             }
         });

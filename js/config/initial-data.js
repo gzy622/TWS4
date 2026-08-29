@@ -83,6 +83,52 @@
         };
     }
 
+    const INITIAL_CLASS_2_NAME = "高二 (4) 班";
+
+    const INITIAL_STUDENT_NAMES_CLASS_2 = [
+        "安晨", "白宇", "陈思源", "程锦", "崔皓",
+        "邓嘉敏", "杜若", "方博", "高睿", "顾远",
+        "韩雨彤", "郝天宇", "何佳欣", "洪涛", "胡梦琪",
+        "黄子轩", "贾楠", "江北", "姜逸飞", "蒋欣然",
+        "金羽", "雷鸣", "李知微", "梁子恒", "林安",
+        "刘星宇", "陆言", "罗凯", "马小雅", "毛宇轩",
+        "孟泽", "潘逸晨", "彭飞", "钱程", "邱悦",
+        "任嘉浩", "沈清越", "宋歌", "苏文", "孙晓",
+        "唐心怡", "田畅", "童心", "汪涵", "王楚",
+        "魏铭", "吴优", "肖凡", "谢天", "徐诺"
+    ];
+
+    const INITIAL_STUDENTS_CLASS_2 = INITIAL_STUDENT_NAMES_CLASS_2.map((name, index) => {
+        const id = index + 1;
+        return {
+            id: id,
+            studentNo: String(id),
+            name: name,
+            isNonEnglish: false,
+            updatedAt: BASE_TIME
+        };
+    });
+
+    const INITIAL_TASKS_CLASS_2 = [
+        { id: "task_c2_0618", name: "0618语文默写", subject: "语文", archived: true, createdAt: "2026-06-18T08:00:00.000Z", updatedAt: "2026-06-18T08:00:00.000Z" },
+        { id: "task_c2_0619", name: "0619数学复习", subject: "数学", archived: true, createdAt: "2026-06-19T08:00:00.000Z", updatedAt: "2026-06-19T08:00:00.000Z" },
+        { id: "task_c2_0620", name: "0620作业", subject: "未设置", archived: false, createdAt: "2026-06-20T08:00:00.000Z", updatedAt: "2026-06-20T08:00:00.000Z" }
+    ];
+
+    const INITIAL_RECORDS_CLASS_2 = {
+        "task_c2_0620": {}
+    };
+
+    for (let i = 1; i <= 50; i++) {
+        INITIAL_RECORDS_CLASS_2["task_c2_0620"][i] = {
+            status: "white",
+            badge: null,
+            score: null,
+            note: null,
+            updatedAt: BASE_TIME
+        };
+    }
+
     const INITIAL_CLASS_NAME = "高二 (3) 班";
     const INITIAL_SCHEDULE_TEMPLATE_VERSION = 2;
 
@@ -275,6 +321,10 @@
         INITIAL_TASKS,
         INITIAL_RECORDS,
         INITIAL_CLASS_NAME,
+        INITIAL_CLASS_2_NAME,
+        INITIAL_STUDENTS_CLASS_2,
+        INITIAL_TASKS_CLASS_2,
+        INITIAL_RECORDS_CLASS_2,
         INITIAL_SCHEDULE,
         INITIAL_SCHEDULE_TEMPLATE_VERSION,
         LEGACY_SCHEDULE_TEMPLATE,

@@ -6,6 +6,10 @@
         INITIAL_TASKS,
         INITIAL_RECORDS,
         INITIAL_CLASS_NAME,
+        INITIAL_CLASS_2_NAME,
+        INITIAL_STUDENTS_CLASS_2,
+        INITIAL_TASKS_CLASS_2,
+        INITIAL_RECORDS_CLASS_2,
         INITIAL_SCHEDULE,
         INITIAL_SCHEDULE_TEMPLATE_VERSION,
         LEGACY_SCHEDULE_TEMPLATE,
@@ -312,38 +316,167 @@
                 return 'dev_ephemeral_' + Math.random().toString(36).substring(2, 9);
             }
         }
-
-        _getInitialState() {
+        _createDefaultClassState(classId, className, initialStudents, initialTasks, initialRecords) {
             const now = getUtcNowIso();
-            const students = JSON.parse(JSON.stringify(INITIAL_STUDENTS)).map(s => ({
+            const students = JSON.parse(JSON.stringify(initialStudents || [])).map(s => ({
                 ...s,
-                isNonEnglish: !!s.isNonEnglish
+                isNonEnglish: !!s.isNonEnglish,
+                updatedAt: s.updatedAt || now
             }));
-            const tasks = JSON.parse(JSON.stringify(INITIAL_TASKS)).map(t => ({
+            const tasks = JSON.parse(JSON.stringify(initialTasks || [])).map(t => ({
                 ...t,
                 subject: t.subject || inferSubjectFromName(t.name)
             }));
+            const records = JSON.parse(JSON.stringify(initialRecords || {}));
+            tasks.forEach(t => {
+                if (!records[t.id]) records[t.id] = {};
+                students.forEach(s => {
+                    if (!records[t.id][s.id]) {
+                        records[t.id][s.id] = { status: 'white', badge: null, score: null, note: null, updatedAt: now };
+                    }
+                });
+            });
             return {
-                schemaVersion: 3,
-                currentClass: INITIAL_CLASS_NAME,
+                id: classId,
+                name: className,
                 classUpdatedAt: now,
                 students,
                 deletedStudents: [],
                 tasks,
                 deletedTasks: [],
-                currentTaskId: tasks.find(t => !t.archived)?.id || tasks[0].id,
-                operationMode: 'check',
-                viewMode: 'grid',
-                showStudentNumbers: true,
+                currentTaskId: tasks.find(t => !t.archived)?.id || (tasks[0] ? tasks[0].id : ''),
+                records,
                 seatLayout: createDefaultSeatLayout(students),
                 seatGroupNames: ['第1组', '第2组', '第3组', '第4组'],
                 seatPodiumPosition: 'bottom',
                 seatLayoutUpdatedAt: now,
-                records: JSON.parse(JSON.stringify(INITIAL_RECORDS)),
                 schedule: JSON.parse(JSON.stringify(INITIAL_SCHEDULE)),
                 officerTable: JSON.parse(JSON.stringify(INITIAL_OFFICERS)),
                 dutyTable: JSON.parse(JSON.stringify(INITIAL_DUTY))
             };
+        }
+
+        _syncActiveClassPointers(state = this.state) {
+            if (!state || !Array.isArray(state.classes) || state.classes.length === 0) return;
+            let activeClass = state.classes.find(c => c.id === state.currentClassId);
+            if (!activeClass) {
+                activeClass = state.classes[0];
+                state.currentClassId = activeClass.id;
+            }
+            state.currentClass = activeClass.name;
+            state.classUpdatedAt = activeClass.classUpdatedAt || getUtcNowIso();
+            state.students = activeClass.students;
+            state.deletedStudents = activeClass.deletedStudents;
+            state.tasks = activeClass.tasks;
+            state.deletedTasks = activeClass.deletedTasks;
+            state.currentTaskId = activeClass.currentTaskId || (activeClass.tasks[0] ? activeClass.tasks[0].id : '');
+            state.records = activeClass.records;
+            state.seatLayout = activeClass.seatLayout;
+            state.seatGroupNames = activeClass.seatGroupNames;
+            state.seatPodiumPosition = activeClass.seatPodiumPosition || 'bottom';
+            state.seatLayoutUpdatedAt = activeClass.seatLayoutUpdatedAt || state.classUpdatedAt;
+            state.schedule = activeClass.schedule;
+            state.officerTable = activeClass.officerTable;
+            state.dutyTable = activeClass.dutyTable;
+        }
+
+        _normalizeClass(cls, fallbackIndex = 0) {
+            if (!cls || typeof cls !== 'object') cls = {};
+            const fallbackId = `class_${fallbackIndex + 1}`;
+            const fallbackName = fallbackIndex === 0 ? (INITIAL_CLASS_NAME || '高二 (3) 班') : (INITIAL_CLASS_2_NAME || '高二 (4) 班');
+            const id = cls.id || fallbackId;
+            const name = cls.name || cls.currentClass || fallbackName;
+            const classUpdatedAt = cls.classUpdatedAt || getUtcNowIso();
+            const students = Array.isArray(cls.students) ? cls.students : [];
+            students.forEach(s => {
+                if (s.isNonEnglish === undefined) s.isNonEnglish = false;
+                if (!s.updatedAt) s.updatedAt = classUpdatedAt;
+            });
+            const deletedStudents = Array.isArray(cls.deletedStudents) ? cls.deletedStudents : [];
+            const tasks = Array.isArray(cls.tasks) ? cls.tasks : [];
+            tasks.forEach(t => {
+                if (!t.subject) t.subject = inferSubjectFromName(t.name);
+            });
+            const deletedTasks = Array.isArray(cls.deletedTasks) ? cls.deletedTasks : [];
+            let currentTaskId = cls.currentTaskId;
+            if (!currentTaskId || !tasks.some(t => t.id === currentTaskId)) {
+                currentTaskId = tasks.find(t => !t.archived)?.id || (tasks[0] ? tasks[0].id : '');
+            }
+            const records = (cls.records && typeof cls.records === 'object') ? cls.records : {};
+            const seatLayout = Array.isArray(cls.seatLayout) ? cls.seatLayout : createDefaultSeatLayout(students);
+            const seatGroupNames = (Array.isArray(cls.seatGroupNames) && cls.seatGroupNames.length === 4)
+                ? cls.seatGroupNames
+                : ['第1组', '第2组', '第3组', '第4组'];
+            const seatPodiumPosition = cls.seatPodiumPosition === 'top' ? 'top' : 'bottom';
+            const seatLayoutUpdatedAt = cls.seatLayoutUpdatedAt || classUpdatedAt;
+
+            const normalizedSchedule = normalizeSchedule(cls.schedule);
+            const schedule = normalizedSchedule.schedule;
+
+            let officerTable = cls.officerTable;
+            if (!officerTable || typeof officerTable !== 'object') {
+                officerTable = JSON.parse(JSON.stringify(INITIAL_OFFICERS));
+            } else {
+                if (!Array.isArray(officerTable.roles)) officerTable.roles = [];
+                if (!officerTable.updatedAt) officerTable.updatedAt = getUtcNowIso();
+            }
+
+            let dutyTable = cls.dutyTable;
+            if (!dutyTable || typeof dutyTable !== 'object') {
+                dutyTable = JSON.parse(JSON.stringify(INITIAL_DUTY));
+            } else {
+                if (!Array.isArray(dutyTable.days)) dutyTable.days = [];
+                if (!Array.isArray(dutyTable.roles)) dutyTable.roles = [];
+                if (!dutyTable.assignments || typeof dutyTable.assignments !== 'object') dutyTable.assignments = {};
+                if (!dutyTable.updatedAt) dutyTable.updatedAt = getUtcNowIso();
+            }
+
+            return {
+                id,
+                name,
+                classUpdatedAt,
+                students,
+                deletedStudents,
+                tasks,
+                deletedTasks,
+                currentTaskId,
+                records,
+                seatLayout,
+                seatGroupNames,
+                seatPodiumPosition,
+                seatLayoutUpdatedAt,
+                schedule,
+                officerTable,
+                dutyTable
+            };
+        }
+
+        _getInitialState() {
+            const class1 = this._createDefaultClassState(
+                'class_1',
+                INITIAL_CLASS_NAME || '高二 (3) 班',
+                INITIAL_STUDENTS,
+                INITIAL_TASKS,
+                INITIAL_RECORDS
+            );
+            const class2 = this._createDefaultClassState(
+                'class_2',
+                INITIAL_CLASS_2_NAME || '高二 (4) 班',
+                INITIAL_STUDENTS_CLASS_2 || INITIAL_STUDENTS,
+                INITIAL_TASKS_CLASS_2 || INITIAL_TASKS,
+                INITIAL_RECORDS_CLASS_2 || {}
+            );
+
+            const state = {
+                schemaVersion: 4,
+                currentClassId: 'class_1',
+                classes: [class1, class2],
+                operationMode: 'check',
+                viewMode: 'grid',
+                showStudentNumbers: true
+            };
+            this._syncActiveClassPointers(state);
+            return state;
         }
 
         _loadFromStorage() {
@@ -362,51 +495,71 @@
                 }
                 if (!raw) return null;
                 const parsed = JSON.parse(raw);
-                if (!parsed || !Array.isArray(parsed.students) || !Array.isArray(parsed.tasks)) {
-                    return null;
+                if (!parsed || typeof parsed !== 'object') return null;
+
+                // 旧格式迁移：若无 classes 数组
+                if (!Array.isArray(parsed.classes) || parsed.classes.length === 0) {
+                    if (!Array.isArray(parsed.students) || !Array.isArray(parsed.tasks)) {
+                        return null;
+                    }
+                    const class1 = this._normalizeClass({
+                        id: 'class_1',
+                        name: parsed.currentClass || INITIAL_CLASS_NAME || '高二 (3) 班',
+                        classUpdatedAt: parsed.classUpdatedAt,
+                        students: parsed.students,
+                        deletedStudents: parsed.deletedStudents,
+                        tasks: parsed.tasks,
+                        deletedTasks: parsed.deletedTasks,
+                        currentTaskId: parsed.currentTaskId,
+                        records: parsed.records,
+                        seatLayout: parsed.seatLayout,
+                        seatGroupNames: parsed.seatGroupNames,
+                        seatPodiumPosition: parsed.seatPodiumPosition,
+                        seatLayoutUpdatedAt: parsed.seatLayoutUpdatedAt,
+                        schedule: parsed.schedule,
+                        officerTable: parsed.officerTable,
+                        dutyTable: parsed.dutyTable
+                    }, 0);
+
+                    const class2 = this._createDefaultClassState(
+                        'class_2',
+                        INITIAL_CLASS_2_NAME || '高二 (4) 班',
+                        INITIAL_STUDENTS_CLASS_2 || INITIAL_STUDENTS,
+                        INITIAL_TASKS_CLASS_2 || INITIAL_TASKS,
+                        INITIAL_RECORDS_CLASS_2 || {}
+                    );
+
+                    parsed.classes = [class1, class2];
+                    parsed.currentClassId = 'class_1';
+                    isOld = true;
+                } else {
+                    // 确保至少有 2 个班级
+                    parsed.classes = parsed.classes.map((cls, idx) => this._normalizeClass(cls, idx));
+                    if (parsed.classes.length === 1) {
+                        const class2 = this._createDefaultClassState(
+                            'class_2',
+                            INITIAL_CLASS_2_NAME || '高二 (4) 班',
+                            INITIAL_STUDENTS_CLASS_2 || INITIAL_STUDENTS,
+                            INITIAL_TASKS_CLASS_2 || INITIAL_TASKS,
+                            INITIAL_RECORDS_CLASS_2 || {}
+                        );
+                        parsed.classes.push(class2);
+                        isOld = true;
+                    }
                 }
-                parsed.schemaVersion = 3;
-                if (!parsed.deletedStudents) parsed.deletedStudents = [];
-                if (!parsed.deletedTasks) parsed.deletedTasks = [];
-                if (!parsed.classUpdatedAt) parsed.classUpdatedAt = getUtcNowIso();
+
+                parsed.schemaVersion = 4;
+                if (!parsed.currentClassId || !parsed.classes.some(c => c.id === parsed.currentClassId)) {
+                    parsed.currentClassId = parsed.classes[0].id;
+                }
                 if (!parsed.operationMode) parsed.operationMode = 'check';
                 if (typeof parsed.showStudentNumbers !== 'boolean') parsed.showStudentNumbers = true;
-                const validViews = ['grid', 'seat'];
+                const validViews = ['grid', 'seat', 'schedule', 'officers', 'duty'];
                 if (!validViews.includes(parsed.viewMode)) parsed.viewMode = 'grid';
-                if (!Array.isArray(parsed.seatLayout)) parsed.seatLayout = createDefaultSeatLayout(parsed.students);
-                if (!Array.isArray(parsed.seatGroupNames) || parsed.seatGroupNames.length !== 4) {
-                    parsed.seatGroupNames = ['第1组', '第2组', '第3组', '第4组'];
-                }
-                if (parsed.seatPodiumPosition !== 'top') parsed.seatPodiumPosition = 'bottom';
-                if (!parsed.seatLayoutUpdatedAt) parsed.seatLayoutUpdatedAt = parsed.classUpdatedAt;
-                parsed.students.forEach(s => {
-                    if (s.isNonEnglish === undefined) s.isNonEnglish = false;
-                });
-                parsed.tasks.forEach(t => {
-                    if (!t.subject) t.subject = inferSubjectFromName(t.name);
-                });
 
-                // 迁移与补齐三表数据。旧版默认课程表只有在严格匹配时才替换。
-                const normalizedSchedule = normalizeSchedule(parsed.schedule);
-                parsed.schedule = normalizedSchedule.schedule;
+                this._syncActiveClassPointers(parsed);
 
-                if (!parsed.officerTable || typeof parsed.officerTable !== 'object') {
-                    parsed.officerTable = JSON.parse(JSON.stringify(INITIAL_OFFICERS));
-                } else {
-                    if (!Array.isArray(parsed.officerTable.roles)) parsed.officerTable.roles = [];
-                    if (!parsed.officerTable.updatedAt) parsed.officerTable.updatedAt = getUtcNowIso();
-                }
-
-                if (!parsed.dutyTable || typeof parsed.dutyTable !== 'object') {
-                    parsed.dutyTable = JSON.parse(JSON.stringify(INITIAL_DUTY));
-                } else {
-                    if (!Array.isArray(parsed.dutyTable.days)) parsed.dutyTable.days = [];
-                    if (!Array.isArray(parsed.dutyTable.roles)) parsed.dutyTable.roles = [];
-                    if (!parsed.dutyTable.assignments || typeof parsed.dutyTable.assignments !== 'object') parsed.dutyTable.assignments = {};
-                    if (!parsed.dutyTable.updatedAt) parsed.dutyTable.updatedAt = getUtcNowIso();
-                }
-
-                if (isOld || normalizedSchedule.changed) {
+                if (isOld) {
                     try {
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
                     } catch (_) {}
@@ -1119,6 +1272,10 @@
         setCurrentTask(taskId) {
             if (this.state.currentTaskId === taskId) return;
             this.state.currentTaskId = taskId;
+            const activeClass = this.state.classes?.find(c => c.id === this.state.currentClassId);
+            if (activeClass) {
+                activeClass.currentTaskId = taskId;
+            }
             this.getStudentRecords(taskId);
             this._notify('TASK_CHANGED', { taskId });
         }
@@ -1141,6 +1298,10 @@
 
             this.state.tasks.unshift(newTask);
             this.state.currentTaskId = id;
+            const activeClass = this.state.classes?.find(c => c.id === this.state.currentClassId);
+            if (activeClass) {
+                activeClass.currentTaskId = id;
+            }
             this.state.records[id] = {};
             const isEnglish = this.isEnglishTask(newTask);
             for (const s of this.state.students) {
@@ -1213,8 +1374,11 @@
 
             if (this.state.currentTaskId === taskId) {
                 this.state.currentTaskId = this.state.tasks[0].id;
+                const activeClass = this.state.classes?.find(c => c.id === this.state.currentClassId);
+                if (activeClass) {
+                    activeClass.currentTaskId = this.state.currentTaskId;
+                }
             }
-
             this._notify('TASK_DELETED', { taskId, task: deletedTask });
             return { success: true };
         }
@@ -1392,10 +1556,52 @@
             this._notify('ROSTER_RESET', { taskId: this.state.currentTaskId });
         }
 
-        switchClass(className) {
-            this.state.currentClass = className;
-            this.state.classUpdatedAt = getUtcNowIso();
-            this._notify('CLASS_CHANGED', { className });
+        switchClass(targetIdOrName) {
+            if (!this.state.classes || this.state.classes.length === 0) return null;
+            let targetClass = this.state.classes.find(c => c.id === targetIdOrName || c.name === targetIdOrName);
+            if (!targetClass && (targetIdOrName === 0 || targetIdOrName === 1 || targetIdOrName === '0' || targetIdOrName === '1')) {
+                targetClass = this.state.classes[Number(targetIdOrName)];
+            }
+            if (!targetClass) {
+                targetClass = this.state.classes.find(c => c.id !== this.state.currentClassId) || this.state.classes[0];
+            }
+            if (!targetClass) return null;
+
+            this.state.currentClassId = targetClass.id;
+            this._syncActiveClassPointers(this.state);
+            this._notify('CLASS_CHANGED', { classId: targetClass.id, className: targetClass.name });
+            return targetClass;
+        }
+
+        renameClass(classId, newName) {
+            const trimmed = String(newName || '').trim();
+            if (!trimmed) return false;
+            if (!this.state.classes) return false;
+            const cls = this.state.classes.find(c => c.id === classId);
+            if (!cls) return false;
+            cls.name = trimmed;
+            cls.classUpdatedAt = getUtcNowIso();
+            if (cls.id === this.state.currentClassId) {
+                this.state.currentClass = trimmed;
+                this.state.classUpdatedAt = cls.classUpdatedAt;
+            }
+            this._notify('CLASS_CHANGED', { classId: cls.id, className: cls.name });
+            return true;
+        }
+
+        getClasses() {
+            if (!this.state.classes) return [];
+            return this.state.classes.map(c => ({
+                id: c.id,
+                name: c.name,
+                studentCount: (c.students || []).length,
+                taskCount: (c.tasks || []).length,
+                isCurrent: c.id === this.state.currentClassId
+            }));
+        }
+
+        getCurrentClassId() {
+            return this.state.currentClassId || (this.state.classes && this.state.classes[0] ? this.state.classes[0].id : 'class_1');
         }
 
         getStats(taskId = this.state.currentTaskId) {
@@ -1424,10 +1630,11 @@
          * 导出完整应用状态快照，用于隐藏备份页 `_TWS3_BACKUP`
          */
         exportStateSnapshot(visibleSheetHash = '') {
+            this._syncActiveClassPointers(this.state);
             return {
                 metadata: {
-                    schemaVersion: 3,
-                    backupVersion: 3,
+                    schemaVersion: 4,
+                    backupVersion: 4,
                     exportedAt: getUtcNowIso(),
                     deviceId: this.deviceId,
                     visibleSheetHash: visibleSheetHash || ''
@@ -1441,48 +1648,54 @@
          */
         overrideWith(remoteData) {
             const incomingState = remoteData.state || remoteData;
-            if (!incomingState || !Array.isArray(incomingState.students) || !Array.isArray(incomingState.tasks)) {
+            if (!incomingState || typeof incomingState !== 'object') {
                 throw new Error('无效的状态数据格式');
             }
 
-            const validViews = ['grid', 'seat', 'schedule', 'officers', 'duty'];
-            const incomingSchedule = hasScheduleData(incomingState)
-                ? normalizeSchedule(incomingState.schedule).schedule
-                : JSON.parse(JSON.stringify(this.state.schedule || INITIAL_SCHEDULE));
-            this.state = {
-                schemaVersion: 3,
-                currentClass: incomingState.currentClass || INITIAL_CLASS_NAME,
-                classUpdatedAt: incomingState.classUpdatedAt || getUtcNowIso(),
-                students: JSON.parse(JSON.stringify(incomingState.students)),
-                deletedStudents: JSON.parse(JSON.stringify(incomingState.deletedStudents || [])),
-                tasks: JSON.parse(JSON.stringify(incomingState.tasks)),
-                deletedTasks: JSON.parse(JSON.stringify(incomingState.deletedTasks || [])),
-                currentTaskId: incomingState.currentTaskId || (incomingState.tasks[0] ? incomingState.tasks[0].id : ''),
-                operationMode: incomingState.operationMode || 'check',
-                viewMode: validViews.includes(incomingState.viewMode) ? incomingState.viewMode : 'grid',
-                showStudentNumbers: incomingState.showStudentNumbers !== false,
-                seatLayout: JSON.parse(JSON.stringify(incomingState.seatLayout || createDefaultSeatLayout(incomingState.students))),
-                seatGroupNames: JSON.parse(JSON.stringify(incomingState.seatGroupNames || ['第1组', '第2组', '第3组', '第4组'])),
-                seatPodiumPosition: incomingState.seatPodiumPosition === 'top' ? 'top' : 'bottom',
-                seatLayoutUpdatedAt: incomingState.seatLayoutUpdatedAt || getUtcNowIso(),
-                records: JSON.parse(JSON.stringify(incomingState.records || {})),
-                schedule: incomingSchedule,
-                officerTable: JSON.parse(JSON.stringify(incomingState.officerTable || INITIAL_OFFICERS)),
-                dutyTable: JSON.parse(JSON.stringify(incomingState.dutyTable || INITIAL_DUTY))
-            };
+            // 多班级格式覆盖
+            if (Array.isArray(incomingState.classes) && incomingState.classes.length > 0) {
+                this.state.classes = incomingState.classes.map((cls, idx) => this._normalizeClass(cls, idx));
+                this.state.currentClassId = incomingState.currentClassId || this.state.classes[0].id;
+                this.state.operationMode = incomingState.operationMode || 'check';
+                this.state.viewMode = incomingState.viewMode || 'grid';
+                this.state.showStudentNumbers = incomingState.showStudentNumbers !== false;
+                this.state.schemaVersion = 4;
+                this._syncActiveClassPointers(this.state);
+                this._notify('STORE_OVERRIDDEN', { state: this.state });
+                return true;
+            }
 
-            // 补全缺失的任务记录
-            this.state.tasks.forEach(t => {
-                if (!this.state.records[t.id]) {
-                    this.state.records[t.id] = {};
-                }
-                this.state.students.forEach(s => {
-                    if (!this.state.records[t.id][s.id]) {
-                        this.state.records[t.id][s.id] = { status: 'white', badge: null, score: null, note: null, updatedAt: getUtcNowIso() };
-                    }
-                });
+            // 单班级格式覆盖当前激活班级
+            if (!Array.isArray(incomingState.students) || !Array.isArray(incomingState.tasks)) {
+                throw new Error('无效的状态数据格式');
+            }
+
+            const activeClass = this.state.classes?.find(c => c.id === this.state.currentClassId);
+            const normalizedClass = this._normalizeClass({
+                id: activeClass ? activeClass.id : 'class_1',
+                name: incomingState.currentClass || (activeClass ? activeClass.name : INITIAL_CLASS_NAME),
+                classUpdatedAt: incomingState.classUpdatedAt || getUtcNowIso(),
+                students: incomingState.students,
+                deletedStudents: incomingState.deletedStudents,
+                tasks: incomingState.tasks,
+                deletedTasks: incomingState.deletedTasks,
+                currentTaskId: incomingState.currentTaskId,
+                records: incomingState.records,
+                seatLayout: incomingState.seatLayout,
+                seatGroupNames: incomingState.seatGroupNames,
+                seatPodiumPosition: incomingState.seatPodiumPosition,
+                seatLayoutUpdatedAt: incomingState.seatLayoutUpdatedAt,
+                schedule: incomingState.schedule,
+                officerTable: incomingState.officerTable,
+                dutyTable: incomingState.dutyTable
             });
 
+            if (activeClass) {
+                Object.assign(activeClass, normalizedClass);
+            } else {
+                this.state.classes = [normalizedClass];
+            }
+            this._syncActiveClassPointers(this.state);
             this._notify('STORE_OVERRIDDEN', { state: this.state });
             return true;
         }

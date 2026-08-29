@@ -1,0 +1,178 @@
+/* 班级切换与管理弹窗样式 */
+.class-modal-container {
+    width: 460px;
+    max-width: 90vw;
+    max-height: 82vh;
+    background: var(--surface-white);
+    border-radius: var(--radius-card);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.class-modal-header {
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.class-modal-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.class-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.class-modal-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.class-modal-close-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 8px;
+    margin: -4px -4px 0 0;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1;
+    border-radius: 6px;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.class-modal-close-btn:hover {
+    color: var(--text-dark);
+    background-color: var(--surface-muted);
+}
+
+.class-list-body {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+}
+
+.class-card-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: var(--radius-inner);
+    border: 1.5px solid var(--border-light);
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.18s, background-color 0.18s, box-shadow 0.18s, transform 0.12s;
+    user-select: none;
+}
+
+.class-card-item:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.class-card-item:active {
+    transform: scale(0.99);
+}
+
+.class-card-item.active {
+    border-color: var(--surface-dark);
+    background: #f8fafc;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.class-card-left {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+}
+
+.class-card-header-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.class-card-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.class-active-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--surface-dark);
+    padding: 2px 7px;
+    border-radius: 9999px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+
+.class-card-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.class-card-meta-dot {
+    color: #cbd5e1;
+}
+
+.class-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+}
+
+.class-rename-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dark);
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.class-rename-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.class-rename-btn:active {
+    transform: scale(0.96);
+}
+
+.class-rename-btn svg {
+    flex-shrink: 0;
+}
