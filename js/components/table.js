@@ -17,14 +17,19 @@
     }
 
     function saveBlob(blob, fileName) {
+        if (window.TWS3 && typeof window.TWS3.saveBlob === 'function') {
+            return window.TWS3.saveBlob(blob, fileName);
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = fileName;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setTimeout(() => {
+            if (a.parentNode) document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 1000);
     }
 
     function initTableView({ onOpenEdit }) {

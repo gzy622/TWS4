@@ -127,24 +127,20 @@
             classListBody.appendChild(frag);
         }
 
-
         function saveBlob(blob, fileName) {
-            if (window.AndroidFiles && typeof window.AndroidFiles.saveFile === 'function') {
-                const reader = new FileReader();
-                reader.onload = () => window.AndroidFiles.saveFile(reader.result, fileName);
-                reader.onerror = () => showToast('文件保存失败');
-                reader.readAsDataURL(blob);
-                return;
+            if (window.TWS3 && typeof window.TWS3.saveBlob === 'function') {
+                return window.TWS3.saveBlob(blob, fileName);
             }
-
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.setAttribute('href', url);
             link.setAttribute('download', fileName);
             document.body.appendChild(link);
             link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            setTimeout(() => {
+                if (link.parentNode) document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }, 1000);
         }
 
         function toggleDrawer(open) {
@@ -1120,7 +1116,7 @@
         // 7. 渲染当前代码版本的 UTC+8 编辑时间戳
         const drawerFooterText = drawer ? drawer.querySelector('.drawer-footer-text') : null;
         if (drawerFooterText) {
-            const buildTime = window.TWS3.BUILD_INFO ? window.TWS3.BUILD_INFO.time : '2026-08-29 22:10:28';
+            const buildTime = window.TWS3.BUILD_INFO ? window.TWS3.BUILD_INFO.time : '2026-08-29 22:17:07';
             drawerFooterText.textContent = buildTime;
             drawerFooterText.title = `代码版本时间: ${buildTime} (点击复制或查看)`;
             drawerFooterText.style.cursor = 'pointer';
