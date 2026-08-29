@@ -36,7 +36,8 @@
     box-shadow: none;
     visibility: hidden;
     pointer-events: none;
-    transition: transform 0.26s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.26s cubic-bezier(0.2, 0, 0, 1), visibility 0.26s;
+    transition: transform 0.26s cubic-bezier(0.2, 0, 0, 1), visibility 0s 0.26s;
+    contain: layout style;
     display: flex;
     flex-direction: column;
     padding: 0;
@@ -50,6 +51,7 @@
     box-shadow: 2px 0 12px rgba(0, 0, 0, 0.12);
     visibility: visible;
     pointer-events: auto;
+    transition: transform 0.26s cubic-bezier(0.2, 0, 0, 1), visibility 0s;
 }
 
 .drawer-card-header {

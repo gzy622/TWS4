@@ -244,14 +244,8 @@
         }
 
         function clearInlineStyles() {
-            [drawer, drawerOverlay, taskDropdown, taskDropdownOverlay, editSheetPanel, editSheetOverlay].forEach(element => {
-                element.style.removeProperty('transition');
-                element.style.removeProperty('transform');
-                element.style.removeProperty('opacity');
-                element.style.removeProperty('background-color');
-                element.style.removeProperty('visibility');
-                element.style.removeProperty('pointer-events');
-                element.style.removeProperty('box-shadow');
+            [drawer, drawerOverlay, taskDropdown, taskDropdownOverlay, editSheetPanel, editSheetOverlay].forEach(el => {
+                el.style.cssText = '';
             });
         }
 
@@ -263,13 +257,12 @@
         }
 
         function renderProgress(axis, progress) {
+            const size = gesture.size;
             if (axis === 'drawer') {
-                const width = Math.max(1, drawer.getBoundingClientRect().width);
                 drawer.style.transition = 'none';
                 drawer.style.visibility = 'visible';
                 drawer.style.pointerEvents = 'none';
-                drawer.style.transform = `translate3d(${(progress - 1) * width}px, 0, 0)`;
-                drawer.style.boxShadow = `2px 0 12px rgba(0, 0, 0, ${0.12 * progress})`;
+                drawer.style.transform = `translate3d(${(progress - 1) * size}px, 0, 0)`;
                 drawerOverlay.style.transition = 'none';
                 drawerOverlay.style.pointerEvents = 'none';
                 drawerOverlay.style.opacity = String(progress);
@@ -277,23 +270,19 @@
             }
 
             if (axis === 'sheet') {
-                const height = Math.max(1, editSheetPanel.getBoundingClientRect().height);
                 editSheetPanel.style.transition = 'none';
                 editSheetPanel.style.pointerEvents = 'none';
-                editSheetPanel.style.transform = `translate3d(0, ${(1 - progress) * height}px, 0)`;
-                editSheetPanel.style.boxShadow = `0 -10px 30px rgba(0, 0, 0, ${0.12 * progress})`;
+                editSheetPanel.style.transform = `translate3d(0, ${(1 - progress) * size}px, 0)`;
                 editSheetOverlay.style.transition = 'none';
                 editSheetOverlay.style.pointerEvents = 'none';
                 editSheetOverlay.style.backgroundColor = `rgba(15, 23, 42, ${0.32 * progress})`;
                 return;
             }
 
-            const height = Math.max(1, taskDropdown.getBoundingClientRect().height);
             taskDropdown.style.transition = 'none';
             taskDropdown.style.visibility = 'visible';
             taskDropdown.style.pointerEvents = 'none';
-            taskDropdown.style.transform = `translate3d(0, ${(progress - 1) * height}px, 0)`;
-            taskDropdown.style.boxShadow = `0 14px 30px rgba(0, 0, 0, ${0.12 * progress})`;
+            taskDropdown.style.transform = `translate3d(0, ${(progress - 1) * size}px, 0)`;
             taskDropdownOverlay.style.transition = 'none';
             taskDropdownOverlay.style.pointerEvents = 'none';
             taskDropdownOverlay.style.opacity = String(progress);
@@ -427,45 +416,49 @@
             const duration = Math.round(clamp(velocityDuration, MIN_SETTLE_MS, MAX_SETTLE_MS));
             const transition = `${duration}ms ${DECELERATION_EASING}`;
 
-            if (axis === 'drawer') {
-                drawer.style.transition = `transform ${transition}, box-shadow ${transition}`;
-                drawerOverlay.style.transition = `opacity ${transition}`;
-                void drawer.offsetWidth;
-                drawer.style.transform = `translate3d(${targetProgress === 1 ? 0 : -size}px, 0, 0)`;
-                drawer.style.boxShadow = targetProgress === 1
-                    ? '2px 0 12px rgba(0, 0, 0, 0.12)'
-                    : '2px 0 12px rgba(0, 0, 0, 0)';
-                drawerOverlay.style.opacity = String(targetProgress);
-                setDrawerOpen(shouldOpen);
-            } else if (axis === 'task') {
-                taskDropdown.style.transition = `transform ${transition}, box-shadow ${transition}`;
-                taskDropdownOverlay.style.transition = `opacity ${transition}`;
-                void taskDropdown.offsetWidth;
-                taskDropdown.style.transform = `translate3d(0, ${targetProgress === 1 ? 0 : -size}px, 0)`;
-                taskDropdown.style.boxShadow = targetProgress === 1
-                    ? '0 14px 30px rgba(0, 0, 0, 0.12)'
-                    : '0 14px 30px rgba(0, 0, 0, 0)';
-                taskDropdownOverlay.style.opacity = String(targetProgress);
-                setTaskDropdownOpen(shouldOpen);
-            } else {
-                editSheetPanel.style.transition = `transform ${transition}, box-shadow ${transition}`;
-                editSheetOverlay.style.transition = `background-color ${transition}`;
-                void editSheetPanel.offsetWidth;
-                editSheetPanel.style.transform = `translate3d(0, ${targetProgress === 1 ? 0 : size}px, 0)`;
-                editSheetPanel.style.boxShadow = targetProgress === 1
-                    ? '0 -10px 30px rgba(0, 0, 0, 0.12)'
-                    : '0 -10px 30px rgba(0, 0, 0, 0)';
-                editSheetOverlay.style.backgroundColor = targetProgress === 1
-                    ? 'rgba(15, 23, 42, 0.32)'
-                    : 'rgba(15, 23, 42, 0)';
-                if (!shouldOpen && typeof closeEditSheet === 'function') closeEditSheet();
-            }
-
             gesture = null;
+
+            // renderProgress 已在本帧设置 transition:none + 当前位置
+            // 双 rAF 确保浏览器先提交当前位置再设置过渡目标，替代 offsetWidth 同步回流
+            requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                if (axis === 'drawer') {
+                    drawer.style.transition = `transform ${transition}`;
+                    drawerOverlay.style.transition = `opacity ${transition}`;
+                    drawer.style.transform = `translate3d(${targetProgress === 1 ? 0 : -size}px, 0, 0)`;
+                    drawer.style.boxShadow = targetProgress === 1
+                        ? '2px 0 12px rgba(0, 0, 0, 0.12)'
+                        : 'none';
+                    drawerOverlay.style.opacity = String(targetProgress);
+                    setDrawerOpen(shouldOpen);
+                } else if (axis === 'task') {
+                    taskDropdown.style.transition = `transform ${transition}`;
+                    taskDropdownOverlay.style.transition = `opacity ${transition}`;
+                    taskDropdown.style.transform = `translate3d(0, ${targetProgress === 1 ? 0 : -size}px, 0)`;
+                    taskDropdown.style.boxShadow = targetProgress === 1
+                        ? '0 14px 30px rgba(0, 0, 0, 0.12)'
+                        : 'none';
+                    taskDropdownOverlay.style.opacity = String(targetProgress);
+                    setTaskDropdownOpen(shouldOpen);
+                } else {
+                    editSheetPanel.style.transition = `transform ${transition}`;
+                    editSheetOverlay.style.transition = `background-color ${transition}`;
+                    editSheetPanel.style.transform = `translate3d(0, ${targetProgress === 1 ? 0 : size}px, 0)`;
+                    editSheetPanel.style.boxShadow = targetProgress === 1
+                        ? '0 -10px 30px rgba(0, 0, 0, 0.12)'
+                        : 'none';
+                    editSheetOverlay.style.backgroundColor = targetProgress === 1
+                        ? 'rgba(15, 23, 42, 0.32)'
+                        : 'rgba(15, 23, 42, 0)';
+                    if (!shouldOpen && typeof closeEditSheet === 'function') closeEditSheet();
+                }
+            });
+            });
+
             settleTimer = window.setTimeout(() => {
                 settleTimer = 0;
                 clearInlineStyles();
-            }, duration + 34);
+            }, duration + 68);
         }
 
         app.addEventListener('touchstart', event => {

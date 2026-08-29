@@ -202,6 +202,7 @@
     z-index: 15;
     opacity: 0;
     pointer-events: none;
+    will-change: opacity;
     transition: opacity 0.26s cubic-bezier(0.2, 0, 0, 1);
 }
 
@@ -230,7 +231,8 @@
     backface-visibility: hidden;
     visibility: hidden;
     pointer-events: none;
-    transition: transform 0.26s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.26s cubic-bezier(0.2, 0, 0, 1), visibility 0.26s;
+    transition: transform 0.26s cubic-bezier(0.2, 0, 0, 1), visibility 0s 0.26s;
+    contain: layout style;
     box-sizing: border-box;
 }
 
@@ -239,6 +241,7 @@
     box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
     visibility: visible;
     pointer-events: auto;
+    transition: transform 0.26s cubic-bezier(0.2, 0, 0, 1), visibility 0s;
 }
 
 /* 顶部工具栏：搜索 */
