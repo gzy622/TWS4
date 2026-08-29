@@ -578,7 +578,7 @@
                 }
                 if (!parsed.operationMode) parsed.operationMode = 'check';
                 if (typeof parsed.showStudentNumbers !== 'boolean') parsed.showStudentNumbers = true;
-                const validViews = ['grid', 'seat', 'table', 'schedule', 'officers', 'duty'];
+                const validViews = ['grid', 'wide', 'seat', 'table', 'schedule', 'officers', 'duty'];
                 if (!validViews.includes(parsed.viewMode)) parsed.viewMode = 'grid';
 
                 this._syncActiveClassPointers(parsed);
@@ -656,12 +656,12 @@
         }
 
         getViewMode() {
-            const allowed = ['grid', 'seat', 'table'];
+            const allowed = ['grid', 'wide', 'seat', 'table'];
             return allowed.includes(this.state.viewMode) ? this.state.viewMode : 'grid';
         }
 
         setViewMode(mode) {
-            const allowed = ['grid', 'seat', 'table'];
+            const allowed = ['grid', 'wide', 'seat', 'table'];
             if (!allowed.includes(mode)) return;
             if (this.state.viewMode === mode) return;
             this.state.viewMode = mode;

@@ -182,7 +182,7 @@
             const chevronSvg = navTitleTrigger.querySelector('svg');
             const progressWrapper = document.querySelector('.tab-indicator-wrapper');
 
-            if (viewMode === 'grid' || viewMode === 'seat') {
+            if (viewMode === 'grid' || viewMode === 'wide' || viewMode === 'seat') {
                 if (chevronSvg) chevronSvg.style.display = '';
                 if (navPlusBtn) navPlusBtn.style.display = '';
                 if (progressWrapper) progressWrapper.style.display = '';
@@ -588,7 +588,7 @@
 
         navTitleTrigger.addEventListener('click', (e) => {
             const mode = store.getViewMode();
-            if (mode !== 'grid' && mode !== 'seat') return;
+            if (mode !== 'grid' && mode !== 'wide' && mode !== 'seat') return;
             e.stopPropagation();
             toggleDropdown();
         });

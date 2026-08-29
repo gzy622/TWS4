@@ -3,6 +3,7 @@
         initNavbar,
         initDrawer,
         initGrid,
+        initWideView,
         initSeatView,
         initTableView,
         initEditSheet,
@@ -17,6 +18,7 @@
         if (!viewElementsCache) {
             viewElementsCache = {
                 grid: document.getElementById('card-grid'),
+                wide: document.getElementById('wide-view'),
                 seat: document.getElementById('seat-view'),
                 table: document.getElementById('table-view')
             };
@@ -73,7 +75,7 @@
                 },
                 canOpenTaskDropdown: () => {
                     const mode = store.getViewMode();
-                    return mode === 'grid' || mode === 'seat';
+                    return mode === 'grid' || mode === 'wide' || mode === 'seat';
                 },
                 closeEditSheet: editSheet.close
             });
@@ -84,6 +86,7 @@
         const openEdit = studentId => editSheet.open(studentId);
         const viewInitializers = {
             grid: () => initGrid({ onOpenEdit: openEdit }),
+            wide: () => initWideView({ onOpenEdit: openEdit }),
             seat: () => initSeatView({ onOpenEdit: openEdit }),
             table: () => initTableView({ onOpenEdit: openEdit })
         };

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TWS4</title>
-    <link rel="stylesheet" href="css/main.css?v=20260829-224309">
+    <link rel="stylesheet" href="css/main.css?v=20260829-225359">
 </head>
 <body>
     <div class="app-container">
@@ -27,6 +27,16 @@
                             <div class="drawer-item-text">
                                 <div class="drawer-item-title">网格视图</div>
                                 <div class="drawer-item-desc">花名册网格与作业登记</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-view-wide-btn">
+                            <div class="drawer-item-icon icon-wide">
+                                <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">宽栏视图</div>
+                                <div class="drawer-item-desc">双列卡片与名单登记</div>
                             </div>
                             <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
@@ -184,7 +194,7 @@
                 </div>
             </div>
             <div class="drawer-footer">
-                <span class="drawer-footer-text">2026-08-29 22:43:09</span>
+                <span class="drawer-footer-text">2026-08-29 22:53:59</span>
             </div>
         </aside>
         <!-- 隐藏的文件上传 Input -->
@@ -224,8 +234,9 @@
             </div>
         </div>
 
-        <!-- 网格视图、座位表视图与表格视图 -->
+        <!-- 网格视图、宽栏视图、座位表视图与表格视图 -->
         <main id="card-grid" class="grid-container"></main>
+        <main id="wide-view" class="wide-view" hidden></main>
         <main id="seat-view" class="seat-view" hidden></main>
         <main id="table-view" class="table-view" hidden></main>
         <!-- 通用统一模态弹窗 -->
@@ -375,29 +386,30 @@
     </div>
 
     <!-- 1. 数据与状态层 -->
-    <script src="js/config/version.js?v=20260829-224309"></script>
-    <script src="js/config/initial-data.js?v=20260829-224309"></script>
-    <script src="js/state/store.js?v=20260829-224309"></script>
+    <script src="js/config/version.js?v=20260829-225359"></script>
+    <script src="js/config/initial-data.js?v=20260829-225359"></script>
+    <script src="js/state/store.js?v=20260829-225359"></script>
 
     <!-- 2. 通用工具与反馈层 -->
-    <script src="js/utils/toast.js?v=20260829-224309"></script>
-    <script src="js/utils/file-saver.js?v=20260829-224309"></script>
-    <script src="js/utils/gestures.js?v=20260829-224309"></script>
-    <script src="js/utils/logger.js?v=20260829-224309"></script>
-    <script src="js/utils/dependencies.js?v=20260829-224309"></script>
-    <script src="js/utils/back-handler.js?v=20260829-224309"></script>
-    <script src="js/modules/workbook.js?v=20260829-224309"></script>
-    <script src="js/modules/seat-workbook.js?v=20260829-224309"></script>
+    <script src="js/utils/toast.js?v=20260829-225359"></script>
+    <script src="js/utils/file-saver.js?v=20260829-225359"></script>
+    <script src="js/utils/gestures.js?v=20260829-225359"></script>
+    <script src="js/utils/logger.js?v=20260829-225359"></script>
+    <script src="js/utils/dependencies.js?v=20260829-225359"></script>
+    <script src="js/utils/back-handler.js?v=20260829-225359"></script>
+    <script src="js/modules/workbook.js?v=20260829-225359"></script>
+    <script src="js/modules/seat-workbook.js?v=20260829-225359"></script>
     <!-- 3. UI 组件层 -->
-    <script src="js/components/modal.js?v=20260829-224309"></script>
-    <script src="js/components/edit-sheet.js?v=20260829-224309"></script>
-    <script src="js/components/navbar.js?v=20260829-224309"></script>
-    <script src="js/components/drawer.js?v=20260829-224309"></script>
-    <script src="js/components/grid.js?v=20260829-224309"></script>
-    <script src="js/components/seat.js?v=20260829-224309"></script>
-    <script src="js/components/table.js?v=20260829-224309"></script>
+    <script src="js/components/modal.js?v=20260829-225359"></script>
+    <script src="js/components/edit-sheet.js?v=20260829-225359"></script>
+    <script src="js/components/navbar.js?v=20260829-225359"></script>
+    <script src="js/components/drawer.js?v=20260829-225359"></script>
+    <script src="js/components/grid.js?v=20260829-225359"></script>
+    <script src="js/components/wide.js?v=20260829-225359"></script>
+    <script src="js/components/seat.js?v=20260829-225359"></script>
+    <script src="js/components/table.js?v=20260829-225359"></script>
 
     <!-- 4. 入口装配 -->
-    <script src="js/app.js?v=20260829-224309"></script>
+    <script src="js/app.js?v=20260829-225359"></script>
 </body>
 </html>

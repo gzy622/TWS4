@@ -11,7 +11,7 @@
     "cap:open": "npx cap open android",
     "cap:run": "npx cap run android",
     "build:apk": "npm run cap:sync && node scripts/build-apk.js",
-    "check": "node --check server.js && node --check js/app.js && node --check js/state/store.js && node --check js/components/grid.js && node --check js/components/seat.js"
+    "check": "node --check server.js && node --check js/app.js && node --check js/state/store.js && node --check js/components/grid.js && node --check js/components/wide.js && node --check js/components/seat.js"
   },
   "engines": {
     "node": ">=18"

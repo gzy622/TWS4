@@ -11,6 +11,7 @@
 
         const switchClassBtn = document.getElementById('drawer-switch-class-btn');
         const viewGridBtn = document.getElementById('drawer-view-grid-btn');
+        const viewWideBtn = document.getElementById('drawer-view-wide-btn');
         const viewSeatBtn = document.getElementById('drawer-view-seat-btn');
         const viewTableBtn = document.getElementById('drawer-view-table-btn');
         const viewScheduleBtn = document.getElementById('drawer-view-schedule-btn');
@@ -933,6 +934,7 @@
         // 视图切换菜单项绑定
         function updateDrawerViewActive(mode = store.getViewMode()) {
             if (viewGridBtn) viewGridBtn.classList.toggle('active', mode === 'grid');
+            if (viewWideBtn) viewWideBtn.classList.toggle('active', mode === 'wide');
             if (viewSeatBtn) viewSeatBtn.classList.toggle('active', mode === 'seat');
             if (viewTableBtn) viewTableBtn.classList.toggle('active', mode === 'table');
             if (viewScheduleBtn) viewScheduleBtn.classList.toggle('active', mode === 'schedule');
@@ -955,6 +957,9 @@
 
         if (viewGridBtn) {
             viewGridBtn.addEventListener('click', () => switchView('grid'));
+        }
+        if (viewWideBtn) {
+            viewWideBtn.addEventListener('click', () => switchView('wide'));
         }
         if (viewSeatBtn) {
             viewSeatBtn.addEventListener('click', () => switchView('seat'));
@@ -1121,7 +1126,7 @@
         // 7. 渲染当前代码版本的 UTC+8 编辑时间戳
         const drawerFooterText = drawer ? drawer.querySelector('.drawer-footer-text') : null;
         if (drawerFooterText) {
-            const buildTime = window.TWS3.BUILD_INFO ? window.TWS3.BUILD_INFO.time : '2026-08-29 22:43:09';
+            const buildTime = window.TWS3.BUILD_INFO ? window.TWS3.BUILD_INFO.time : '2026-08-29 22:53:59';
             drawerFooterText.textContent = buildTime;
             drawerFooterText.title = `代码版本时间: ${buildTime} (点击复制或查看)`;
             drawerFooterText.style.cursor = 'pointer';

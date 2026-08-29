@@ -1,0 +1,152 @@
+/* 宽栏视图（双列排布，每行两个卡片，共 25 行） */
+.wide-view {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px calc(10px + var(--safe-right, 0px)) calc(18px + var(--safe-bottom, 0px)) calc(10px + var(--safe-left, 0px));
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 10px;
+    align-content: start;
+    animation: fadeInView 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: opacity, transform;
+}
+
+.wide-card {
+    position: relative;
+    height: 56px;
+    border-radius: var(--radius-card, 12px);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+    transition: background-color 0.16s ease, transform 0.1s ease, box-shadow 0.16s ease;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.wide-card:active {
+    transform: scale(0.96);
+}
+
+/* 归档只读模式 */
+.wide-view.archived-mode .wide-card {
+    cursor: not-allowed;
+}
+
+.wide-view.archived-mode .wide-card:active {
+    transform: none;
+}
+
+/* 卡片背景与状态色彩 */
+.wide-card.white { background-color: var(--surface-white); }
+.wide-card.dark { background-color: var(--surface-dark); }
+.wide-card.muted { background-color: var(--surface-muted); }
+
+/* 学号水印/序号 */
+.wide-card-number {
+    position: absolute;
+    left: 8px;
+    bottom: -4px;
+    font-size: 30px;
+    font-weight: 900;
+    font-style: italic;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1;
+    pointer-events: none;
+    transition: color 0.16s ease;
+    opacity: 0.85;
+}
+
+.wide-card.white .wide-card-number { color: var(--border-light); }
+.wide-card.dark .wide-card-number { color: #2b4f46; }
+.wide-card.muted .wide-card-number { color: #dce1e7; }
+.wide-card.number-hidden .wide-card-number { display: none; }
+
+/* 卡片主体文本区 */
+.wide-card-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding-left: 20px;
+    min-width: 0;
+    flex: 1;
+    pointer-events: none;
+}
+
+.wide-card.number-hidden .wide-card-content {
+    padding-left: 0;
+}
+
+.wide-card-name {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.16s ease;
+}
+
+.wide-card.white .wide-card-name { color: var(--text-dark); }
+.wide-card.dark .wide-card-name { color: var(--text-white); }
+.wide-card.muted .wide-card-name { color: var(--text-muted); }
+
+.wide-card-note {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 10.5px;
+    font-weight: 500;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wide-card.white .wide-card-note { color: #527763; }
+.wide-card.dark .wide-card-note { color: #b6dfc4; }
+.wide-card.muted .wide-card-note { color: #74808c; }
+
+/* 角标 */
+.wide-card .badge {
+    position: absolute;
+    top: 4px;
+    right: 5px;
+    font-size: 9.5px;
+    padding: 1px 5px;
+    border-radius: 10px;
+    line-height: 1.2;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 3;
+    pointer-events: none;
+    transition: background-color 0.16s ease, color 0.16s ease, opacity 0.16s ease;
+}
+
+.wide-card.dark .badge {
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #e2f7ea;
+}
+
+.wide-card.white .badge {
+    background-color: #f0f2f5;
+    color: #555b63;
+}
+
+.wide-card.muted .badge {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: var(--text-muted);
+}
+
+.wide-card.muted .badge.non-english {
+    background-color: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+    font-weight: 700;
+}
