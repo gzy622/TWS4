@@ -85,6 +85,7 @@
                 </svg>
                 <span class="archive-action-text">归档</span>
             </button>
+            <div class="task-action-menu-divider" role="separator"></div>
             <button type="button" class="task-action-menu-item delete-task-action danger" role="menuitem">
                 <svg viewBox="0 0 24 24">
                     <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -328,7 +329,7 @@
             // 测量菜单尺寸并计算方向
             actionMenu.style.visibility = 'hidden';
             actionMenu.style.display = 'flex';
-            const menuHeight = actionMenu.offsetHeight || 106;
+            const menuHeight = actionMenu.offsetHeight || 122;
             actionMenu.style.visibility = '';
             actionMenu.style.display = '';
 
