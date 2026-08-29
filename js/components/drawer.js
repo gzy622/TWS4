@@ -1123,18 +1123,29 @@
                 }
             }
         });
-        // 7. 渲染当前代码版本的 UTC+8 编辑时间戳
+        // 7. 渲染当前代码版本的应用版本号与时间戳
         const drawerFooterText = drawer ? drawer.querySelector('.drawer-footer-text') : null;
         if (drawerFooterText) {
-            const buildTime = window.TWS3.BUILD_INFO ? window.TWS3.BUILD_INFO.time : '2026-08-29 22:53:59';
-            drawerFooterText.textContent = buildTime;
-            drawerFooterText.title = `代码版本时间: ${buildTime} (点击复制或查看)`;
+            const buildInfo = window.TWS3.BUILD_INFO || {};
+            const appVersion = buildInfo.appVersion || '1.0.0';
+            const buildTime = buildInfo.time || '2026-08-29 22:53:59';
+            const versionStr = `v${appVersion} · ${buildTime}`;
+            drawerFooterText.textContent = versionStr;
+            drawerFooterText.title = `应用版本: v${appVersion}\n代码构建时间: ${buildTime} (点击复制)`;
             drawerFooterText.style.cursor = 'pointer';
             drawerFooterText.addEventListener('click', () => {
-                showToast(`当前代码版本: ${buildTime}`);
+                const copyPayload = `TWS4 v${appVersion} (${buildInfo.version || buildTime})`;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(copyPayload).then(() => {
+                        showToast(`已复制版本信息: ${copyPayload}`);
+                    }).catch(() => {
+                        showToast(`版本: ${copyPayload}`);
+                    });
+                } else {
+                    showToast(`版本: ${copyPayload}`);
+                }
             });
         }
-
         renderHeader();
         renderStudentNumberToggle();
 
