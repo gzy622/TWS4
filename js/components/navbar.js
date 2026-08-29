@@ -60,9 +60,14 @@
             </div>
         `;
 
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'task-drag-handle';
+        dragHandle.setAttribute('aria-hidden', 'true');
+
         taskDropdown.appendChild(toolbar);
         taskDropdown.appendChild(listContainer);
         taskDropdown.appendChild(footer);
+        taskDropdown.appendChild(dragHandle);
 
         let activeMenuTaskId = null;
         let activeMoreBtn = null;
