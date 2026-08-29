@@ -1,0 +1,161 @@
+/* 网格及卡片 */
+.grid-container {
+    padding: 10px 8px 16px 8px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 7px 6px;
+    animation: fadeInGrid 0.3s ease-out;
+    transition: opacity 0.2s ease;
+}
+
+@keyframes fadeInGrid {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    position: relative;
+    height: 62px;
+    border-radius: var(--radius-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+    transition: background-color 0.16s ease, transform 0.1s ease, box-shadow 0.16s ease;
+}
+
+.card:active {
+    transform: scale(0.92);
+}
+
+/* 归档只读模式 */
+.grid-container.archived-mode .card {
+    cursor: not-allowed;
+}
+
+.grid-container.archived-mode .card:active {
+    transform: none;
+}
+
+.card.white { background-color: var(--surface-white); }
+.card.dark { background-color: var(--surface-dark); }
+.card.muted { background-color: var(--surface-muted); }
+
+.card-number {
+    position: absolute;
+    left: 4px;
+    bottom: -3px;
+    font-size: 26px;
+    font-weight: 900;
+    font-style: italic;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1;
+    pointer-events: none;
+    transition: color 0.16s ease;
+}
+
+.card.white .card-number { color: var(--border-light); }
+.card.dark .card-number { color: #2b4f46; }
+.card.muted .card-number { color: #dce1e7; }
+.card.number-hidden .card-number { display: none; }
+
+.card-text {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    max-width: calc(100% - 10px);
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    pointer-events: none;
+}
+
+.card-name {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    text-align: center;
+    white-space: nowrap;
+    transition: color 0.16s ease;
+}
+
+.card.white .card-name { color: var(--text-dark); }
+.card.dark .card-name { color: var(--text-white); }
+.card.muted .card-name { color: var(--text-muted); }
+.card.white .card-note { color: #527763; }
+.card.dark .card-note { color: #b6dfc4; }
+.card.muted .card-note { color: #74808c; }
+
+.card-note {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.badge {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    font-size: 10px;
+    padding: 1px 4.5px;
+    border-radius: 5px;
+    line-height: 1.15;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 3;
+    pointer-events: none;
+    transition: background-color 0.16s ease, color 0.16s ease, opacity 0.16s ease;
+}
+.card.dark .badge {
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #e2f7ea;
+}
+
+.card.white .badge {
+    background-color: #f0f2f5;
+    color: #555b63;
+}
+
+.card.muted .badge {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: var(--text-muted);
+}
+
+.card.muted .badge.non-english {
+    background-color: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+    font-weight: 700;
+}
+
+/* 轻量 Toast 浮动提示 */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background-color: rgba(27, 56, 49, 0.96);
+    color: #ffffff;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 13.5px;
+    font-weight: 600;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+}
+
+.toast-container.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}

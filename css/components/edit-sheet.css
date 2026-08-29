@@ -1,0 +1,303 @@
+/* 编辑学生底部面板 (Sheet) */
+.edit-sheet-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.48);
+    z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+}
+
+.edit-sheet-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.edit-sheet {
+    background: var(--bg-page);
+    width: 100%;
+    max-width: 440px;
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+    padding: 16px 16px 26px 16px;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.edit-sheet-overlay.show .edit-sheet {
+    transform: translateY(0);
+}
+
+/* 顶部标题与学号徽标 */
+.sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2px 2px 2px;
+}
+
+.sheet-student-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sheet-student-id {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--accent-mint);
+    background-color: var(--surface-dark);
+    padding: 2.5px 9px;
+    border-radius: 6px;
+    line-height: 1.2;
+}
+
+.sheet-title {
+    font-size: 17.5px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.sheet-non-english-toggle {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-light);
+    background: var(--surface-white);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 2px;
+}
+
+.sheet-non-english-toggle:active {
+    transform: scale(0.96);
+}
+
+.sheet-non-english-toggle.active {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+    font-weight: 700;
+}
+.sheet-close-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.sheet-close-btn:active {
+    background-color: #cbd5e1;
+    transform: scale(0.92);
+}
+
+/* 主展示行：左侧大字分值卡片 + 右侧备注与标签 */
+.sheet-hero-row {
+    display: grid;
+    grid-template-columns: 104px 1fr;
+    gap: 10px;
+    align-items: stretch;
+}
+
+/* 大字分值突出展示卡片 */
+.sheet-score-hero {
+    background: var(--surface-white);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.score-hero-num-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+}
+
+.score-hero-num {
+    font-size: 34px;
+    font-weight: 900;
+    color: var(--surface-dark);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+
+.score-hero-unit {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+/* 右侧备注与标签容器 */
+.sheet-remark-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: space-between;
+}
+.sheet-remark-input {
+    width: 100%;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-inner);
+    font-size: 14px;
+    outline: none;
+    background-color: var(--surface-white);
+    color: var(--text-dark);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sheet-remark-input:focus {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 3px rgba(100, 181, 135, 0.2);
+}
+
+/* 快捷常用备注标签 */
+.sheet-quick-tags {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.sheet-quick-tags::-webkit-scrollbar {
+    display: none;
+}
+.quick-tag-btn {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    background-color: var(--surface-white);
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+}
+
+.quick-tag-btn:active {
+    transform: scale(0.94);
+}
+
+.quick-tag-btn.active {
+    background-color: var(--surface-dark);
+    color: var(--text-white);
+    border-color: var(--surface-dark);
+}
+
+/* 3x4 宽适单手数字键盘 (50px 高度舒适按压) */
+.keypad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+    margin-top: 2px;
+}
+.keypad-btn {
+    height: 48px;
+    background-color: var(--surface-white);
+    border-radius: 12px;
+    border: none;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-dark);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.08s ease, background-color 0.12s ease;
+}
+
+.keypad-btn:active {
+    transform: scale(0.95);
+    background-color: #f1f5f9;
+}
+
+.keypad-btn.action {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.keypad-btn.action[data-key="."] {
+    font-size: 26px;
+    font-weight: 900;
+}
+
+.keypad-btn.action:active {
+    background-color: #e2e8f0;
+}
+
+/* 底部操作栏 (46px 高度) */
+.sheet-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 10px;
+    margin-top: 4px;
+}
+.sheet-btn {
+    height: 44px;
+    border-radius: var(--radius-inner);
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s ease, opacity 0.15s ease;
+}
+
+.sheet-btn:active {
+    transform: scale(0.97);
+}
+
+.sheet-btn.clear {
+    background-color: #fee2e2;
+    color: #e11d48;
+    box-shadow: var(--shadow-card);
+}
+
+.sheet-btn.save {
+    background-color: var(--surface-dark);
+    color: var(--text-white);
+    box-shadow: var(--shadow-card);
+}

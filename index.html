@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TWS4</title>
+    <link rel="stylesheet" href="css/main.css?v=20260829-172815">
+<body>
+    <div class="app-container">
+        <!-- 侧边栏抽屉 -->
+        <div id="drawer-overlay" class="drawer-overlay"></div>
+        <aside id="drawer" class="drawer">
+            <div class="drawer-card-header">
+                <div class="drawer-title">高二 (3) 班</div>
+                <div class="drawer-subtitle">在籍学生：50 人</div>
+                <div class="bg-tag">CLASS</div>
+            </div>
+            <div class="drawer-scroll-area">
+                <div class="drawer-section">
+                    <div class="drawer-section-title">班级视图</div>
+                    <div class="drawer-menu">
+                        <div class="drawer-menu-item" id="drawer-view-grid-btn">
+                            <div class="drawer-item-icon icon-roster">
+                                <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">网格视图</div>
+                                <div class="drawer-item-desc">花名册网格与作业登记</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-view-seat-btn">
+                            <div class="drawer-item-icon icon-seat">
+                                <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14m8-14v14M4 12h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">座位表</div>
+                                <div class="drawer-item-desc">班级座位排布与可视化</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="drawer-section">
+                    <div class="drawer-section-title">数据管理</div>
+                    <div class="drawer-menu">
+                        <div class="drawer-menu-item" id="drawer-switch-class-btn">
+                            <div class="drawer-item-icon icon-class">
+                                <svg viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">切换班级</div>
+                                <div class="drawer-item-desc">切换或重命名当前班级</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-manage-roster-btn">
+                            <div class="drawer-item-icon icon-roster">
+                                <svg viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">学生花名册</div>
+                                <div class="drawer-item-desc">学生姓名、学号及非英语生设置</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-import-seat-btn">
+                            <div class="drawer-item-icon icon-seat-import">
+                                <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14m8-14v14M4 12h16"/><path d="M12 9V3m0 0L9.5 5.5M12 3l2.5 2.5"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">导入座位表</div>
+                                <div class="drawer-item-desc">读取四组双列布局表格 (.xlsx)</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-export-seat-btn">
+                            <div class="drawer-item-icon icon-seat-export">
+                                <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14m8-14v14M4 12h16"/><path d="M12 15v6m0 0l-2.5-2.5M12 21l2.5-2.5"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">导出座位表</div>
+                                <div class="drawer-item-desc">按当前布局生成模板表格 (.xlsx)</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-import-xlsx-btn">
+                            <div class="drawer-item-icon icon-import">
+                                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6m0 0l-3 3m3-3l3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">导入记分册</div>
+                                <div class="drawer-item-desc">智能比对与合并 .xlsx 表格</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-export-xlsx-btn">
+                            <div class="drawer-item-icon icon-export">
+                                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6m0 0l-3-3m3 3l3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">导出记分册</div>
+                                <div class="drawer-item-desc">标准多任务排版表格 (.xlsx)</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-import-json-btn">
+                            <div class="drawer-item-icon icon-json-import">
+                                <svg viewBox="0 0 24 24"><path d="M4 4v16a2 2 0 002 2h12a2 2 0 002-2V8.342a2 2 0 00-.602-1.43l-4.44-4.342A2 2 0 0013.56 2H6a2 2 0 00-2 2z" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 18v-6m0 0l-2.5 2.5M12 12l2.5 2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">导入 JSON 备份</div>
+                                <div class="drawer-item-desc">还原快照与差异合并</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-export-json-btn">
+                            <div class="drawer-item-icon icon-json-export">
+                                <svg viewBox="0 0 24 24"><path d="M4 4v16a2 2 0 002 2h12a2 2 0 002-2V8.342a2 2 0 00-.602-1.43l-4.44-4.342A2 2 0 0013.56 2H6a2 2 0 00-2 2z" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 12v6m0 0l-2.5-2.5M12 18l2.5-2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">导出 JSON 备份</div>
+                                <div class="drawer-item-desc">全量作业与提交记录快照</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-export-data-btn">
+                            <div class="drawer-item-icon icon-csv">
+                                <svg viewBox="0 0 24 24"><path d="M9 17v-6m4 6v-3m4 6v-9M4 21h16a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">导出 CSV 报表</div>
+                                <div class="drawer-item-desc">纯文本作业汇总明细表</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="drawer-section">
+                    <div class="drawer-section-title">快捷操作</div>
+                    <div class="drawer-menu">
+                        <div class="drawer-menu-item" id="drawer-reset-roster-btn">
+                            <div class="drawer-item-icon icon-reset">
+                                <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">重置当前作业</div>
+                                <div class="drawer-item-desc">清空全员本项提交与打分</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <button type="button" class="drawer-menu-item drawer-toggle-item" id="drawer-student-number-toggle" aria-pressed="true">
+                            <div class="drawer-item-icon icon-roster">
+                                <svg viewBox="0 0 24 24"><path d="M4 12s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5z" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">显示学生卡片号码</div>
+                                <div class="drawer-item-desc">网格视图内显示学生编号</div>
+                            </div>
+                            <span class="drawer-toggle" aria-hidden="true"><span></span></span>
+                        </button>
+                        <div class="drawer-menu-item" id="drawer-toggle-debugger-btn">
+                            <div class="drawer-item-icon icon-debug">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">调试录制悬浮球</div>
+                                <div class="drawer-item-desc">切换显示或隐藏悬浮球</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="drawer-footer">
+                <span class="drawer-footer-text">2026-08-29 17:28:15</span>
+            </div>
+        </aside>
+        <!-- 隐藏的文件上传 Input -->
+        <input type="file" id="xlsx-file-input" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display: none;" />
+        <input type="file" id="seat-xlsx-file-input" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display: none;" />
+        <input type="file" id="json-file-input" accept=".json,application/json" style="display: none;" />
+
+        <!-- 顶部导航 -->
+        <header class="navbar">
+            <div class="nav-icon" id="nav-drawer-btn" aria-label="打开菜单">
+                <div class="nav-menu-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="nav-title" id="nav-title-trigger">
+                <span id="current-task-name">作业</span>
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="nav-icon nav-plus-icon" id="nav-new-task-btn" aria-label="新建任务">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </header>
+
+        <!-- 任务下拉菜单及遮罩 -->
+        <div id="task-dropdown-overlay" class="dropdown-overlay"></div>
+        <div id="task-dropdown" class="task-dropdown"></div>
+        <!-- 进度指示条 -->
+        <div class="tab-indicator-wrapper">
+            <div class="tab-indicator">
+                <div id="progress-bar" class="tab-indicator-bar"></div>
+            </div>
+        </div>
+
+        <!-- 网格视图与座位表视图 -->
+        <main id="card-grid" class="grid-container"></main>
+        <main id="seat-view" class="seat-view" hidden></main>
+        <!-- 通用统一模态弹窗 -->
+        <div id="app-modal" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-title" id="modal-title">提示</div>
+                <div class="modal-body" id="modal-body" style="display: none;"></div>
+                <input type="text" id="modal-input" class="modal-input" style="display: none;" />
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn cancel" id="modal-cancel-btn">取消</button>
+                    <button type="button" class="modal-btn confirm" id="modal-confirm-btn">确认</button>
+                </div>
+            </div>
+        </div>
+        <!-- 导入差异比对弹窗 -->
+        <div id="diff-modal" class="modal-overlay">
+            <div class="diff-modal-container">
+                <div class="diff-header">
+                    <div class="diff-header-title">
+                        <span>导入差异比对</span>
+                        <span id="diff-source-tag" class="diff-tag-external">普通模板</span>
+                    </div>
+                    <div class="diff-source-info" id="diff-source-info"></div>
+                    <div class="diff-header-sub" id="diff-header-desc">检测到数据差异，请选择合并方式：</div>
+                </div>
+                <div class="diff-body" id="diff-modal-body">
+                    <div class="diff-merge-preview" id="diff-merge-preview"></div>
+                    <div class="diff-filter-row">
+                        <div class="diff-filter-tabs" id="diff-filter-tabs">
+                            <button type="button" class="diff-filter-btn active" data-filter="all">全部 <span>0</span></button>
+                            <button type="button" class="diff-filter-btn" data-filter="conflict">冲突 <span>0</span></button>
+                            <button type="button" class="diff-filter-btn" data-filter="class">班级 <span>0</span></button>
+                            <button type="button" class="diff-filter-btn" data-filter="student">学生 <span>0</span></button>
+                            <button type="button" class="diff-filter-btn" data-filter="task">任务 <span>0</span></button>
+                            <button type="button" class="diff-filter-btn" data-filter="record">记录 <span>0</span></button>
+                            <button type="button" class="diff-filter-btn" data-filter="table">表格 <span>0</span></button>
+                            <button type="button" class="diff-filter-btn" data-filter="delete">删除 <span>0</span></button>
+                        </div>
+                        <input type="search" id="diff-search-input" class="diff-search-input" placeholder="搜索学生、任务或记录" />
+                    </div>
+                    <div class="diff-list" id="diff-details-list"></div>
+                    <div class="diff-load-more" id="diff-load-more">加载更多</div>
+                    <div class="diff-empty" id="diff-empty" style="display: none;">无匹配差异</div>
+                </div>
+                <div class="diff-actions">
+                    <div class="diff-btn-group-main">
+                        <button type="button" class="diff-action-btn override" id="diff-btn-override" title="使用导入文件覆盖本地数据">覆盖本地</button>
+                        <button type="button" class="diff-action-btn merge" id="diff-btn-merge" title="保留更新数据并智能合并">智能合并</button>
+                    </div>
+                    <button type="button" class="diff-action-btn cancel" id="diff-btn-cancel">取消</button>
+                </div>
+            </div>
+        </div>
+        <!-- 学生花名册管理弹窗 -->
+        <div id="roster-modal" class="modal-overlay">
+            <div class="roster-modal-container">
+                <div class="roster-header">
+                    <div class="roster-header-info">
+                        <div class="roster-title">
+                            <span>学生花名册</span>
+                            <span class="roster-count-badge" id="roster-count-badge">50 人</span>
+                        </div>
+                        <div class="roster-subtitle">点击「英语生」标签可切换为非英语生（英语作业免交）</div>
+                    </div>
+                    <button type="button" class="roster-close-btn" id="roster-close-btn" aria-label="关闭">✕</button>
+                </div>
+                <div class="roster-toolbar">
+                    <input type="search" id="roster-search-input" class="roster-search-input" placeholder="按姓名或学号搜索..." />
+                    <button type="button" id="roster-add-btn" class="roster-add-btn">
+                        <svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                        <span>添加学生</span>
+                    </button>
+                </div>
+                <div class="roster-list-body" id="roster-list-body"></div>
+            </div>
+        </div>
+        <!-- 编辑学生底部面板 (Sheet) -->
+        <div id="edit-sheet-overlay" class="edit-sheet-overlay">
+            <div class="edit-sheet">
+                <div class="sheet-header">
+                    <div class="sheet-student-info">
+                        <span class="sheet-student-id" id="edit-sheet-id">1</span>
+                        <span class="sheet-title" id="edit-sheet-title">编辑学生</span>
+                        <button type="button" class="sheet-non-english-toggle" id="sheet-non-english-toggle">英语生</button>
+                    </div>
+                    <button type="button" class="sheet-close-btn" aria-label="关闭">✕</button>
+                </div>
+
+                <!-- 主展示行：左侧大字分值卡片 + 右侧备注与快捷标签 -->
+                <div class="sheet-hero-row">
+                    <div class="sheet-score-hero">
+                        <div class="score-hero-num-wrap">
+                            <span class="score-hero-num" id="edit-score-display">--</span>
+                            <span class="score-hero-unit">分</span>
+                        </div>
+                    </div>
+                    <div class="sheet-remark-wrap">
+                        <input type="text" id="edit-remark-input" class="sheet-remark-input" placeholder="备注或标签" />
+                        <div class="sheet-quick-tags">
+                            <button type="button" class="quick-tag-btn" data-tag="未订正">未订正</button>
+                            <button type="button" class="quick-tag-btn" data-tag="迟交">迟交</button>
+                            <button type="button" class="quick-tag-btn" data-tag="请假">请假</button>
+                            <button type="button" class="quick-tag-btn" data-tag="优">优</button>
+                            <button type="button" class="quick-tag-btn" data-tag="A+">A+</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- 内建数字键盘 (3×4) -->
+                <div class="keypad-grid">
+                    <button type="button" class="keypad-btn" data-key="1">1</button>
+                    <button type="button" class="keypad-btn" data-key="2">2</button>
+                    <button type="button" class="keypad-btn" data-key="3">3</button>
+                    <button type="button" class="keypad-btn" data-key="4">4</button>
+                    <button type="button" class="keypad-btn" data-key="5">5</button>
+                    <button type="button" class="keypad-btn" data-key="6">6</button>
+                    <button type="button" class="keypad-btn" data-key="7">7</button>
+                    <button type="button" class="keypad-btn" data-key="8">8</button>
+                    <button type="button" class="keypad-btn" data-key="9">9</button>
+                    <button type="button" class="keypad-btn action" data-key=".">.</button>
+                    <button type="button" class="keypad-btn" data-key="0">0</button>
+                    <button type="button" class="keypad-btn action" data-key="del">⌫</button>
+                </div>
+
+                <!-- 底部操作栏 -->
+                <div class="sheet-actions">
+                    <button type="button" class="sheet-btn clear">移除标记</button>
+                    <button type="button" class="sheet-btn save">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. 数据与状态层 -->
+    <script src="js/config/version.js?v=20260829-172815"></script>
+    <script src="js/config/initial-data.js?v=20260829-172815"></script>
+    <script src="js/state/store.js?v=20260829-172815"></script>
+
+    <!-- 2. 通用工具与反馈层 -->
+    <script src="js/utils/toast.js?v=20260829-172815"></script>
+    <script src="js/utils/gestures.js?v=20260829-172815"></script>
+    <script src="js/utils/logger.js?v=20260829-172815"></script>
+    <script src="js/utils/dependencies.js?v=20260829-172815"></script>
+    <script src="js/utils/back-handler.js?v=20260829-172815"></script>
+    <script src="js/modules/workbook.js?v=20260829-172815"></script>
+    <script src="js/modules/seat-workbook.js?v=20260829-172815"></script>
+    <!-- 3. UI 组件层 -->
+    <script src="js/components/modal.js?v=20260829-172815"></script>
+    <script src="js/components/edit-sheet.js?v=20260829-172815"></script>
+    <script src="js/components/navbar.js?v=20260829-172815"></script>
+    <script src="js/components/drawer.js?v=20260829-172815"></script>
+    <script src="js/components/grid.js?v=20260829-172815"></script>
+    <script src="js/components/seat.js?v=20260829-172815"></script>
+
+    <!-- 4. 入口装配 -->
+    <script src="js/app.js?v=20260829-172815"></script>
+</html>

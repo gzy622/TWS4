@@ -1,0 +1,2135 @@
+(function() {
+    window.TWS3 = window.TWS3 || {};
+
+    const {
+        INITIAL_STUDENTS,
+        INITIAL_TASKS,
+        INITIAL_RECORDS,
+        INITIAL_CLASS_NAME,
+        INITIAL_SCHEDULE,
+        INITIAL_SCHEDULE_TEMPLATE_VERSION,
+        LEGACY_SCHEDULE_TEMPLATE,
+        INITIAL_OFFICERS,
+        INITIAL_DUTY
+    } = window.TWS3.initialData;
+    const STORAGE_KEY = 'tws4_grid_seat_store_v1';
+    const OLD_STORAGE_KEYS = [];
+
+    function getUtcNowIso() {
+        return new Date().toISOString();
+    }
+
+    function generateId(prefix = 'id') {
+        return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 7);
+    }
+
+    const EMPTY_TIME = '1970-01-01T00:00:00.000Z';
+    const SUBJECT_OPTIONS = ['未设置', '语文', '数学', '英语', '物理', '化学', '生物', '政治', '历史', '地理', '其他'];
+
+    function inferSubjectFromName(name) {
+        const text = String(name || '').trim();
+        if (/语文|默写|文言文|古诗|作文/.test(text)) return '语文';
+        if (/数学|几何|代数|函数|算术/.test(text)) return '数学';
+        if (/英语|单词|听力|改错|完形|阅读|背诵/.test(text)) return '英语';
+        if (/物理|力学|电学|光学/.test(text)) return '物理';
+        if (/化学/.test(text)) return '化学';
+        if (/生物/.test(text)) return '生物';
+        if (/政治|道法|道德与法治/.test(text)) return '政治';
+        if (/历史/.test(text)) return '历史';
+        if (/地理/.test(text)) return '地理';
+        return '未设置';
+    }
+
+    function normalizeTaskName(name) {
+        return String(name || '').normalize('NFKC').replace(/\s+/g, '').trim().toLowerCase();
+    }
+    function normalizeRecord(record) {
+        const source = record || {};
+        return {
+            status: source.status || 'white',
+            badge: source.badge || null,
+            score: source.score === undefined ? null : source.score,
+            note: source.note || null
+        };
+    }
+
+    function isBlankRecord(record) {
+        const value = normalizeRecord(record);
+        return value.status === 'white' && !value.badge && value.score === null && !value.note;
+    }
+
+    function recordsEqual(left, right) {
+        const a = normalizeRecord(left);
+        const b = normalizeRecord(right);
+        return a.status === b.status && a.badge === b.badge && a.score === b.score && a.note === b.note;
+    }
+
+    function recordDisplay(record) {
+        const value = normalizeRecord(record);
+        const labels = [];
+        if (value.status === 'dark') labels.push('已交');
+        else if (value.status === 'muted') labels.push('灰色状态');
+        else labels.push('未交');
+        if (value.score !== null && value.score !== undefined && value.score !== '') labels.push(`${value.score}分`);
+        if (value.badge && String(value.badge).trim() && String(value.badge) !== `${value.score}分`) labels.push(String(value.badge));
+        if (value.note && String(value.note).trim() && value.note !== value.badge) labels.push(String(value.note));
+        return labels.join('，');
+    }
+
+    function sideValue(value, exists, rawValue, updatedAt) {
+        const semantic = typeof value === 'object' && value !== null ? JSON.parse(JSON.stringify(value)) : value;
+        return {
+            value: semantic,
+            display: typeof semantic === 'object' ? recordDisplay(semantic) : (semantic === null || semantic === undefined || semantic === '' ? '' : String(semantic)),
+            rawValue: rawValue === undefined ? null : rawValue,
+            exists: !!exists,
+            updatedAt: updatedAt || null
+        };
+    }
+
+    function getEntityTime(entity, deleted = false) {
+        if (!entity) return EMPTY_TIME;
+        return entity[deleted ? 'deletedAt' : 'updatedAt'] || entity.updatedAt || entity.createdAt || EMPTY_TIME;
+    }
+
+    function stableStringify(value) {
+        if (Array.isArray(value)) return '[' + value.map(stableStringify).join(',') + ']';
+        if (value && typeof value === 'object') {
+            return '{' + Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',') + '}';
+        }
+        return JSON.stringify(value);
+    }
+
+    function scheduleTemplatePayload(schedule) {
+        const payload = JSON.parse(JSON.stringify(schedule));
+        delete payload.updatedAt;
+        delete payload.templateVersion;
+        return payload;
+    }
+
+    function isLegacyDefaultSchedule(schedule) {
+        if (!schedule || typeof schedule !== 'object' || Array.isArray(schedule)) return false;
+        if (Number(schedule.templateVersion) >= Number(INITIAL_SCHEDULE_TEMPLATE_VERSION)) return false;
+        return stableStringify(scheduleTemplatePayload(schedule)) === stableStringify(LEGACY_SCHEDULE_TEMPLATE);
+    }
+
+    function normalizeSchedule(schedule) {
+        if (!schedule || typeof schedule !== 'object' || Array.isArray(schedule)) {
+            return { schedule: JSON.parse(JSON.stringify(INITIAL_SCHEDULE)), changed: true };
+        }
+
+        if (isLegacyDefaultSchedule(schedule)) {
+            return { schedule: JSON.parse(JSON.stringify(INITIAL_SCHEDULE)), changed: true, migrated: true };
+        }
+
+        const normalized = JSON.parse(JSON.stringify(schedule));
+        let changed = false;
+        if (!Array.isArray(normalized.days)) {
+            normalized.days = JSON.parse(JSON.stringify(INITIAL_SCHEDULE.days));
+            changed = true;
+        }
+        if (!Array.isArray(normalized.periods)) {
+            normalized.periods = JSON.parse(JSON.stringify(INITIAL_SCHEDULE.periods));
+            changed = true;
+        }
+        if (!Array.isArray(normalized.courseLibrary)) {
+            normalized.courseLibrary = JSON.parse(JSON.stringify(INITIAL_SCHEDULE.courseLibrary));
+            changed = true;
+        }
+        if (!normalized.grid || typeof normalized.grid !== 'object' || Array.isArray(normalized.grid)) {
+            normalized.grid = JSON.parse(JSON.stringify(INITIAL_SCHEDULE.grid));
+            changed = true;
+        }
+        if (!normalized.lunchBreak || typeof normalized.lunchBreak !== 'object') {
+            normalized.lunchBreak = {
+                enabled: true,
+                afterPeriod: 4,
+                name: '午间休息'
+            };
+            changed = true;
+        } else {
+            if (typeof normalized.lunchBreak.enabled !== 'boolean') {
+                normalized.lunchBreak.enabled = true;
+                changed = true;
+            }
+            if (typeof normalized.lunchBreak.afterPeriod !== 'number') {
+                normalized.lunchBreak.afterPeriod = 4;
+                changed = true;
+            }
+            if (typeof normalized.lunchBreak.name !== 'string' || !normalized.lunchBreak.name.trim()) {
+                normalized.lunchBreak.name = '午间休息';
+                changed = true;
+            }
+        }
+        if (!normalized.updatedAt) {
+            normalized.updatedAt = getUtcNowIso();
+            changed = true;
+        }
+        if (normalized.templateVersion !== INITIAL_SCHEDULE_TEMPLATE_VERSION) {
+            normalized.templateVersion = INITIAL_SCHEDULE_TEMPLATE_VERSION;
+            changed = true;
+        }
+        return { schedule: normalized, changed };
+    }
+
+    function hasScheduleData(state) {
+        return !!(state && state.schedule && typeof state.schedule === 'object' && !Array.isArray(state.schedule));
+    }
+
+    function compareTimes(localTime, importedTime) {
+        const local = localTime || EMPTY_TIME;
+        const imported = importedTime || EMPTY_TIME;
+        if (imported > local) return 'file';
+        if (imported < local) return 'local';
+        return 'conflict';
+    }
+
+    function createDefaultSeatLayout(students) {
+        return (students || []).map((student, index) => ({
+            studentId: student.id,
+            row: Math.floor(index / 8),
+            group: Math.floor((index % 8) / 2),
+            side: index % 2
+        }));
+    }
+
+    function makeResolution(localSide, importedSide, importedDeleted = false) {
+        if (!localSide.exists && importedSide.exists) {
+            return { choice: 'file', label: '采用文件', reason: '文件中存在，本地不存在' };
+        }
+        if (localSide.exists && !importedSide.exists) {
+            if (importedDeleted) {
+                const deleteChoice = compareTimes(localSide.updatedAt, importedSide.updatedAt);
+                if (deleteChoice === 'file') return { choice: 'file', label: '采用文件', reason: '文件标记删除且删除时间较新' };
+                if (deleteChoice === 'conflict') return { choice: 'local', conflict: true, label: '保留本地', reason: '文件标记删除且双方时间相同，按规则保留本地' };
+                return { choice: 'local', label: '保留本地', reason: '本地修改时间较新，忽略文件删除' };
+            }
+            return { choice: 'local', label: '保留本地', reason: '文件中不存在对应项' };
+        }
+        const choice = compareTimes(localSide.updatedAt, importedSide.updatedAt);
+        if (choice === 'file') return { choice, label: '采用文件', reason: '文件修改时间较新' };
+        if (choice === 'local') return { choice, label: '保留本地', reason: '本地修改时间较新' };
+        return { choice: 'local', conflict: true, label: '保留本地', reason: '双方修改时间相同，按规则保留本地' };
+    }
+
+    function matchStudents(localStudents, importedStudents, useStableIds) {
+        const localById = new Map((localStudents || []).map(student => [String(student.id), student]));
+        const localByNo = new Map((localStudents || []).map(student => [String(student.studentNo || student.id), student]));
+        const used = new Set();
+        const pairs = [];
+        const importedUnmatched = [];
+
+        (importedStudents || []).forEach(imported => {
+            let localStudent = useStableIds ? localById.get(String(imported.id)) : null;
+            if (!localStudent) localStudent = localByNo.get(String(imported.studentNo || imported.id));
+            if (localStudent && !used.has(localStudent.id)) {
+                used.add(localStudent.id);
+                pairs.push({ local: localStudent, imported });
+            } else {
+                importedUnmatched.push(imported);
+            }
+        });
+
+        return {
+            pairs,
+            localUnmatched: (localStudents || []).filter(student => !used.has(student.id)),
+            importedUnmatched
+        };
+    }
+
+    function matchTasks(localTasks, importedTasks, useStableIds) {
+        const localById = new Map((localTasks || []).map(task => [String(task.id), task]));
+        const localByName = new Map();
+        (localTasks || []).forEach(task => {
+            const key = normalizeTaskName(task.name);
+            if (!localByName.has(key)) localByName.set(key, []);
+            localByName.get(key).push(task);
+        });
+        const used = new Set();
+        const nameIndexes = new Map();
+        const pairs = [];
+        const importedUnmatched = [];
+
+        (importedTasks || []).forEach(imported => {
+            let localTask = useStableIds ? localById.get(String(imported.id)) : null;
+            if (localTask && used.has(localTask.id)) localTask = null;
+            if (!localTask) {
+                const key = normalizeTaskName(imported.name);
+                const candidates = localByName.get(key) || [];
+                const index = nameIndexes.get(key) || 0;
+                localTask = candidates.slice(index).find(task => !used.has(task.id));
+                nameIndexes.set(key, index + 1);
+            }
+            if (localTask && !used.has(localTask.id)) {
+                used.add(localTask.id);
+                pairs.push({ local: localTask, imported });
+            } else {
+                importedUnmatched.push(imported);
+            }
+        });
+
+        return {
+            pairs,
+            localUnmatched: (localTasks || []).filter(task => !used.has(task.id)),
+            importedUnmatched
+        };
+    }
+
+    function getRawCell(preparedData, taskName, studentNo) {
+        const rawCells = preparedData.visibleRawCells || {};
+        const keys = [`${taskName.id || taskName}_${studentNo}`, `${taskName.name || taskName}_${studentNo}`];
+        for (const key of keys) {
+            if (Object.prototype.hasOwnProperty.call(rawCells, key)) return rawCells[key];
+        }
+        return null;
+    }
+
+    class Store {
+        constructor() {
+            this.listeners = new Set();
+            this.storageSaveHandle = null;
+            this.deviceId = this._getOrCreateDeviceId();
+            this.state = this._loadFromStorage() || this._getInitialState();
+            // 清除旧版本存储以释放空间并避免混淆
+            OLD_STORAGE_KEYS.forEach(k => {
+                try { localStorage.removeItem(k); } catch (_) {}
+            });
+            window.addEventListener('pagehide', () => this._flushStorageSave());
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') this._flushStorageSave();
+            });
+        }
+
+        _getOrCreateDeviceId() {
+            try {
+                let id = localStorage.getItem('tws3_device_id');
+                if (!id) {
+                    id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9);
+                    localStorage.setItem('tws3_device_id', id);
+                }
+                return id;
+            } catch (_) {
+                return 'dev_ephemeral_' + Math.random().toString(36).substring(2, 9);
+            }
+        }
+
+        _getInitialState() {
+            const now = getUtcNowIso();
+            const students = JSON.parse(JSON.stringify(INITIAL_STUDENTS)).map(s => ({
+                ...s,
+                isNonEnglish: !!s.isNonEnglish
+            }));
+            const tasks = JSON.parse(JSON.stringify(INITIAL_TASKS)).map(t => ({
+                ...t,
+                subject: t.subject || inferSubjectFromName(t.name)
+            }));
+            return {
+                schemaVersion: 3,
+                currentClass: INITIAL_CLASS_NAME,
+                classUpdatedAt: now,
+                students,
+                deletedStudents: [],
+                tasks,
+                deletedTasks: [],
+                currentTaskId: tasks.find(t => !t.archived)?.id || tasks[0].id,
+                operationMode: 'check',
+                viewMode: 'grid',
+                showStudentNumbers: true,
+                seatLayout: createDefaultSeatLayout(students),
+                seatGroupNames: ['第1组', '第2组', '第3组', '第4组'],
+                seatPodiumPosition: 'bottom',
+                seatLayoutUpdatedAt: now,
+                records: JSON.parse(JSON.stringify(INITIAL_RECORDS)),
+                schedule: JSON.parse(JSON.stringify(INITIAL_SCHEDULE)),
+                officerTable: JSON.parse(JSON.stringify(INITIAL_OFFICERS)),
+                dutyTable: JSON.parse(JSON.stringify(INITIAL_DUTY))
+            };
+        }
+
+        _loadFromStorage() {
+            try {
+                let raw = localStorage.getItem(STORAGE_KEY);
+                let isOld = false;
+                if (!raw) {
+                    for (const oldKey of OLD_STORAGE_KEYS) {
+                        const oldRaw = localStorage.getItem(oldKey);
+                        if (oldRaw) {
+                            raw = oldRaw;
+                            isOld = true;
+                            break;
+                        }
+                    }
+                }
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!parsed || !Array.isArray(parsed.students) || !Array.isArray(parsed.tasks)) {
+                    return null;
+                }
+                parsed.schemaVersion = 3;
+                if (!parsed.deletedStudents) parsed.deletedStudents = [];
+                if (!parsed.deletedTasks) parsed.deletedTasks = [];
+                if (!parsed.classUpdatedAt) parsed.classUpdatedAt = getUtcNowIso();
+                if (!parsed.operationMode) parsed.operationMode = 'check';
+                if (typeof parsed.showStudentNumbers !== 'boolean') parsed.showStudentNumbers = true;
+                const validViews = ['grid', 'seat'];
+                if (!validViews.includes(parsed.viewMode)) parsed.viewMode = 'grid';
+                if (!Array.isArray(parsed.seatLayout)) parsed.seatLayout = createDefaultSeatLayout(parsed.students);
+                if (!Array.isArray(parsed.seatGroupNames) || parsed.seatGroupNames.length !== 4) {
+                    parsed.seatGroupNames = ['第1组', '第2组', '第3组', '第4组'];
+                }
+                if (parsed.seatPodiumPosition !== 'top') parsed.seatPodiumPosition = 'bottom';
+                if (!parsed.seatLayoutUpdatedAt) parsed.seatLayoutUpdatedAt = parsed.classUpdatedAt;
+                parsed.students.forEach(s => {
+                    if (s.isNonEnglish === undefined) s.isNonEnglish = false;
+                });
+                parsed.tasks.forEach(t => {
+                    if (!t.subject) t.subject = inferSubjectFromName(t.name);
+                });
+
+                // 迁移与补齐三表数据。旧版默认课程表只有在严格匹配时才替换。
+                const normalizedSchedule = normalizeSchedule(parsed.schedule);
+                parsed.schedule = normalizedSchedule.schedule;
+
+                if (!parsed.officerTable || typeof parsed.officerTable !== 'object') {
+                    parsed.officerTable = JSON.parse(JSON.stringify(INITIAL_OFFICERS));
+                } else {
+                    if (!Array.isArray(parsed.officerTable.roles)) parsed.officerTable.roles = [];
+                    if (!parsed.officerTable.updatedAt) parsed.officerTable.updatedAt = getUtcNowIso();
+                }
+
+                if (!parsed.dutyTable || typeof parsed.dutyTable !== 'object') {
+                    parsed.dutyTable = JSON.parse(JSON.stringify(INITIAL_DUTY));
+                } else {
+                    if (!Array.isArray(parsed.dutyTable.days)) parsed.dutyTable.days = [];
+                    if (!Array.isArray(parsed.dutyTable.roles)) parsed.dutyTable.roles = [];
+                    if (!parsed.dutyTable.assignments || typeof parsed.dutyTable.assignments !== 'object') parsed.dutyTable.assignments = {};
+                    if (!parsed.dutyTable.updatedAt) parsed.dutyTable.updatedAt = getUtcNowIso();
+                }
+
+                if (isOld || normalizedSchedule.changed) {
+                    try {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+                    } catch (_) {}
+                }
+                return parsed;
+            } catch {
+                return null;
+            }
+        }
+
+        _saveToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+            } catch (e) {
+                console.error('Failed to save to localStorage', e);
+            }
+        }
+
+        _scheduleStorageSave() {
+            if (this.storageSaveHandle !== null) return;
+
+            const save = () => {
+                this.storageSaveHandle = null;
+                this._saveToStorage();
+            };
+            if (typeof window.requestIdleCallback === 'function') {
+                this.storageSaveHandle = window.requestIdleCallback(save, { timeout: 500 });
+            } else {
+                this.storageSaveHandle = window.setTimeout(save, 100);
+            }
+        }
+
+        _flushStorageSave() {
+            if (this.storageSaveHandle === null) return;
+            if (typeof window.cancelIdleCallback === 'function') {
+                window.cancelIdleCallback(this.storageSaveHandle);
+            } else {
+                window.clearTimeout(this.storageSaveHandle);
+            }
+            this.storageSaveHandle = null;
+            this._saveToStorage();
+        }
+
+        _notify(eventType, payload) {
+            this._scheduleStorageSave();
+            for (const listener of this.listeners) {
+                try {
+                    listener(this.state, eventType, payload);
+                } catch (err) {
+                    console.error('Store listener error:', err);
+                }
+            }
+        }
+
+        subscribe(listener) {
+            this.listeners.add(listener);
+            return () => this.listeners.delete(listener);
+        }
+
+        getState() {
+            return this.state;
+        }
+
+        getDeviceId() {
+            return this.deviceId;
+        }
+
+        getOperationMode() {
+            return this.state.operationMode || 'check';
+        }
+
+        getViewMode() {
+            const allowed = ['grid', 'seat'];
+            return allowed.includes(this.state.viewMode) ? this.state.viewMode : 'grid';
+        }
+
+        setViewMode(mode) {
+            const allowed = ['grid', 'seat'];
+            if (!allowed.includes(mode)) return;
+            if (this.state.viewMode === mode) return;
+            this.state.viewMode = mode;
+            this._notify('VIEW_MODE_CHANGED', { mode });
+        }
+
+        getShowStudentNumbers() {
+            return this.state.showStudentNumbers !== false;
+        }
+
+        setShowStudentNumbers(show) {
+            const nextValue = show !== false;
+            if (this.state.showStudentNumbers === nextValue) return;
+            this.state.showStudentNumbers = nextValue;
+            this._notify('STUDENT_NUMBER_VISIBILITY_CHANGED', { show: nextValue });
+        }
+
+        // ==========================================
+        // 课程表 (Schedule) 相关 API
+        // ==========================================
+        getSchedule() {
+            if (!this.state.schedule) {
+                this.state.schedule = JSON.parse(JSON.stringify(INITIAL_SCHEDULE));
+            }
+            return this.state.schedule;
+        }
+
+        setSchedule(scheduleData) {
+            if (!scheduleData || typeof scheduleData !== 'object') return false;
+            this.state.schedule = normalizeSchedule(scheduleData).schedule;
+            this.state.schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_CHANGED', { schedule: this.state.schedule });
+            return true;
+        }
+
+        addScheduleDay(name) {
+            const trimmed = String(name || '').trim();
+            if (!trimmed) return null;
+            const schedule = this.getSchedule();
+            const newId = generateId('day');
+            const newDay = {
+                id: newId,
+                name: trimmed,
+                order: schedule.days.length + 1
+            };
+            schedule.days.push(newDay);
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_DAYS_CHANGED', { days: schedule.days });
+            return newDay;
+        }
+
+        updateScheduleDay(dayId, newName) {
+            const trimmed = String(newName || '').trim();
+            if (!trimmed) return false;
+            const schedule = this.getSchedule();
+            const day = schedule.days.find(d => d.id === dayId);
+            if (!day) return false;
+            day.name = trimmed;
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_DAYS_CHANGED', { days: schedule.days });
+            return true;
+        }
+
+        removeScheduleDay(dayId) {
+            const schedule = this.getSchedule();
+            const idx = schedule.days.findIndex(d => d.id === dayId);
+            if (idx === -1) return false;
+            schedule.days.splice(idx, 1);
+            // 清理相关的单元格
+            if (schedule.grid) {
+                Object.keys(schedule.grid).forEach(key => {
+                    if (key.startsWith(dayId + '_')) {
+                        delete schedule.grid[key];
+                    }
+                });
+            }
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_DAYS_CHANGED', { days: schedule.days });
+            return true;
+        }
+
+        reorderScheduleDays(dayIds) {
+            if (!Array.isArray(dayIds)) return false;
+            const schedule = this.getSchedule();
+            const dayMap = new Map(schedule.days.map(d => [d.id, d]));
+            const reordered = [];
+            dayIds.forEach((id, idx) => {
+                if (dayMap.has(id)) {
+                    const day = dayMap.get(id);
+                    day.order = idx + 1;
+                    reordered.push(day);
+                    dayMap.delete(id);
+                }
+            });
+            dayMap.forEach(d => {
+                d.order = reordered.length + 1;
+                reordered.push(d);
+            });
+            schedule.days = reordered;
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_DAYS_CHANGED', { days: schedule.days });
+            return true;
+        }
+
+        addSchedulePeriod(name) {
+            const trimmed = String(name || '').trim();
+            if (!trimmed) return null;
+            const schedule = this.getSchedule();
+            const newId = generateId('p');
+            const newPeriod = {
+                id: newId,
+                name: trimmed,
+                order: schedule.periods.length + 1
+            };
+            schedule.periods.push(newPeriod);
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_PERIODS_CHANGED', { periods: schedule.periods });
+            return newPeriod;
+        }
+
+        updateSchedulePeriod(periodId, newName) {
+            const trimmed = String(newName || '').trim();
+            if (!trimmed) return false;
+            const schedule = this.getSchedule();
+            const period = schedule.periods.find(p => p.id === periodId);
+            if (!period) return false;
+            period.name = trimmed;
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_PERIODS_CHANGED', { periods: schedule.periods });
+            return true;
+        }
+
+        removeSchedulePeriod(periodId) {
+            const schedule = this.getSchedule();
+            const idx = schedule.periods.findIndex(p => p.id === periodId);
+            if (idx === -1) return false;
+            schedule.periods.splice(idx, 1);
+            if (schedule.grid) {
+                Object.keys(schedule.grid).forEach(key => {
+                    if (key.endsWith('_' + periodId)) {
+                        delete schedule.grid[key];
+                    }
+                });
+            }
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_PERIODS_CHANGED', { periods: schedule.periods });
+            return true;
+        }
+
+        reorderSchedulePeriods(periodIds) {
+            if (!Array.isArray(periodIds)) return false;
+            const schedule = this.getSchedule();
+            const pMap = new Map(schedule.periods.map(p => [p.id, p]));
+            const reordered = [];
+            periodIds.forEach((id, idx) => {
+                if (pMap.has(id)) {
+                    const p = pMap.get(id);
+                    p.order = idx + 1;
+                    reordered.push(p);
+                    pMap.delete(id);
+                }
+            });
+            pMap.forEach(p => {
+                p.order = reordered.length + 1;
+                reordered.push(p);
+            });
+            schedule.periods = reordered;
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_PERIODS_CHANGED', { periods: schedule.periods });
+            return true;
+        }
+
+        addCourse(name, color = 'blue') {
+            const trimmed = String(name || '').trim();
+            if (!trimmed) return null;
+            const schedule = this.getSchedule();
+            const newId = generateId('c');
+            const newCourse = {
+                id: newId,
+                name: trimmed,
+                color: color || 'blue'
+            };
+            schedule.courseLibrary.push(newCourse);
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_COURSES_CHANGED', { courses: schedule.courseLibrary });
+            return newCourse;
+        }
+
+        updateCourse(courseId, updates = {}) {
+            const schedule = this.getSchedule();
+            const course = schedule.courseLibrary.find(c => c.id === courseId);
+            if (!course) return false;
+            if (updates.name !== undefined) course.name = String(updates.name || '').trim();
+            if (updates.color !== undefined) course.color = updates.color;
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_COURSES_CHANGED', { courses: schedule.courseLibrary });
+            return true;
+        }
+
+        removeCourse(courseId) {
+            const schedule = this.getSchedule();
+            const idx = schedule.courseLibrary.findIndex(c => c.id === courseId);
+            if (idx === -1) return false;
+            schedule.courseLibrary.splice(idx, 1);
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_COURSES_CHANGED', { courses: schedule.courseLibrary });
+            return true;
+        }
+
+        setScheduleCell(dayId, periodId, { courseId = null, customName = '' } = {}) {
+            const schedule = this.getSchedule();
+            if (!schedule.grid) schedule.grid = {};
+            const key = `${dayId}_${periodId}`;
+            schedule.grid[key] = {
+                courseId: courseId || null,
+                customName: String(customName || '').trim()
+            };
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_GRID_CHANGED', { key, cell: schedule.grid[key] });
+            return schedule.grid[key];
+        }
+
+        clearScheduleCell(dayId, periodId) {
+            const schedule = this.getSchedule();
+            if (!schedule.grid) return true;
+            const key = `${dayId}_${periodId}`;
+            delete schedule.grid[key];
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_GRID_CHANGED', { key, cell: null });
+            return true;
+        }
+        updateScheduleLunchBreak(updates = {}) {
+            const schedule = this.getSchedule();
+            if (!schedule.lunchBreak) {
+                schedule.lunchBreak = { enabled: true, afterPeriod: 4, name: '午间休息' };
+            }
+            if (updates.enabled !== undefined) schedule.lunchBreak.enabled = !!updates.enabled;
+            if (updates.afterPeriod !== undefined) schedule.lunchBreak.afterPeriod = Number(updates.afterPeriod);
+            if (updates.name !== undefined) schedule.lunchBreak.name = String(updates.name || '').trim() || '午间休息';
+            schedule.updatedAt = getUtcNowIso();
+            this._notify('SCHEDULE_LUNCH_BREAK_CHANGED', { lunchBreak: schedule.lunchBreak });
+            return schedule.lunchBreak;
+        }
+
+        // 班干部表 (Officer Table) 相关 API
+        // ==========================================
+        getOfficerTable() {
+            if (!this.state.officerTable) {
+                this.state.officerTable = JSON.parse(JSON.stringify(INITIAL_OFFICERS));
+            }
+            return this.state.officerTable;
+        }
+
+        setOfficerTable(officerData) {
+            if (!officerData || typeof officerData !== 'object') return false;
+            this.state.officerTable = JSON.parse(JSON.stringify(officerData));
+            this.state.officerTable.updatedAt = getUtcNowIso();
+            this._notify('OFFICERS_CHANGED', { officerTable: this.state.officerTable });
+            return true;
+        }
+
+        addOfficerRole(name) {
+            const trimmed = String(name || '').trim();
+            if (!trimmed) return null;
+            const table = this.getOfficerTable();
+            const newId = generateId('role');
+            const newRole = {
+                id: newId,
+                name: trimmed,
+                order: table.roles.length + 1,
+                students: [] // [{ studentId, nameSnapshot }]
+            };
+            table.roles.push(newRole);
+            table.updatedAt = getUtcNowIso();
+            this._notify('OFFICERS_CHANGED', { officerTable: table });
+            return newRole;
+        }
+
+        updateOfficerRole(roleId, updates = {}) {
+            const table = this.getOfficerTable();
+            const role = table.roles.find(r => r.id === roleId);
+            if (!role) return false;
+            if (updates.name !== undefined) role.name = String(updates.name || '').trim();
+            table.updatedAt = getUtcNowIso();
+            this._notify('OFFICERS_CHANGED', { officerTable: table });
+            return true;
+        }
+
+        removeOfficerRole(roleId) {
+            const table = this.getOfficerTable();
+            const idx = table.roles.findIndex(r => r.id === roleId);
+            if (idx === -1) return false;
+            table.roles.splice(idx, 1);
+            table.updatedAt = getUtcNowIso();
+            this._notify('OFFICERS_CHANGED', { officerTable: table });
+            return true;
+        }
+
+        reorderOfficerRoles(roleIds) {
+            if (!Array.isArray(roleIds)) return false;
+            const table = this.getOfficerTable();
+            const rMap = new Map(table.roles.map(r => [r.id, r]));
+            const reordered = [];
+            roleIds.forEach((id, idx) => {
+                if (rMap.has(id)) {
+                    const r = rMap.get(id);
+                    r.order = idx + 1;
+                    reordered.push(r);
+                    rMap.delete(id);
+                }
+            });
+            rMap.forEach(r => {
+                r.order = reordered.length + 1;
+                reordered.push(r);
+            });
+            table.roles = reordered;
+            table.updatedAt = getUtcNowIso();
+            this._notify('OFFICERS_CHANGED', { officerTable: table });
+            return true;
+        }
+
+        setRoleStudents(roleId, studentList = []) {
+            const table = this.getOfficerTable();
+            const role = table.roles.find(r => r.id === roleId);
+            if (!role) return false;
+
+            // 职位内去重
+            const seen = new Set();
+            const normalized = [];
+            (studentList || []).forEach(item => {
+                const sId = String(item.studentId || item.id);
+                if (sId && !seen.has(sId)) {
+                    seen.add(sId);
+                    normalized.push({
+                        studentId: item.studentId || item.id,
+                        nameSnapshot: item.nameSnapshot || item.name || ''
+                    });
+                }
+            });
+            role.students = normalized;
+            table.updatedAt = getUtcNowIso();
+            this._notify('OFFICERS_CHANGED', { officerTable: table });
+            return true;
+        }
+
+        // ==========================================
+        // 值日生表 (Duty Table) 相关 API
+        // ==========================================
+        getDutyTable() {
+            if (!this.state.dutyTable) {
+                this.state.dutyTable = JSON.parse(JSON.stringify(INITIAL_DUTY));
+            }
+            return this.state.dutyTable;
+        }
+
+        setDutyTable(dutyData) {
+            if (!dutyData || typeof dutyData !== 'object') return false;
+            this.state.dutyTable = JSON.parse(JSON.stringify(dutyData));
+            this.state.dutyTable.updatedAt = getUtcNowIso();
+            this._notify('DUTY_CHANGED', { dutyTable: this.state.dutyTable });
+            return true;
+        }
+
+        addDutyDay(name) {
+            const trimmed = String(name || '').trim();
+            if (!trimmed) return null;
+            const table = this.getDutyTable();
+            const newId = generateId('dday');
+            const newDay = {
+                id: newId,
+                name: trimmed,
+                order: table.days.length + 1
+            };
+            table.days.push(newDay);
+            table.updatedAt = getUtcNowIso();
+            this._notify('DUTY_CHANGED', { dutyTable: table });
+            return newDay;
+        }
+
+        updateDutyDay(dayId, updates = {}) {
+            const table = this.getDutyTable();
+            const day = table.days.find(d => d.id === dayId);
+            if (!day) return false;
+            if (updates.name !== undefined) day.name = String(updates.name || '').trim();
+            table.updatedAt = getUtcNowIso();
+            this._notify('DUTY_CHANGED', { dutyTable: table });
+            return true;
+        }
+
+        removeDutyDay(dayId) {
+            const table = this.getDutyTable();
+            const idx = table.days.findIndex(d => d.id === dayId);
+            if (idx === -1) return false;
+            table.days.splice(idx, 1);
+            if (table.assignments) {
+                Object.keys(table.assignments).forEach(key => {
+                    if (key.startsWith(dayId + '_')) delete table.assignments[key];
+                });
+            }
+            table.updatedAt = getUtcNowIso();
+            this._notify('DUTY_CHANGED', { dutyTable: table });
+            return true;
+        }
+
+        reorderDutyDays(dayIds) {
+            if (!Array.isArray(dayIds)) return false;
+            const table = this.getDutyTable();
+            const dMap = new Map(table.days.map(d => [d.id, d]));
+            const reordered = [];
+            dayIds.forEach((id, idx) => {
+                if (dMap.has(id)) {
+                    const d = dMap.get(id);
+                    d.order = idx + 1;
+                    reordered.push(d);
+                    dMap.delete(id);
+                }
+            });
+            dMap.forEach(d => {
+                d.order = reordered.length + 1;
+                reordered.push(d);
+            });
+            table.days = reordered;
+            table.updatedAt = getUtcNowIso();
+            this._notify('DUTY_CHANGED', { dutyTable: table });
+            return true;
+        }
+
+        addDutyRole(name) {
+            const trimmed = String(name || '').trim();
+            if (!trimmed) return null;
+            const table = this.getDutyTable();
+            const newId = generateId('drole');
+            const newRole = {
+                id: newId,
+                name: trimmed,
+                order: table.roles.length + 1
+            };
+            table.roles.push(newRole);
+            table.updatedAt = getUtcNowIso();
+            this._notify('DUTY_CHANGED', { dutyTable: table });
+            return newRole;
+        }
+
+        updateDutyRole(roleId, updates = {}) {
+            const table = this.getDutyTable();
+            const role = table.roles.find(r => r.id === roleId);
+            if (!role) return false;
+            if (updates.name !== undefined) role.name = String(updates.name || '').trim();
+            table.updatedAt = getUtcNowIso();
+            this._notify('DUTY_CHANGED', { dutyTable: table });
+            return true;
+        }
+
+        removeDutyRole(roleId) {
+            const table = this.getDutyTable();
+            const idx = table.roles.findIndex(r => r.id === roleId);
+            if (idx === -1) return false;
+            table.roles.splice(idx, 1);
+            if (table.assignments) {
+                Object.keys(table.assignments).forEach(key => {
+                    if (key.endsWith('_' + roleId)) delete table.assignments[key];
+                });
+            }
+            table.updatedAt = getUtcNowIso();
+            this._notify('DUTY_CHANGED', { dutyTable: table });
+            return true;
+        }
+
+        reorderDutyRoles(roleIds) {
+            if (!Array.isArray(roleIds)) return false;
+            const table = this.getDutyTable();
+            const rMap = new Map(table.roles.map(r => [r.id, r]));
+            const reordered = [];
+            roleIds.forEach((id, idx) => {
+                if (rMap.has(id)) {
+                    const r = rMap.get(id);
+                    r.order = idx + 1;
+                    reordered.push(r);
+                    rMap.delete(id);
+                }
+            });
+            rMap.forEach(r => {
+                r.order = reordered.length + 1;
+                reordered.push(r);
+            });
+            table.roles = reordered;
+            table.updatedAt = getUtcNowIso();
+            this._notify('DUTY_CHANGED', { dutyTable: table });
+            return true;
+        }
+
+        setDutyAssignment(dayId, roleId, studentList = []) {
+            const table = this.getDutyTable();
+            if (!table.assignments) table.assignments = {};
+            const key = `${dayId}_${roleId}`;
+
+            // 单单元格内去重
+            const seen = new Set();
+            const normalized = [];
+            (studentList || []).forEach(item => {
+                const sId = String(item.studentId || item.id);
+                if (sId && !seen.has(sId)) {
+                    seen.add(sId);
+                    normalized.push({
+                        studentId: item.studentId || item.id,
+                        nameSnapshot: item.nameSnapshot || item.name || ''
+                    });
+                }
+            });
+            table.assignments[key] = normalized;
+            table.updatedAt = getUtcNowIso();
+            this._notify('DUTY_CHANGED', { dutyTable: table });
+            return normalized;
+        }
+
+        // ==========================================
+        // 学生显示名称解析（用于班干部与值日生表）
+        // ==========================================
+        resolveStudentDisplay(item) {
+            if (!item) return { studentId: '', studentNo: '', name: '未知', isDeparted: true };
+            const studentId = item.studentId !== undefined ? item.studentId : item.id;
+            const student = (this.state.students || []).find(s => String(s.id) === String(studentId));
+            if (student) {
+                return {
+                    studentId: student.id,
+                    studentNo: student.studentNo || String(student.id),
+                    name: student.name,
+                    isDeparted: false
+                };
+            }
+            return {
+                studentId: studentId,
+                studentNo: '',
+                name: item.nameSnapshot || item.name || '已离班学生',
+                isDeparted: true
+            };
+        }
+
+        getSeatLayout() {
+            if (!Array.isArray(this.state.seatLayout)) {
+                this.state.seatLayout = createDefaultSeatLayout(this.state.students);
+            }
+            return this.state.seatLayout;
+        }
+
+        setSeatLayout(layout, groupNames) {
+            const validIds = new Set(this.state.students.map(student => String(student.id)));
+            const usedIds = new Set();
+            const usedSlots = new Set();
+            const normalized = [];
+
+            (layout || []).forEach(item => {
+                const student = this.state.students.find(entry => String(entry.id) === String(item.studentId));
+                const row = Number(item.row);
+                const group = Number(item.group);
+                const side = Number(item.side);
+                const slotKey = `${row}:${group}:${side}`;
+                if (!student || !validIds.has(String(student.id)) || usedIds.has(String(student.id)) || usedSlots.has(slotKey)) return;
+                if (!Number.isInteger(row) || row < 0 || !Number.isInteger(group) || group < 0 || group > 3 || (side !== 0 && side !== 1)) return;
+                usedIds.add(String(student.id));
+                usedSlots.add(slotKey);
+                normalized.push({ studentId: student.id, row, group, side });
+            });
+
+            let cursor = 0;
+            this.state.students.forEach(student => {
+                if (usedIds.has(String(student.id))) return;
+                while (usedSlots.has(`${Math.floor(cursor / 8)}:${Math.floor((cursor % 8) / 2)}:${cursor % 2}`)) cursor++;
+                const row = Math.floor(cursor / 8);
+                const group = Math.floor((cursor % 8) / 2);
+                const side = cursor % 2;
+                normalized.push({ studentId: student.id, row, group, side });
+                usedSlots.add(`${row}:${group}:${side}`);
+                cursor++;
+            });
+
+            this.state.seatLayout = normalized;
+            if (Array.isArray(groupNames) && groupNames.length === 4) {
+                this.state.seatGroupNames = groupNames.map((name, index) => String(name || `第${index + 1}组`));
+            }
+            this.state.seatLayoutUpdatedAt = getUtcNowIso();
+            this._notify('SEAT_LAYOUT_CHANGED', { count: normalized.length });
+            return normalized;
+        }
+
+        setSeatPodiumPosition(position) {
+            const normalized = position === 'top' ? 'top' : 'bottom';
+            if (this.state.seatPodiumPosition === normalized) return;
+            this.state.seatPodiumPosition = normalized;
+            this.state.seatLayoutUpdatedAt = getUtcNowIso();
+            this._notify('SEAT_PODIUM_CHANGED', { position: normalized });
+        }
+
+        setOperationMode(mode) {
+            if (mode !== 'check' && mode !== 'grade') return;
+            if (this.state.operationMode === mode) return;
+            this.state.operationMode = mode;
+            this._notify('OPERATION_MODE_CHANGED', { mode });
+        }
+
+        getCurrentTask() {
+            return this.state.tasks.find(t => t.id === this.state.currentTaskId) || this.state.tasks[0];
+        }
+
+        isEnglishTask(task = this.getCurrentTask()) {
+            if (!task) return false;
+            return task.subject === '英语' || (!task.subject && /英语/.test(task.name));
+        }
+
+        getStudentRecords(taskId = this.state.currentTaskId) {
+            if (!this.state.records[taskId]) {
+                this.state.records[taskId] = {};
+                const now = getUtcNowIso();
+                const task = this.state.tasks.find(t => t.id === taskId);
+                const isEnglish = this.isEnglishTask(task);
+                for (const s of this.state.students) {
+                    const defaultStatus = (isEnglish && s.isNonEnglish) ? 'muted' : 'white';
+                    this.state.records[taskId][s.id] = { status: defaultStatus, badge: null, score: null, note: null, updatedAt: now };
+                }
+            }
+            return this.state.records[taskId];
+        }
+
+        getStudentRecord(studentId, taskId = this.state.currentTaskId) {
+            const records = this.getStudentRecords(taskId);
+            if (!records[studentId]) {
+                records[studentId] = { status: 'white', badge: null, score: null, note: null, updatedAt: getUtcNowIso() };
+            }
+            return records[studentId];
+        }
+
+        setCurrentTask(taskId) {
+            if (this.state.currentTaskId === taskId) return;
+            this.state.currentTaskId = taskId;
+            this.getStudentRecords(taskId);
+            this._notify('TASK_CHANGED', { taskId });
+        }
+
+        addTask(name, subject = '未设置') {
+            const trimmed = (name || '').trim();
+            if (!trimmed) return null;
+
+            const finalSubject = subject && subject !== '未设置' ? subject : inferSubjectFromName(trimmed);
+            const now = getUtcNowIso();
+            const id = 'task_' + Date.now();
+            const newTask = {
+                id,
+                name: trimmed,
+                subject: finalSubject,
+                archived: false,
+                createdAt: now,
+                updatedAt: now
+            };
+
+            this.state.tasks.unshift(newTask);
+            this.state.currentTaskId = id;
+            this.state.records[id] = {};
+            const isEnglish = this.isEnglishTask(newTask);
+            for (const s of this.state.students) {
+                const defaultStatus = (isEnglish && s.isNonEnglish) ? 'muted' : 'white';
+                this.state.records[id][s.id] = { status: defaultStatus, badge: null, score: null, note: null, updatedAt: now };
+            }
+
+            this._notify('TASK_ADDED', { task: newTask });
+            return newTask;
+        }
+
+        updateTaskName(taskId, newName) {
+            const trimmed = (newName || '').trim();
+            if (!trimmed) return false;
+            const task = this.state.tasks.find(t => t.id === taskId);
+            if (!task) return false;
+            task.name = trimmed;
+            if (!task.subject || task.subject === '未设置') {
+                task.subject = inferSubjectFromName(trimmed);
+            }
+            task.updatedAt = getUtcNowIso();
+            this._notify('TASK_RENAMED', { taskId, name: trimmed });
+            return true;
+        }
+
+        setTaskSubject(taskId, subject) {
+            const task = this.state.tasks.find(t => t.id === taskId);
+            if (!task) return false;
+            const normalized = (subject || '').trim() || '未设置';
+            if (task.subject === normalized) return true;
+            task.subject = normalized;
+            task.updatedAt = getUtcNowIso();
+
+            if (this.isEnglishTask(task) && this.state.records[taskId]) {
+                const taskRecs = this.state.records[taskId];
+                this.state.students.forEach(s => {
+                    if (s.isNonEnglish && (!taskRecs[s.id] || taskRecs[s.id].status === 'white')) {
+                        if (!taskRecs[s.id]) {
+                            taskRecs[s.id] = { status: 'muted', badge: null, score: null, note: null, updatedAt: getUtcNowIso() };
+                        } else if (!taskRecs[s.id].badge && taskRecs[s.id].score === null) {
+                            taskRecs[s.id].status = 'muted';
+                            taskRecs[s.id].updatedAt = getUtcNowIso();
+                        }
+                    }
+                });
+            }
+
+            this._notify('TASK_SUBJECT_CHANGED', { taskId, subject: normalized });
+            return true;
+        }
+
+        deleteTask(taskId) {
+            if (this.state.tasks.length <= 1) {
+                return { success: false, reason: '至少需保留一个作业任务' };
+            }
+            const taskIndex = this.state.tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return { success: false, reason: '任务不存在' };
+
+            const [deletedTask] = this.state.tasks.splice(taskIndex, 1);
+            const now = getUtcNowIso();
+            deletedTask.deletedAt = now;
+            deletedTask.updatedAt = now;
+
+            if (!this.state.deletedTasks) this.state.deletedTasks = [];
+            this.state.deletedTasks.push(deletedTask);
+
+            if (this.state.records[taskId]) {
+                delete this.state.records[taskId];
+            }
+
+            if (this.state.currentTaskId === taskId) {
+                this.state.currentTaskId = this.state.tasks[0].id;
+            }
+
+            this._notify('TASK_DELETED', { taskId, task: deletedTask });
+            return { success: true };
+        }
+
+        toggleArchiveTask(taskId) {
+            const task = this.state.tasks.find(t => t.id === taskId);
+            if (!task) return;
+            task.archived = !task.archived;
+            task.updatedAt = getUtcNowIso();
+            this._notify('TASK_ARCHIVE_TOGGLED', { taskId, archived: task.archived });
+        }
+
+        archiveTask(taskId) {
+            const task = this.state.tasks.find(t => t.id === taskId);
+            if (!task || task.archived) return;
+            task.archived = true;
+            task.updatedAt = getUtcNowIso();
+            this._notify('TASK_ARCHIVE_TOGGLED', { taskId, archived: true });
+        }
+
+        unarchiveTask(taskId) {
+            const task = this.state.tasks.find(t => t.id === taskId);
+            if (!task || !task.archived) return;
+            task.archived = false;
+            task.updatedAt = getUtcNowIso();
+            this._notify('TASK_ARCHIVE_TOGGLED', { taskId, archived: false });
+        }
+
+        cycleStudentStatus(studentId) {
+            const task = this.getCurrentTask();
+            const isEnglish = this.isEnglishTask(task);
+            const student = this.state.students.find(s => s.id === studentId);
+            const isNonEnglish = student && !!student.isNonEnglish;
+
+            const record = this.getStudentRecord(studentId);
+
+            // 单击仅二态切换：dark 与 该学生的默认未提交态（英语作业免交生为 muted，普通生为 white），
+            // 不再出现 white→dark→muted 三态循环。
+            record.status = record.status === 'dark'
+                ? ((isEnglish && isNonEnglish) ? 'muted' : 'white')
+                : 'dark';
+            record.updatedAt = getUtcNowIso();
+            this._notify('STUDENT_STATUS_CHANGED', { studentId, status: record.status });
+        }
+
+        setStudentNonEnglish(studentId, isNonEnglish) {
+            const student = this.state.students.find(s => s.id === studentId);
+            if (!student) return false;
+            const boolVal = !!isNonEnglish;
+            student.isNonEnglish = boolVal;
+            student.updatedAt = getUtcNowIso();
+
+            // 若当前作业为英语作业，联动更新未修改记录的状态
+            const curTask = this.getCurrentTask();
+            if (this.isEnglishTask(curTask)) {
+                const rec = this.getStudentRecord(studentId);
+                if (boolVal && rec.status === 'white' && !rec.badge && rec.score === null) {
+                    rec.status = 'muted';
+                    rec.updatedAt = getUtcNowIso();
+                } else if (!boolVal && rec.status === 'muted' && !rec.badge && rec.score === null) {
+                    rec.status = 'white';
+                    rec.updatedAt = getUtcNowIso();
+                }
+            }
+
+            this._notify('STUDENT_NON_ENGLISH_CHANGED', { studentId, isNonEnglish: boolVal });
+            return true;
+        }
+
+        updateStudent(studentId, { name, studentNo, isNonEnglish }) {
+            const student = this.state.students.find(s => s.id === studentId);
+            if (!student) return false;
+            if (name !== undefined) student.name = String(name || '').trim();
+            if (studentNo !== undefined) student.studentNo = String(studentNo || '').trim();
+            if (isNonEnglish !== undefined) this.setStudentNonEnglish(studentId, isNonEnglish);
+            student.updatedAt = getUtcNowIso();
+            this._notify('STUDENT_UPDATED', { studentId, student });
+            return true;
+        }
+
+        addStudent({ name, studentNo, isNonEnglish }) {
+            const trimmedName = String(name || '').trim();
+            if (!trimmedName) return null;
+            const nextId = this.state.students.reduce((max, s) => Math.max(max, Number(s.id) || 0), 0) + 1;
+            const newStudent = {
+                id: nextId,
+                studentNo: String(studentNo || nextId).trim(),
+                name: trimmedName,
+                isNonEnglish: !!isNonEnglish,
+                updatedAt: getUtcNowIso()
+            };
+            this.state.students.push(newStudent);
+
+            const occupied = new Set(this.getSeatLayout().map(item => `${item.row}:${item.group}:${item.side}`));
+            let seatIndex = 0;
+            while (occupied.has(`${Math.floor(seatIndex / 8)}:${Math.floor((seatIndex % 8) / 2)}:${seatIndex % 2}`)) seatIndex++;
+            this.state.seatLayout.push({
+                studentId: newStudent.id,
+                row: Math.floor(seatIndex / 8),
+                group: Math.floor((seatIndex % 8) / 2),
+                side: seatIndex % 2
+            });
+            this.state.seatLayoutUpdatedAt = getUtcNowIso();
+
+            const now = getUtcNowIso();
+            this.state.tasks.forEach(t => {
+                if (!this.state.records[t.id]) this.state.records[t.id] = {};
+                const defaultStatus = (this.isEnglishTask(t) && newStudent.isNonEnglish) ? 'muted' : 'white';
+                this.state.records[t.id][newStudent.id] = {
+                    status: defaultStatus,
+                    badge: null,
+                    score: null,
+                    note: null,
+                    updatedAt: now
+                };
+            });
+
+            this._notify('STUDENT_ADDED', { student: newStudent });
+            return newStudent;
+        }
+
+        deleteStudent(studentId) {
+            if (this.state.students.length <= 1) {
+                return { success: false, reason: '至少需保留一名学生' };
+            }
+            const idx = this.state.students.findIndex(s => s.id === studentId);
+            if (idx === -1) return { success: false, reason: '学生不存在' };
+
+            const [deleted] = this.state.students.splice(idx, 1);
+            this.state.seatLayout = this.getSeatLayout().filter(item => String(item.studentId) !== String(studentId));
+            this.state.seatLayoutUpdatedAt = getUtcNowIso();
+            const now = getUtcNowIso();
+            deleted.deletedAt = now;
+            deleted.updatedAt = now;
+            if (!this.state.deletedStudents) this.state.deletedStudents = [];
+            this.state.deletedStudents.push(deleted);
+
+            this._notify('STUDENT_DELETED', { studentId, student: deleted });
+            return { success: true };
+        }
+
+        setStudentBadge(studentId, badgeText) {
+            const record = this.getStudentRecord(studentId);
+            const trimmed = badgeText ? String(badgeText).trim() : null;
+            record.badge = trimmed;
+            record.updatedAt = getUtcNowIso();
+            this._notify('STUDENT_BADGE_CHANGED', { studentId, badge: record.badge });
+        }
+
+        clearStudentBadge(studentId) {
+            const record = this.getStudentRecord(studentId);
+            record.badge = null;
+            record.score = null;
+            record.note = null;
+            record.updatedAt = getUtcNowIso();
+            this._notify('STUDENT_BADGE_CHANGED', { studentId, badge: null });
+        }
+
+        updateStudentRecord(studentId, { status, badge, score, note }) {
+            const record = this.getStudentRecord(studentId);
+            if (status !== undefined) record.status = status;
+            if (badge !== undefined) record.badge = badge;
+            if (score !== undefined) record.score = score;
+            if (note !== undefined) record.note = note;
+            record.updatedAt = getUtcNowIso();
+            this._notify('STUDENT_RECORD_UPDATED', { studentId, record });
+        }
+
+        resetCurrentTaskRoster() {
+            const currentRecords = this.getStudentRecords();
+            const now = getUtcNowIso();
+            for (const s of this.state.students) {
+                currentRecords[s.id] = { status: 'white', badge: null, score: null, note: null, updatedAt: now };
+            }
+            this._notify('ROSTER_RESET', { taskId: this.state.currentTaskId });
+        }
+
+        switchClass(className) {
+            this.state.currentClass = className;
+            this.state.classUpdatedAt = getUtcNowIso();
+            this._notify('CLASS_CHANGED', { className });
+        }
+
+        getStats(taskId = this.state.currentTaskId) {
+            const task = this.state.tasks.find(t => t.id === taskId);
+            const isEnglish = this.isEnglishTask(task);
+            const records = this.getStudentRecords(taskId);
+            const total = this.state.students.length;
+            let submitted = 0;
+            let exempt = 0;
+
+            for (const s of this.state.students) {
+                const rec = records[s.id];
+                if (rec && rec.status === 'dark') {
+                    submitted++;
+                } else if (isEnglish && s.isNonEnglish && (!rec || rec.status === 'muted')) {
+                    exempt++;
+                }
+            }
+
+            const required = Math.max(1, total - exempt);
+            const percentage = total > 0 ? (submitted / required) * 100 : 0;
+            return { total, submitted, exempt, required, percentage: Math.min(100, percentage) };
+        }
+
+        /**
+         * 导出完整应用状态快照，用于隐藏备份页 `_TWS3_BACKUP`
+         */
+        exportStateSnapshot(visibleSheetHash = '') {
+            return {
+                metadata: {
+                    schemaVersion: 3,
+                    backupVersion: 3,
+                    exportedAt: getUtcNowIso(),
+                    deviceId: this.deviceId,
+                    visibleSheetHash: visibleSheetHash || ''
+                },
+                state: JSON.parse(JSON.stringify(this.state))
+            };
+        }
+
+        /**
+         * 使用远程数据完整覆盖本地状态
+         */
+        overrideWith(remoteData) {
+            const incomingState = remoteData.state || remoteData;
+            if (!incomingState || !Array.isArray(incomingState.students) || !Array.isArray(incomingState.tasks)) {
+                throw new Error('无效的状态数据格式');
+            }
+
+            const validViews = ['grid', 'seat', 'schedule', 'officers', 'duty'];
+            const incomingSchedule = hasScheduleData(incomingState)
+                ? normalizeSchedule(incomingState.schedule).schedule
+                : JSON.parse(JSON.stringify(this.state.schedule || INITIAL_SCHEDULE));
+            this.state = {
+                schemaVersion: 3,
+                currentClass: incomingState.currentClass || INITIAL_CLASS_NAME,
+                classUpdatedAt: incomingState.classUpdatedAt || getUtcNowIso(),
+                students: JSON.parse(JSON.stringify(incomingState.students)),
+                deletedStudents: JSON.parse(JSON.stringify(incomingState.deletedStudents || [])),
+                tasks: JSON.parse(JSON.stringify(incomingState.tasks)),
+                deletedTasks: JSON.parse(JSON.stringify(incomingState.deletedTasks || [])),
+                currentTaskId: incomingState.currentTaskId || (incomingState.tasks[0] ? incomingState.tasks[0].id : ''),
+                operationMode: incomingState.operationMode || 'check',
+                viewMode: validViews.includes(incomingState.viewMode) ? incomingState.viewMode : 'grid',
+                showStudentNumbers: incomingState.showStudentNumbers !== false,
+                seatLayout: JSON.parse(JSON.stringify(incomingState.seatLayout || createDefaultSeatLayout(incomingState.students))),
+                seatGroupNames: JSON.parse(JSON.stringify(incomingState.seatGroupNames || ['第1组', '第2组', '第3组', '第4组'])),
+                seatPodiumPosition: incomingState.seatPodiumPosition === 'top' ? 'top' : 'bottom',
+                seatLayoutUpdatedAt: incomingState.seatLayoutUpdatedAt || getUtcNowIso(),
+                records: JSON.parse(JSON.stringify(incomingState.records || {})),
+                schedule: incomingSchedule,
+                officerTable: JSON.parse(JSON.stringify(incomingState.officerTable || INITIAL_OFFICERS)),
+                dutyTable: JSON.parse(JSON.stringify(incomingState.dutyTable || INITIAL_DUTY))
+            };
+
+            // 补全缺失的任务记录
+            this.state.tasks.forEach(t => {
+                if (!this.state.records[t.id]) {
+                    this.state.records[t.id] = {};
+                }
+                this.state.students.forEach(s => {
+                    if (!this.state.records[t.id][s.id]) {
+                        this.state.records[t.id][s.id] = { status: 'white', badge: null, score: null, note: null, updatedAt: getUtcNowIso() };
+                    }
+                });
+            });
+
+            this._notify('STORE_OVERRIDDEN', { state: this.state });
+            return true;
+        }
+
+        /**
+         * 计算本地状态与传入数据（备份或解析出的可见表）的差异
+         */
+        diff(preparedData) {
+            const local = this.state;
+            const remoteState = preparedData.state || preparedData;
+            const useStableIds = !!preparedData.hasBackup;
+            const items = [];
+            let itemIndex = 0;
+
+            const addItem = ({ category, operation, conflict = false, context, localSide, importedSide, importedDeleted = false }) => {
+                const resolution = makeResolution(localSide, importedSide, importedDeleted);
+                const searchText = [
+                    context.className,
+                    context.studentNo,
+                    context.studentName,
+                    context.taskName,
+                    context.fieldName,
+                    localSide.display,
+                    importedSide.display,
+                    localSide.rawValue,
+                    importedSide.rawValue
+                ].filter(value => value !== null && value !== undefined).join(' ').toLowerCase();
+                items.push({
+                    id: `diff_${Date.now().toString(36)}_${itemIndex++}`,
+                    category,
+                    operation,
+                    conflict: conflict || !!resolution.conflict || resolution.choice === 'conflict',
+                    context,
+                    local: localSide,
+                    imported: importedSide,
+                    resolution,
+                    reason: resolution.reason,
+                    searchText
+                });
+            };
+
+            const classChanged = local.currentClass !== remoteState.currentClass;
+            if (classChanged) {
+                const localSide = sideValue(local.currentClass, true, local.currentClass, local.classUpdatedAt);
+                const importedSide = sideValue(remoteState.currentClass, !!remoteState.currentClass, remoteState.currentClass, remoteState.classUpdatedAt);
+                addItem({
+                    category: 'class',
+                    operation: 'modify',
+                    context: { entity: 'class', className: remoteState.currentClass || local.currentClass, fieldName: '班级名称' },
+                    localSide,
+                    importedSide
+                });
+            }
+
+            const studentMatch = matchStudents(local.students || [], remoteState.students || [], useStableIds);
+            const localStudentPairs = new Map(studentMatch.pairs.map(pair => [pair.local.id, pair]));
+            const importedStudentPairs = new Map(studentMatch.pairs.map(pair => [pair.imported.id, pair]));
+            const remoteDeletedStudents = remoteState.deletedStudents || [];
+            const remoteDeletedStudentKeys = new Set(remoteDeletedStudents.map(student => String(student.studentNo || student.id)));
+            const hasRemoteStudentDeletion = student => remoteDeletedStudentKeys.has(String(student.studentNo || student.id))
+                || (useStableIds && remoteDeletedStudents.some(deleted => String(deleted.id) === String(student.id)));
+
+            studentMatch.pairs.forEach(({ local: localStudent, imported: importedStudent }) => {
+                if (localStudent.name !== importedStudent.name) {
+                    addItem({
+                        category: 'student',
+                        operation: 'modify',
+                        context: { entity: 'student', studentNo: String(importedStudent.studentNo || localStudent.studentNo || localStudent.id), studentName: importedStudent.name || localStudent.name, fieldName: '姓名' },
+                        localSide: sideValue(localStudent.name, true, localStudent.name, localStudent.updatedAt),
+                        importedSide: sideValue(importedStudent.name, true, importedStudent.name, importedStudent.updatedAt)
+                    });
+                }
+            });
+
+            const localStudentOrder = (local.students || []).map(student => student.id).filter(id => localStudentPairs.has(id));
+            const importedStudentOrder = (remoteState.students || []).map(student => student.id).filter(id => importedStudentPairs.has(id));
+            studentMatch.pairs.forEach(({ local: localStudent, imported: importedStudent }) => {
+                if (localStudentOrder.indexOf(localStudent.id) !== importedStudentOrder.indexOf(importedStudent.id)) {
+                    addItem({
+                        category: 'student',
+                        operation: 'modify',
+                        context: { entity: 'student', studentNo: String(importedStudent.studentNo || localStudent.studentNo || localStudent.id), studentName: importedStudent.name || localStudent.name, fieldName: '排序' },
+                        localSide: sideValue(localStudentOrder.indexOf(localStudent.id) + 1, true, null, localStudent.updatedAt),
+                        importedSide: sideValue(importedStudentOrder.indexOf(importedStudent.id) + 1, true, null, importedStudent.updatedAt)
+                    });
+                }
+            });
+
+            studentMatch.localUnmatched.filter(student => !hasRemoteStudentDeletion(student)).forEach(student => {
+                addItem({
+                    category: 'student',
+                    operation: 'local-only',
+                    context: { entity: 'student', studentNo: String(student.studentNo || student.id), studentName: student.name, fieldName: '学生' },
+                    localSide: sideValue(student.name, true, student.name, student.updatedAt),
+                    importedSide: sideValue(null, false, null, null)
+                });
+            });
+
+            studentMatch.importedUnmatched.forEach(student => {
+                addItem({
+                    category: 'student',
+                    operation: 'file-only',
+                    context: { entity: 'student', studentNo: String(student.studentNo || student.id), studentName: student.name, fieldName: '学生' },
+                    localSide: sideValue(null, false, null, null),
+                    importedSide: sideValue(student.name, true, student.name, student.updatedAt)
+                });
+            });
+
+            const localStudentByKey = new Map((local.students || []).map(student => [String(student.studentNo || student.id), student]));
+            remoteDeletedStudents.forEach(deletedStudent => {
+                const key = String(deletedStudent.studentNo || deletedStudent.id);
+                const localStudent = localStudentByKey.get(key) || (useStableIds ? (local.students || []).find(student => String(student.id) === String(deletedStudent.id)) : null);
+                if (localStudent) {
+                    addItem({
+                        category: 'delete',
+                        operation: 'delete',
+                        context: { entity: 'student', studentNo: key, studentName: deletedStudent.name || localStudent.name, fieldName: '学生' },
+                        localSide: sideValue(localStudent.name, true, localStudent.name, localStudent.updatedAt),
+                        importedSide: sideValue(null, false, deletedStudent.name || null, getEntityTime(deletedStudent, true)),
+                        importedDeleted: true
+                    });
+                }
+            });
+
+            const taskMatch = matchTasks(local.tasks || [], remoteState.tasks || [], useStableIds);
+            const localTaskPairs = new Map(taskMatch.pairs.map(pair => [pair.local.id, pair]));
+            const importedTaskPairs = new Map(taskMatch.pairs.map(pair => [pair.imported.id, pair]));
+            const remoteDeletedTasks = remoteState.deletedTasks || [];
+            const remoteDeletedTaskIds = new Set(remoteDeletedTasks.map(task => String(task.id)));
+            const remoteDeletedTaskNames = new Set(remoteDeletedTasks.map(task => normalizeTaskName(task.name)));
+
+            taskMatch.pairs.forEach(({ local: localTask, imported: importedTask }) => {
+                if (localTask.name !== importedTask.name) {
+                    addItem({
+                        category: 'task',
+                        operation: 'modify',
+                        context: { entity: 'task', taskName: importedTask.name || localTask.name, localTaskName: localTask.name, fieldName: '任务名称' },
+                        localSide: sideValue(localTask.name, true, localTask.name, localTask.updatedAt),
+                        importedSide: sideValue(importedTask.name, true, importedTask.name, importedTask.updatedAt)
+                    });
+                }
+                if (!!localTask.archived !== !!importedTask.archived) {
+                    addItem({
+                        category: 'task',
+                        operation: 'modify',
+                        context: { entity: 'task', taskName: importedTask.name || localTask.name, fieldName: '归档状态' },
+                        localSide: sideValue(localTask.archived ? '已归档' : '未归档', true, localTask.archived, localTask.updatedAt),
+                        importedSide: sideValue(importedTask.archived ? '已归档' : '未归档', true, importedTask.archived, importedTask.updatedAt)
+                    });
+                }
+            });
+
+            const localTaskOrder = (local.tasks || []).map(task => task.id).filter(id => localTaskPairs.has(id));
+            const importedTaskOrder = (remoteState.tasks || []).map(task => task.id).filter(id => importedTaskPairs.has(id));
+            taskMatch.pairs.forEach(({ local: localTask, imported: importedTask }) => {
+                if (localTaskOrder.indexOf(localTask.id) !== importedTaskOrder.indexOf(importedTask.id)) {
+                    addItem({
+                        category: 'task',
+                        operation: 'modify',
+                        context: { entity: 'task', taskName: importedTask.name || localTask.name, fieldName: '排序' },
+                        localSide: sideValue(localTaskOrder.indexOf(localTask.id) + 1, true, null, localTask.updatedAt),
+                        importedSide: sideValue(importedTaskOrder.indexOf(importedTask.id) + 1, true, null, importedTask.updatedAt)
+                    });
+                }
+            });
+
+            taskMatch.localUnmatched.filter(task => !remoteDeletedTaskIds.has(String(task.id)) && !remoteDeletedTaskNames.has(normalizeTaskName(task.name))).forEach(task => {
+                addItem({
+                    category: 'task',
+                    operation: 'local-only',
+                    context: { entity: 'task', taskName: task.name, fieldName: '任务' },
+                    localSide: sideValue(task.name, true, task.name, getEntityTime(task)),
+                    importedSide: sideValue(null, false, null, null)
+                });
+            });
+
+            taskMatch.importedUnmatched.forEach(task => {
+                addItem({
+                    category: 'task',
+                    operation: 'file-only',
+                    context: { entity: 'task', taskName: task.name, fieldName: '任务' },
+                    localSide: sideValue(null, false, null, null),
+                    importedSide: sideValue(task.name, true, task.name, getEntityTime(task))
+                });
+            });
+
+            const localTaskById = new Map((local.tasks || []).map(task => [String(task.id), task]));
+            const localTaskByName = new Map((local.tasks || []).map(task => [normalizeTaskName(task.name), task]));
+            remoteDeletedTasks.forEach(deletedTask => {
+                const localTask = localTaskById.get(String(deletedTask.id)) || localTaskByName.get(normalizeTaskName(deletedTask.name));
+                if (localTask) {
+                    addItem({
+                        category: 'delete',
+                        operation: 'delete',
+                        context: { entity: 'task', taskName: deletedTask.name || localTask.name, fieldName: '任务' },
+                        localSide: sideValue(localTask.name, true, localTask.name, getEntityTime(localTask)),
+                        importedSide: sideValue(null, false, deletedTask.name || null, getEntityTime(deletedTask, true)),
+                        importedDeleted: true
+                    });
+                }
+            });
+
+            const localStudentById = new Map((local.students || []).map(student => [String(student.id), student]));
+            const importedStudentById = new Map((remoteState.students || []).map(student => [String(student.id), student]));
+            const addRecordItem = (taskPair, studentPair, localRecord, importedRecord, localRecordExists, importedRecordExists, importedRaw) => {
+                const localTask = taskPair.local;
+                const importedTask = taskPair.imported;
+                const localStudent = studentPair ? studentPair.local : null;
+                const importedStudent = studentPair ? studentPair.imported : null;
+                const studentNo = String((importedStudent || localStudent || {}).studentNo || (importedStudent || localStudent || {}).id || '');
+                const studentName = (importedStudent || localStudent || {}).name || `学生${studentNo}`;
+                const localValue = normalizeRecord(localRecord);
+                const importedValue = normalizeRecord(importedRecord);
+                const localSide = sideValue(localValue, localRecordExists, localRecordExists ? recordDisplay(localValue) : null, localRecord && localRecord.updatedAt);
+                const importedSide = sideValue(importedValue, importedRecordExists, importedRaw === null || importedRaw === undefined ? recordDisplay(importedValue) : importedRaw, importedRecord && importedRecord.updatedAt);
+                const importedCleared = !isBlankRecord(importedValue) ? false : !isBlankRecord(localValue);
+                addItem({
+                    category: 'record',
+                    operation: importedCleared ? 'clear' : 'modify',
+                    context: {
+                        entity: 'record',
+                        taskName: importedTask.name || localTask.name,
+                        studentNo,
+                        studentName,
+                        fieldName: importedCleared ? '记录清空' : '提交记录',
+                        changedFields: ['状态', '分数', '备注'].filter(field => {
+                            if (field === '状态') return localValue.status !== importedValue.status;
+                            if (field === '分数') return localValue.score !== importedValue.score || localValue.badge !== importedValue.badge;
+                            return localValue.note !== importedValue.note;
+                        })
+                    },
+                    localSide,
+                    importedSide
+                });
+            };
+
+            const recordPairs = [];
+            taskMatch.pairs.forEach(taskPair => {
+                studentMatch.pairs.forEach(studentPair => recordPairs.push({ taskPair, studentPair }));
+            });
+
+            recordPairs.forEach(({ taskPair, studentPair }) => {
+                const localTaskId = taskPair.local.id;
+                const importedTaskId = taskPair.imported.id;
+                const localStudentId = studentPair.local.id;
+                const importedStudentId = studentPair.imported.id;
+                const localRecord = local.records && local.records[localTaskId] ? local.records[localTaskId][localStudentId] : null;
+                const importedRecord = remoteState.records && remoteState.records[importedTaskId] ? remoteState.records[importedTaskId][importedStudentId] : null;
+                const localExists = !!localRecord;
+                const importedExists = !!importedRecord;
+                if ((localRecord || importedRecord) && !recordsEqual(localRecord, importedRecord)) {
+                    addRecordItem(taskPair, studentPair, localRecord, importedRecord, localExists, importedExists, getRawCell(preparedData, taskPair.imported, studentPair.imported.studentNo || studentPair.imported.id));
+                }
+            });
+
+            // 学生仅本地或仅文件时，仍展示其非空记录，确保覆盖删除统计与详情一致。
+            studentMatch.localUnmatched.forEach(localStudent => {
+                taskMatch.pairs.forEach(taskPair => {
+                    const record = local.records && local.records[taskPair.local.id] && local.records[taskPair.local.id][localStudent.id];
+                    if (!record || isBlankRecord(record)) return;
+                    addRecordItem(taskPair, { local: localStudent, imported: localStudent }, record, null, true, false, null);
+                });
+            });
+
+            studentMatch.importedUnmatched.forEach(importedStudent => {
+                taskMatch.pairs.forEach(taskPair => {
+                    const record = remoteState.records && remoteState.records[taskPair.imported.id] && remoteState.records[taskPair.imported.id][importedStudent.id];
+                    if (!record || isBlankRecord(record)) return;
+                    addRecordItem(taskPair, { local: importedStudent, imported: importedStudent }, null, record, false, true, getRawCell(preparedData, taskPair.imported, importedStudent.studentNo || importedStudent.id));
+                });
+            });
+
+            const localUnmatchedTaskPairs = taskMatch.localUnmatched;
+            const importedUnmatchedTaskPairs = taskMatch.importedUnmatched;
+            localUnmatchedTaskPairs.forEach(localTask => {
+                const taskPair = { local: localTask, imported: { name: localTask.name } };
+                Object.keys((local.records && local.records[localTask.id]) || {}).forEach(studentId => {
+                    const record = local.records[localTask.id][studentId];
+                    if (!isBlankRecord(record)) {
+                        const student = localStudentById.get(String(studentId));
+                        addRecordItem(taskPair, student ? { local: student, imported: student } : null, record, null, true, false, null);
+                    }
+                });
+            });
+
+            importedUnmatchedTaskPairs.forEach(importedTask => {
+                const taskPair = { local: { name: importedTask.name }, imported: importedTask };
+                Object.keys((remoteState.records && remoteState.records[importedTask.id]) || {}).forEach(studentId => {
+                    const record = remoteState.records[importedTask.id][studentId];
+                    if (!isBlankRecord(record)) {
+                        const student = importedStudentById.get(String(studentId));
+                        addRecordItem(taskPair, student ? { local: student, imported: student } : null, null, record, false, true, getRawCell(preparedData, importedTask.name, student && (student.studentNo || student.id)));
+                    }
+                });
+            });
+            // 课程表、班干部表、值日生表差异对比
+            const localSchedule = local.schedule || INITIAL_SCHEDULE;
+            const remoteSchedule = hasScheduleData(remoteState)
+                ? normalizeSchedule(remoteState.schedule).schedule
+                : null;
+            if (remoteSchedule && JSON.stringify(localSchedule) !== JSON.stringify(remoteSchedule)) {
+                const localSide = sideValue('已配置课程安排', true, JSON.stringify(localSchedule), localSchedule.updatedAt);
+                const importedSide = sideValue('导入课程安排', true, JSON.stringify(remoteSchedule), remoteSchedule.updatedAt);
+                addItem({
+                    category: 'table',
+                    operation: 'modify',
+                    context: { entity: 'table', tableName: '课程表', fieldName: '课程表数据' },
+                    localSide,
+                    importedSide
+                });
+            }
+
+            const localOfficers = local.officerTable || INITIAL_OFFICERS;
+            const remoteOfficers = remoteState.officerTable || (useStableIds ? null : localOfficers);
+            if (remoteOfficers && JSON.stringify(localOfficers) !== JSON.stringify(remoteOfficers)) {
+                const localSide = sideValue(`${(localOfficers.roles || []).length}个职位`, true, JSON.stringify(localOfficers), localOfficers.updatedAt);
+                const importedSide = sideValue(`${(remoteOfficers.roles || []).length}个职位`, true, JSON.stringify(remoteOfficers), remoteOfficers.updatedAt);
+                addItem({
+                    category: 'table',
+                    operation: 'modify',
+                    context: { entity: 'table', tableName: '班干部表', fieldName: '职位与成员' },
+                    localSide,
+                    importedSide
+                });
+            }
+
+            const localDuty = local.dutyTable || INITIAL_DUTY;
+            const remoteDuty = remoteState.dutyTable || (useStableIds ? null : localDuty);
+            if (remoteDuty && JSON.stringify(localDuty) !== JSON.stringify(remoteDuty)) {
+                const localSide = sideValue(`${(localDuty.days || []).length}天/${(localDuty.roles || []).length}岗位`, true, JSON.stringify(localDuty), localDuty.updatedAt);
+                const importedSide = sideValue(`${(remoteDuty.days || []).length}天/${(remoteDuty.roles || []).length}岗位`, true, JSON.stringify(remoteDuty), remoteDuty.updatedAt);
+                addItem({
+                    category: 'table',
+                    operation: 'modify',
+                    context: { entity: 'table', tableName: '值日生表', fieldName: '值日安排' },
+                    localSide,
+                    importedSide
+                });
+            }
+
+
+            const summary = {
+                total: items.length,
+                conflicts: items.filter(item => item.conflict).length,
+                byCategory: { class: 0, student: 0, task: 0, record: 0, delete: 0, table: 0 },
+                byOperation: { add: 0, modify: 0, clear: 0, delete: 0, 'local-only': 0, 'file-only': 0 },
+                adoptedFromFile: items.filter(item => item.resolution.choice === 'file').length,
+                keptLocal: items.filter(item => item.resolution.choice === 'local' && !item.conflict).length,
+                externalEdits: preparedData.externalEditCount || (preparedData.isExternalEdited ? 1 : 0)
+            };
+            items.forEach(item => {
+                summary.byCategory[item.category] = (summary.byCategory[item.category] || 0) + 1;
+                summary.byOperation[item.operation] = (summary.byOperation[item.operation] || 0) + 1;
+            });
+
+            const sourceInfo = {
+                fileName: preparedData.fileName || preparedData.sourceInfo && preparedData.sourceInfo.fileName || '导入记分册.xlsx',
+                fileMtime: preparedData.fileMtime || preparedData.sourceInfo && preparedData.sourceInfo.fileMtime || null,
+                backupExportedAt: preparedData.metadata && preparedData.metadata.exportedAt || preparedData.sourceInfo && preparedData.sourceInfo.backupExportedAt || null,
+                type: preparedData.isExternalEdited ? 'external-edited' : (preparedData.hasBackup ? 'backup' : 'template'),
+                label: preparedData.isExternalEdited ? '检测到 Excel/WPS 外部编辑' : (preparedData.hasBackup ? '完整备份' : '普通模板')
+            };
+
+            const mergePreview = {
+                adoptFile: summary.adoptedFromFile,
+                keepLocal: summary.keptLocal,
+                conflicts: summary.conflicts,
+                unresolved: summary.conflicts
+            };
+
+            return {
+                hasDifference: items.length > 0 || !!preparedData.isExternalEdited,
+                sourceInfo,
+                summary,
+                mergePreview,
+                items,
+                isExternalEdited: !!preparedData.isExternalEdited
+            };
+        }
+
+        _alignImportedState(preparedData) {
+            const source = preparedData.state || preparedData;
+            const aligned = JSON.parse(JSON.stringify(source));
+            if (preparedData.hasBackup) {
+                if (hasScheduleData(aligned)) {
+                    aligned.schedule = normalizeSchedule(aligned.schedule).schedule;
+                }
+                return aligned;
+            }
+
+            const studentMatch = matchStudents(this.state.students || [], aligned.students || [], false);
+            const studentIdMap = new Map();
+            studentMatch.pairs.forEach(({ local, imported }) => {
+                studentIdMap.set(String(imported.id), String(local.id));
+                imported.id = local.id;
+            });
+
+            const taskMatch = matchTasks(this.state.tasks || [], aligned.tasks || [], false);
+            const taskIdMap = new Map();
+            taskMatch.pairs.forEach(({ local, imported }) => {
+                taskIdMap.set(String(imported.id), String(local.id));
+                imported.id = local.id;
+            });
+
+            const alignedRecords = {};
+            Object.keys(aligned.records || {}).forEach(importedTaskId => {
+                const targetTaskId = taskIdMap.get(String(importedTaskId)) || importedTaskId;
+                if (!alignedRecords[targetTaskId]) alignedRecords[targetTaskId] = {};
+                Object.keys(aligned.records[importedTaskId] || {}).forEach(importedStudentId => {
+                    const targetStudentId = studentIdMap.get(String(importedStudentId)) || importedStudentId;
+                    alignedRecords[targetTaskId][targetStudentId] = aligned.records[importedTaskId][importedStudentId];
+                });
+            });
+            aligned.records = alignedRecords;
+
+            (aligned.deletedStudents || []).forEach(student => {
+                const local = (this.state.students || []).find(item => String(item.studentNo || item.id) === String(student.studentNo || student.id));
+                if (local) student.id = local.id;
+            });
+            (aligned.deletedTasks || []).forEach(task => {
+                const local = (this.state.tasks || []).find(item => String(item.id) === String(task.id) || normalizeTaskName(item.name) === normalizeTaskName(task.name));
+                if (local) task.id = local.id;
+            });
+            if (hasScheduleData(aligned)) {
+                aligned.schedule = normalizeSchedule(aligned.schedule).schedule;
+            }
+            if (!aligned.officerTable) aligned.officerTable = JSON.parse(JSON.stringify(INITIAL_OFFICERS));
+            if (!aligned.dutyTable) aligned.dutyTable = JSON.parse(JSON.stringify(INITIAL_DUTY));
+            return aligned;
+        }
+
+        /**
+         * 智能合并：按实体与字段修改时间（updatedAt）合并，保留较新者；
+         * 时间相同但内容不同时保留本地值，并记录冲突数。
+         */
+        smartMerge(preparedData) {
+            const remoteState = this._alignImportedState(preparedData);
+            let conflictCount = 0;
+
+            // 1. 班级合并
+            if (remoteState.currentClass && remoteState.currentClass !== this.state.currentClass) {
+                const remoteTime = remoteState.classUpdatedAt || '1970-01-01T00:00:00.000Z';
+                const localTime = this.state.classUpdatedAt || '1970-01-01T00:00:00.000Z';
+                if (remoteTime > localTime) {
+                    this.state.currentClass = remoteState.currentClass;
+                    this.state.classUpdatedAt = remoteTime;
+                } else if (remoteTime === localTime) {
+                    // 时间相同内容不同，保留本地
+                    conflictCount++;
+                }
+            }
+
+            // 2. 学生花名册合并
+            const localStudentMap = new Map(this.state.students.map(s => [String(s.studentNo || s.id), s]));
+            const localDeletedStudentMap = new Map((this.state.deletedStudents || []).map(s => [String(s.studentNo || s.id), s]));
+
+            const remoteStudents = remoteState.students || [];
+            const remoteDeletedStudents = remoteState.deletedStudents || [];
+
+            // 2.1 处理远程墓碑
+            remoteDeletedStudents.forEach(rds => {
+                const key = String(rds.studentNo || rds.id);
+                const ls = localStudentMap.get(key);
+                if (ls) {
+                    const rDelTime = rds.deletedAt || rds.updatedAt || '1970-01-01T00:00:00.000Z';
+                    const lUpdTime = ls.updatedAt || '1970-01-01T00:00:00.000Z';
+                    if (rDelTime > lUpdTime) {
+                        // 删除本地学生
+                        const idx = this.state.students.findIndex(s => String(s.studentNo || s.id) === key);
+                        if (idx !== -1) {
+                            const [deleted] = this.state.students.splice(idx, 1);
+                            if (!this.state.deletedStudents) this.state.deletedStudents = [];
+                            this.state.deletedStudents.push({ ...deleted, deletedAt: rDelTime, updatedAt: rDelTime });
+                        }
+                    } else if (rDelTime === lUpdTime) {
+                        conflictCount++;
+                    }
+                }
+            });
+
+            // 2.2 处理远程活跃学生
+            remoteStudents.forEach(rs => {
+                const key = String(rs.studentNo || rs.id);
+                const ls = localStudentMap.get(key);
+                const lds = localDeletedStudentMap.get(key);
+                const rUpdTime = rs.updatedAt || '1970-01-01T00:00:00.000Z';
+
+                if (lds) {
+                    const lDelTime = lds.deletedAt || lds.updatedAt || '1970-01-01T00:00:00.000Z';
+                    if (rUpdTime > lDelTime) {
+                        // 远程修改在本地删除之后，恢复学生
+                        const delIdx = this.state.deletedStudents.findIndex(s => String(s.studentNo || s.id) === key);
+                        if (delIdx !== -1) this.state.deletedStudents.splice(delIdx, 1);
+                        this.state.students.push({ ...rs });
+                    }
+                } else if (!ls) {
+                    // 本地没有，直接添加
+                    this.state.students.push({ ...rs });
+                } else {
+                    // 本地已有，逐字段对比
+                    const lUpdTime = ls.updatedAt || '1970-01-01T00:00:00.000Z';
+                    if (rUpdTime > lUpdTime) {
+                        ls.name = rs.name;
+                        ls.updatedAt = rUpdTime;
+                    } else if (rUpdTime === lUpdTime && ls.name !== rs.name) {
+                        conflictCount++;
+                    }
+                }
+            });
+
+            // 3. 任务列表合并
+            const localTaskMap = new Map(this.state.tasks.map(t => [t.id, t]));
+            const localTaskNameMap = new Map(this.state.tasks.map(t => [t.name, t]));
+            const localDeletedTaskMap = new Map((this.state.deletedTasks || []).map(t => [t.id, t]));
+
+            const remoteTasks = remoteState.tasks || [];
+            const remoteDeletedTasks = remoteState.deletedTasks || [];
+
+            // 3.1 处理远程任务墓碑
+            remoteDeletedTasks.forEach(rdt => {
+                const lt = localTaskMap.get(rdt.id) || localTaskNameMap.get(rdt.name);
+                if (lt) {
+                    const rDelTime = rdt.deletedAt || rdt.updatedAt || '1970-01-01T00:00:00.000Z';
+                    const lUpdTime = lt.updatedAt || '1970-01-01T00:00:00.000Z';
+                    if (rDelTime > lUpdTime) {
+                        const idx = this.state.tasks.findIndex(t => t.id === lt.id);
+                        if (idx !== -1) {
+                            const [deleted] = this.state.tasks.splice(idx, 1);
+                            if (!this.state.deletedTasks) this.state.deletedTasks = [];
+                            this.state.deletedTasks.push({ ...deleted, deletedAt: rDelTime, updatedAt: rDelTime });
+                        }
+                    } else if (rDelTime === lUpdTime) {
+                        conflictCount++;
+                    }
+                }
+            });
+
+            // 3.2 处理远程活跃任务
+            remoteTasks.forEach(rt => {
+                const lt = localTaskMap.get(rt.id) || localTaskNameMap.get(rt.name);
+                const ldt = localDeletedTaskMap.get(rt.id);
+                const rUpdTime = rt.updatedAt || rt.createdAt || '1970-01-01T00:00:00.000Z';
+
+                if (ldt) {
+                    const lDelTime = ldt.deletedAt || ldt.updatedAt || '1970-01-01T00:00:00.000Z';
+                    if (rUpdTime > lDelTime) {
+                        const delIdx = this.state.deletedTasks.findIndex(t => t.id === rt.id);
+                        if (delIdx !== -1) this.state.deletedTasks.splice(delIdx, 1);
+                        this.state.tasks.push({ ...rt });
+                    }
+                } else if (!lt) {
+                    this.state.tasks.push({ ...rt });
+                } else {
+                    const lUpdTime = lt.updatedAt || lt.createdAt || '1970-01-01T00:00:00.000Z';
+                    if (rUpdTime > lUpdTime) {
+                        lt.name = rt.name;
+                        lt.archived = rt.archived;
+                        lt.updatedAt = rUpdTime;
+                    } else if (rUpdTime === lUpdTime) {
+                        if (lt.name !== rt.name || lt.archived !== rt.archived) {
+                            conflictCount++;
+                        }
+                    }
+                }
+            });
+
+            // 4. 提交记录合并
+            const remoteRecords = remoteState.records || {};
+            for (const taskId of Object.keys(remoteRecords)) {
+                if (!this.state.records[taskId]) {
+                    this.state.records[taskId] = {};
+                }
+                const lTaskRecords = this.state.records[taskId];
+                const rTaskRecords = remoteRecords[taskId];
+
+                for (const studentId of Object.keys(rTaskRecords)) {
+                    const rRec = rTaskRecords[studentId];
+                    const lRec = lTaskRecords[studentId];
+
+                    if (!lRec) {
+                        lTaskRecords[studentId] = { ...rRec };
+                    } else {
+                        const rTime = rRec.updatedAt || '1970-01-01T00:00:00.000Z';
+                        const lTime = lRec.updatedAt || '1970-01-01T00:00:00.000Z';
+
+                        if (rTime > lTime) {
+                            lTaskRecords[studentId] = { ...rRec };
+                        } else if (rTime === lTime) {
+                            const isDifferent = rRec.status !== lRec.status || rRec.badge !== lRec.badge || rRec.score !== lRec.score || rRec.note !== lRec.note;
+                            if (isDifferent) {
+                                conflictCount++;
+                            }
+                        }
+                    }
+                }
+            }
+            // 5. 课程表合并
+            if (remoteState.schedule && typeof remoteState.schedule === 'object') {
+                const lTime = (this.state.schedule && this.state.schedule.updatedAt) || '1970-01-01T00:00:00.000Z';
+                const rTime = remoteState.schedule.updatedAt || '1970-01-01T00:00:00.000Z';
+                if (rTime > lTime) {
+                    this.state.schedule = JSON.parse(JSON.stringify(remoteState.schedule));
+                } else if (rTime === lTime) {
+                    if (JSON.stringify(this.state.schedule) !== JSON.stringify(remoteState.schedule)) {
+                        conflictCount++;
+                    }
+                }
+            }
+
+            // 6. 班干部表合并
+            if (remoteState.officerTable && typeof remoteState.officerTable === 'object') {
+                const lTime = (this.state.officerTable && this.state.officerTable.updatedAt) || '1970-01-01T00:00:00.000Z';
+                const rTime = remoteState.officerTable.updatedAt || '1970-01-01T00:00:00.000Z';
+                if (rTime > lTime) {
+                    this.state.officerTable = JSON.parse(JSON.stringify(remoteState.officerTable));
+                } else if (rTime === lTime) {
+                    if (JSON.stringify(this.state.officerTable) !== JSON.stringify(remoteState.officerTable)) {
+                        conflictCount++;
+                    }
+                }
+            }
+
+            // 7. 值日生表合并
+            if (remoteState.dutyTable && typeof remoteState.dutyTable === 'object') {
+                const lTime = (this.state.dutyTable && this.state.dutyTable.updatedAt) || '1970-01-01T00:00:00.000Z';
+                const rTime = remoteState.dutyTable.updatedAt || '1970-01-01T00:00:00.000Z';
+                if (rTime > lTime) {
+                    this.state.dutyTable = JSON.parse(JSON.stringify(remoteState.dutyTable));
+                } else if (rTime === lTime) {
+                    if (JSON.stringify(this.state.dutyTable) !== JSON.stringify(remoteState.dutyTable)) {
+                        conflictCount++;
+                    }
+                }
+            }
+
+
+            // 确保当前选中的任务合法
+            if (!this.state.tasks.some(t => t.id === this.state.currentTaskId)) {
+                this.state.currentTaskId = this.state.tasks[0] ? this.state.tasks[0].id : '';
+            }
+
+            this._notify('STORE_SMART_MERGED', { conflictCount });
+            return { success: true, conflictCount };
+        }
+    }
+
+    window.TWS3.SUBJECT_OPTIONS = SUBJECT_OPTIONS;
+    window.TWS3.store = new Store();
+    window.TWS3.store.SUBJECT_OPTIONS = SUBJECT_OPTIONS;
+})();
