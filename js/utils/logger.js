@@ -215,12 +215,11 @@
 
         document.body.appendChild(floatingBtnEl);
 
-        // 恢复位置与可见性
+        // 恢复位置与可见性（默认关闭隐藏，仅当用户在抽屉中主动开启且配置为 'true' 时显示）
         const savedVis = localStorage.getItem(STORAGE_KEY_VIS);
-        if (savedVis === 'false') {
+        if (savedVis !== 'true') {
             floatingBtnEl.classList.add('hidden');
         }
-
         const savedPos = localStorage.getItem(STORAGE_KEY_POS);
         if (savedPos) {
             try {
