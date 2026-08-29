@@ -4,19 +4,20 @@
         initDrawer,
         initGrid,
         initSeatView,
+        initTableView,
         initEditSheet,
         initModal,
         initBackHandler,
         logger,
         store
     } = window.TWS3;
-
     let viewElementsCache = null;
     function getViewElements() {
         if (!viewElementsCache) {
             viewElementsCache = {
                 grid: document.getElementById('card-grid'),
-                seat: document.getElementById('seat-view')
+                seat: document.getElementById('seat-view'),
+                table: document.getElementById('table-view')
             };
         }
         return viewElementsCache;
@@ -47,9 +48,9 @@
         const openEdit = studentId => editSheet.open(studentId);
         const viewInitializers = {
             grid: () => initGrid({ onOpenEdit: openEdit }),
-            seat: () => initSeatView({ onOpenEdit: openEdit })
+            seat: () => initSeatView({ onOpenEdit: openEdit }),
+            table: () => initTableView({ onOpenEdit: openEdit })
         };
-
         function ensureViewInitialized(mode) {
             if (initializedViews.has(mode)) return;
             const initialize = viewInitializers[mode];

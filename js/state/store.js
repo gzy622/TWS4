@@ -554,7 +554,7 @@
                 }
                 if (!parsed.operationMode) parsed.operationMode = 'check';
                 if (typeof parsed.showStudentNumbers !== 'boolean') parsed.showStudentNumbers = true;
-                const validViews = ['grid', 'seat', 'schedule', 'officers', 'duty'];
+                const validViews = ['grid', 'seat', 'table', 'schedule', 'officers', 'duty'];
                 if (!validViews.includes(parsed.viewMode)) parsed.viewMode = 'grid';
 
                 this._syncActiveClassPointers(parsed);
@@ -632,12 +632,12 @@
         }
 
         getViewMode() {
-            const allowed = ['grid', 'seat'];
+            const allowed = ['grid', 'seat', 'table'];
             return allowed.includes(this.state.viewMode) ? this.state.viewMode : 'grid';
         }
 
         setViewMode(mode) {
-            const allowed = ['grid', 'seat'];
+            const allowed = ['grid', 'seat', 'table'];
             if (!allowed.includes(mode)) return;
             if (this.state.viewMode === mode) return;
             this.state.viewMode = mode;
@@ -1408,12 +1408,17 @@
         }
 
         cycleStudentStatus(studentId) {
-            const task = this.getCurrentTask();
+            return this.cycleStudentRecord(studentId, this.state.currentTaskId);
+        }
+
+        cycleStudentRecord(studentId, taskId = this.state.currentTaskId) {
+            const task = this.state.tasks.find(t => t.id === taskId) || this.getCurrentTask();
+            if (task && task.archived) return false;
             const isEnglish = this.isEnglishTask(task);
             const student = this.state.students.find(s => s.id === studentId);
             const isNonEnglish = student && !!student.isNonEnglish;
 
-            const record = this.getStudentRecord(studentId);
+            const record = this.getStudentRecord(studentId, taskId);
 
             // 单击仅二态切换：dark 与 该学生的默认未提交态（英语作业免交生为 muted，普通生为 white），
             // 不再出现 white→dark→muted 三态循环。
@@ -1421,7 +1426,8 @@
                 ? ((isEnglish && isNonEnglish) ? 'muted' : 'white')
                 : 'dark';
             record.updatedAt = getUtcNowIso();
-            this._notify('STUDENT_STATUS_CHANGED', { studentId, status: record.status });
+            this._notify('STUDENT_STATUS_CHANGED', { studentId, taskId, status: record.status });
+            return true;
         }
 
         setStudentNonEnglish(studentId, isNonEnglish) {
@@ -1537,14 +1543,14 @@
             this._notify('STUDENT_BADGE_CHANGED', { studentId, badge: null });
         }
 
-        updateStudentRecord(studentId, { status, badge, score, note }) {
-            const record = this.getStudentRecord(studentId);
+        updateStudentRecord(studentId, { status, badge, score, note }, taskId = this.state.currentTaskId) {
+            const record = this.getStudentRecord(studentId, taskId);
             if (status !== undefined) record.status = status;
             if (badge !== undefined) record.badge = badge;
             if (score !== undefined) record.score = score;
             if (note !== undefined) record.note = note;
             record.updatedAt = getUtcNowIso();
-            this._notify('STUDENT_RECORD_UPDATED', { studentId, record });
+            this._notify('STUDENT_RECORD_UPDATED', { studentId, taskId, record });
         }
 
         resetCurrentTaskRoster() {

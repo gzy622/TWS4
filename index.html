@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TWS4</title>
     <link rel="stylesheet" href="css/main.css?v=20260829-172815">
+</head>
 <body>
     <div class="app-container">
         <!-- 侧边栏抽屉 -->
@@ -36,6 +37,16 @@
                             <div class="drawer-item-text">
                                 <div class="drawer-item-title">座位表</div>
                                 <div class="drawer-item-desc">班级座位排布与可视化</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-view-table-btn">
+                            <div class="drawer-item-icon icon-table">
+                                <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M3 15h18M9 5v14M15 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">表格视图</div>
+                                <div class="drawer-item-desc">记分册全览与统计明细</div>
                             </div>
                             <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
@@ -214,9 +225,10 @@
             </div>
         </div>
 
-        <!-- 网格视图与座位表视图 -->
+        <!-- 网格视图、座位表视图与表格视图 -->
         <main id="card-grid" class="grid-container"></main>
         <main id="seat-view" class="seat-view" hidden></main>
+        <main id="table-view" class="table-view" hidden></main>
         <!-- 通用统一模态弹窗 -->
         <div id="app-modal" class="modal-overlay">
             <div class="modal">
@@ -382,7 +394,9 @@
     <script src="js/components/drawer.js?v=20260829-172815"></script>
     <script src="js/components/grid.js?v=20260829-172815"></script>
     <script src="js/components/seat.js?v=20260829-172815"></script>
+    <script src="js/components/table.js?v=20260829-172815"></script>
 
     <!-- 4. 入口装配 -->
     <script src="js/app.js?v=20260829-172815"></script>
+</body>
 </html>

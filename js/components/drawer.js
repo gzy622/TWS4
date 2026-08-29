@@ -12,6 +12,7 @@
         const switchClassBtn = document.getElementById('drawer-switch-class-btn');
         const viewGridBtn = document.getElementById('drawer-view-grid-btn');
         const viewSeatBtn = document.getElementById('drawer-view-seat-btn');
+        const viewTableBtn = document.getElementById('drawer-view-table-btn');
         const viewScheduleBtn = document.getElementById('drawer-view-schedule-btn');
         const viewOfficersBtn = document.getElementById('drawer-view-officers-btn');
         const viewDutyBtn = document.getElementById('drawer-view-duty-btn');
@@ -934,11 +935,11 @@
         function updateDrawerViewActive(mode = store.getViewMode()) {
             if (viewGridBtn) viewGridBtn.classList.toggle('active', mode === 'grid');
             if (viewSeatBtn) viewSeatBtn.classList.toggle('active', mode === 'seat');
+            if (viewTableBtn) viewTableBtn.classList.toggle('active', mode === 'table');
             if (viewScheduleBtn) viewScheduleBtn.classList.toggle('active', mode === 'schedule');
             if (viewOfficersBtn) viewOfficersBtn.classList.toggle('active', mode === 'officers');
             if (viewDutyBtn) viewDutyBtn.classList.toggle('active', mode === 'duty');
         }
-
         function switchView(targetMode) {
             const currentMode = store.getViewMode();
             if (currentMode === targetMode) {
@@ -957,6 +958,9 @@
         }
         if (viewSeatBtn) {
             viewSeatBtn.addEventListener('click', () => switchView('seat'));
+        }
+        if (viewTableBtn) {
+            viewTableBtn.addEventListener('click', () => switchView('table'));
         }
         if (viewScheduleBtn) {
             viewScheduleBtn.addEventListener('click', () => switchView('schedule'));
