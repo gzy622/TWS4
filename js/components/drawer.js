@@ -106,9 +106,8 @@
                             ${isCurrent ? '<span class="class-active-badge">当前班级</span>' : ''}
                         </div>
                         <div class="class-card-meta">
-                            <span>在籍学生：${c.studentCount} 人</span>
-                            <span class="class-card-meta-dot">·</span>
-                            <span>作业任务：${c.taskCount} 项</span>
+                            <div class="class-card-meta-line">在籍学生：${c.studentCount} 人</div>
+                            <div class="class-card-meta-line">作业任务：${c.taskCount} 项</div>
                         </div>
                     </div>
                     <div class="class-card-actions">

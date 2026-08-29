@@ -134,12 +134,13 @@
     font-size: 12px;
     color: var(--text-muted);
     display: flex;
-    align-items: center;
-    gap: 6px;
+    flex-direction: column;
+    gap: 3px;
+    line-height: 1.35;
 }
 
-.class-card-meta-dot {
-    color: #cbd5e1;
+.class-card-meta-line {
+    white-space: nowrap;
 }
 
 .class-card-actions {
