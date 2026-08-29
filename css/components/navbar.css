@@ -648,9 +648,7 @@
 }
 /* 底部全宽滑动操作模式切换器 */
 .task-dropdown-footer {
-    padding-top: 8px;
-    border-top: 1px solid var(--border-light);
-    margin-top: 4px;
+    padding-top: 2px;
     width: 100%;
     contain: layout paint;
 }
