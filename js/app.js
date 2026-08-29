@@ -37,7 +37,7 @@
             try {
                 const { StatusBar } = window.Capacitor.Plugins;
                 StatusBar.setOverlaysWebView({ overlay: true });
-                StatusBar.setStyle({ style: 'DARK' });
+                StatusBar.setStyle({ style: 'LIGHT' });
             } catch (_) {}
         }
 
