@@ -134,7 +134,7 @@
 
         let searchQuery = '';
         let isArchivedGroupExpanded = null; // null 表示随当前作业自动决定
-
+        let taskListDirty = false;
         // 搜索事件监听
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
@@ -366,7 +366,7 @@
             const isArchived = !!task.archived;
             const item = document.createElement('div');
             item.className = `task-item ${isCurrent ? 'active' : ''} ${isArchived ? 'archived' : ''}`;
-
+            item.dataset.taskId = task.id;
             const subject = task.subject || '未设置';
             const isEnglish = subject === '英语';
             const subjectBadgeClass = isEnglish ? 'task-chip chip-english' : 'task-chip chip-subject';
@@ -422,9 +422,19 @@
             return item;
         }
 
-        function renderTaskList() {
+        function updateActiveTaskHighlight() {
             const state = store.getState();
-            listContainer.innerHTML = '';
+            const currentTaskId = state.currentTaskId;
+            const items = listContainer.querySelectorAll('.task-item');
+            items.forEach(item => {
+                item.classList.toggle('active', item.dataset.taskId === currentTaskId);
+            });
+        }
+
+        function renderTaskList() {
+            taskListDirty = false;
+            const state = store.getState();
+            const fragment = document.createDocumentFragment();
 
             let allTasks = state.tasks || [];
 
@@ -441,7 +451,9 @@
                 const emptyEl = document.createElement('div');
                 emptyEl.className = 'task-empty-state';
                 emptyEl.innerHTML = `<span>未找到匹配的作业</span>`;
-                listContainer.appendChild(emptyEl);
+                fragment.appendChild(emptyEl);
+                listContainer.innerHTML = '';
+                listContainer.appendChild(fragment);
                 return;
             }
 
@@ -465,14 +477,14 @@
                             <span class="task-group-count">${ongoingTasks.length}</span>
                         </div>
                     `;
-                    listContainer.appendChild(groupHeader);
+                    fragment.appendChild(groupHeader);
                 }
                 const ongoingGroup = document.createElement('div');
                 ongoingGroup.className = 'task-group-list';
                 ongoingTasks.forEach(task => {
                     ongoingGroup.appendChild(createTaskItemElement(task, state));
                 });
-                listContainer.appendChild(ongoingGroup);
+                fragment.appendChild(ongoingGroup);
             }
 
             // 2. 渲染已归档分组
@@ -495,7 +507,7 @@
                     renderTaskList();
                 });
 
-                listContainer.appendChild(archivedHeader);
+                fragment.appendChild(archivedHeader);
 
                 if (shouldExpandArchived) {
                     const archivedGroup = document.createElement('div');
@@ -503,11 +515,13 @@
                     archivedTasks.forEach(task => {
                         archivedGroup.appendChild(createTaskItemElement(task, state));
                     });
-                    listContainer.appendChild(archivedGroup);
+                    fragment.appendChild(archivedGroup);
                 }
             }
-        }
 
+            listContainer.innerHTML = '';
+            listContainer.appendChild(fragment);
+        }
         function updateProgress() {
             const stats = store.getStats();
             progressBar.style.width = stats.percentage + '%';
@@ -523,14 +537,18 @@
                 taskDropdownOverlay.classList.toggle('show', isShown);
             }
             if (isShown && !wasShown) {
-                // 每次新打开时重置搜索；手势收尾重复写入打开态时不重建列表。
+                const hadSearch = searchQuery !== '' || (searchInput && searchInput.value !== '');
                 if (searchInput) searchInput.value = '';
                 searchQuery = '';
                 if (searchClearBtn) searchClearBtn.style.display = 'none';
                 isArchivedGroupExpanded = null;
-                renderTaskList();
+                // 仅当数据有脏标记、此前存在搜索过滤或列表尚未生成时才重建 DOM，避免拖拽初帧卡顿
+                if (taskListDirty || hadSearch || listContainer.children.length === 0) {
+                    renderTaskList();
+                } else {
+                    updateActiveTaskHighlight();
+                }
             }
-            return isShown;
         }
 
         function closeDropdown() {
@@ -605,8 +623,11 @@
                 updateModeSwitcher(payload.mode);
             } else if (eventType === 'VIEW_MODE_CHANGED') {
                 updateHeaderTitle();
+            } else if (eventType === 'TASK_CHANGED') {
+                updateActiveTaskHighlight();
+                updateHeaderTitle();
+                updateProgress();
             } else if (
-                eventType === 'TASK_CHANGED' ||
                 eventType === 'TASK_ADDED' ||
                 eventType === 'TASK_RENAMED' ||
                 eventType === 'TASK_SUBJECT_CHANGED' ||
@@ -619,7 +640,11 @@
                 eventType === 'STORE_SMART_MERGED' ||
                 eventType === 'CLASS_CHANGED'
             ) {
-                renderTaskList();
+                if (taskDropdown.classList.contains('show')) {
+                    renderTaskList();
+                } else {
+                    taskListDirty = true;
+                }
                 updateHeaderTitle();
                 updateProgress();
             } else if (
