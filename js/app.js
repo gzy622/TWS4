@@ -53,7 +53,8 @@
                 canOpenTaskDropdown: () => {
                     const mode = store.getViewMode();
                     return mode === 'grid' || mode === 'seat';
-                }
+                },
+                closeEditSheet: editSheet.close
             });
         }
 

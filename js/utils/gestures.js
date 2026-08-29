@@ -167,13 +167,15 @@
         });
     }
 
-    function initGlobalPanelGestures({ setDrawerOpen, setTaskDropdownOpen, canOpenTaskDropdown }) {
+    function initGlobalPanelGestures({ setDrawerOpen, setTaskDropdownOpen, canOpenTaskDropdown, closeEditSheet }) {
         const app = document.querySelector('.app-container');
         const drawer = document.getElementById('drawer');
         const drawerOverlay = document.getElementById('drawer-overlay');
         const taskDropdown = document.getElementById('task-dropdown');
         const taskDropdownOverlay = document.getElementById('task-dropdown-overlay');
-        if (!app || !drawer || !drawerOverlay || !taskDropdown || !taskDropdownOverlay) return;
+        const editSheetOverlay = document.getElementById('edit-sheet-overlay');
+        const editSheetPanel = editSheetOverlay ? editSheetOverlay.querySelector('.edit-sheet') : null;
+        if (!app || !drawer || !drawerOverlay || !taskDropdown || !taskDropdownOverlay || !editSheetPanel) return;
 
         const DIRECTION_SLOP = 10;
         const DIRECTION_RATIO = 1.2;
@@ -223,7 +225,7 @@
         }
 
         function hasBlockingLayer() {
-            return !!document.querySelector('.modal-overlay.show, .edit-sheet-overlay.show');
+            return !!document.querySelector('.modal-overlay.show');
         }
 
         function canDragOpenTask(target, deltaY) {
@@ -242,7 +244,7 @@
         }
 
         function clearInlineStyles() {
-            [drawer, drawerOverlay, taskDropdown, taskDropdownOverlay].forEach(element => {
+            [drawer, drawerOverlay, taskDropdown, taskDropdownOverlay, editSheetPanel, editSheetOverlay].forEach(element => {
                 element.style.removeProperty('transition');
                 element.style.removeProperty('transform');
                 element.style.removeProperty('opacity');
@@ -270,6 +272,18 @@
                 drawerOverlay.style.transition = 'none';
                 drawerOverlay.style.pointerEvents = 'none';
                 drawerOverlay.style.opacity = String(progress);
+                return;
+            }
+
+            if (axis === 'sheet') {
+                const height = Math.max(1, editSheetPanel.getBoundingClientRect().height);
+                editSheetPanel.style.transition = 'none';
+                editSheetPanel.style.pointerEvents = 'none';
+                editSheetPanel.style.transform = `translate3d(0, ${(1 - progress) * height}px, 0)`;
+                editSheetPanel.style.boxShadow = `0 -10px 30px rgba(0, 0, 0, ${0.12 * progress})`;
+                editSheetOverlay.style.transition = 'none';
+                editSheetOverlay.style.pointerEvents = 'none';
+                editSheetOverlay.style.opacity = String(progress);
                 return;
             }
 
@@ -304,18 +318,19 @@
 
         function lockGesture(axis, currentX, currentY, time) {
             gesture.axis = axis;
-            gesture.initialProgress = axis === 'drawer'
-                ? (gesture.drawerOpen ? 1 : 0)
-                : (gesture.taskOpen ? 1 : 0);
-
             if (axis === 'drawer') {
+                gesture.initialProgress = gesture.drawerOpen ? 1 : 0;
                 if (!gesture.drawerOpen) setDrawerOpen(true);
                 if (gesture.taskOpen) setTaskDropdownOpen(false);
                 gesture.size = Math.max(1, drawer.getBoundingClientRect().width);
-            } else {
+            } else if (axis === 'task') {
+                gesture.initialProgress = gesture.taskOpen ? 1 : 0;
                 if (!gesture.taskOpen) setTaskDropdownOpen(true);
                 if (gesture.drawerOpen) setDrawerOpen(false);
                 gesture.size = Math.max(1, taskDropdown.getBoundingClientRect().height);
+            } else {
+                gesture.initialProgress = 1;
+                gesture.size = Math.max(1, editSheetPanel.getBoundingClientRect().height);
             }
 
             gesture.samples = [{ x: currentX, y: currentY, time }];
@@ -332,7 +347,13 @@
                 const absY = Math.abs(deltaY);
                 if (Math.max(absX, absY) < DIRECTION_SLOP) return false;
 
-                if (gesture.drawerOpen) {
+                if (gesture.sheetOpen) {
+                    if (absY <= absX * DIRECTION_RATIO || deltaY <= 0) {
+                        gesture = null;
+                        return false;
+                    }
+                    lockGesture('sheet', touch.clientX, touch.clientY, time);
+                } else if (gesture.drawerOpen) {
                     if (absX <= absY * DIRECTION_RATIO) {
                         gesture = null;
                         return false;
@@ -359,7 +380,9 @@
                 }
             }
 
-            const axisDelta = gesture.axis === 'drawer' ? deltaX : deltaY;
+            const axisDelta = gesture.axis === 'drawer'
+                ? deltaX
+                : (gesture.axis === 'sheet' ? -deltaY : deltaY);
             gesture.progress = clamp(gesture.initialProgress + axisDelta / gesture.size, 0, 1);
             recordSample(touch.clientX, touch.clientY, time);
             scheduleRender();
@@ -371,9 +394,9 @@
             const first = gesture.samples[0];
             const last = gesture.samples[gesture.samples.length - 1];
             const elapsed = Math.max(1, last.time - first.time);
-            return gesture.axis === 'drawer'
-                ? (last.x - first.x) / elapsed
-                : (last.y - first.y) / elapsed;
+            if (gesture.axis === 'drawer') return (last.x - first.x) / elapsed;
+            const velocityY = (last.y - first.y) / elapsed;
+            return gesture.axis === 'sheet' ? -velocityY : velocityY;
         }
 
         function settleGesture(cancelled) {
@@ -413,7 +436,7 @@
                     : '2px 0 12px rgba(0, 0, 0, 0)';
                 drawerOverlay.style.opacity = String(targetProgress);
                 setDrawerOpen(shouldOpen);
-            } else {
+            } else if (axis === 'task') {
                 taskDropdown.style.transition = `transform ${transition}, box-shadow ${transition}`;
                 taskDropdownOverlay.style.transition = `opacity ${transition}`;
                 void taskDropdown.offsetWidth;
@@ -423,6 +446,16 @@
                     : '0 14px 30px rgba(0, 0, 0, 0)';
                 taskDropdownOverlay.style.opacity = String(targetProgress);
                 setTaskDropdownOpen(shouldOpen);
+            } else {
+                editSheetPanel.style.transition = `transform ${transition}, box-shadow ${transition}`;
+                editSheetOverlay.style.transition = `opacity ${transition}`;
+                void editSheetPanel.offsetWidth;
+                editSheetPanel.style.transform = `translate3d(0, ${targetProgress === 1 ? 0 : size}px, 0)`;
+                editSheetPanel.style.boxShadow = targetProgress === 1
+                    ? '0 -10px 30px rgba(0, 0, 0, 0.12)'
+                    : '0 -10px 30px rgba(0, 0, 0, 0)';
+                editSheetOverlay.style.opacity = String(targetProgress);
+                if (!shouldOpen && typeof closeEditSheet === 'function') closeEditSheet();
             }
 
             gesture = null;
@@ -452,6 +485,7 @@
                 startY: touch.clientY,
                 drawerOpen: drawer.classList.contains('show'),
                 taskOpen: taskDropdown.classList.contains('show'),
+                sheetOpen: editSheetOverlay.classList.contains('show'),
                 axis: null,
                 initialProgress: 0,
                 progress: 0,
@@ -470,7 +504,10 @@
         }, { passive: false, capture: true });
 
         app.addEventListener('touchend', event => {
-            if (!gesture || !getTouch(event.changedTouches, gesture.identifier)) return;
+            if (!gesture) return;
+            const touch = getTouch(event.changedTouches, gesture.identifier);
+            if (!touch) return;
+            if (gesture.axis) recordSample(touch.clientX, touch.clientY, performance.now());
             settleGesture(false);
         }, { passive: true, capture: true });
 
