@@ -237,7 +237,7 @@
 
             const overallRate = totalRecordsCount > 0
                 ? ((totalSubmittedCount / totalRecordsCount) * 100).toFixed(1)
-                : '0.0';
+                : (allTasks.length > 0 ? '100.0' : '0.0');
             // 4. 过滤学生列表（默认按学号升序）
             // 5. 过滤学生列表（默认按学号升序）
             let studentStatsList = students.map(student => {
@@ -333,7 +333,7 @@
                         if (rec.status === 'dark') taskSubmitted++;
                     }
                 });
-                const rate = taskExpected > 0 ? ((taskSubmitted / taskExpected) * 100).toFixed(0) : '0';
+                const rate = taskExpected > 0 ? ((taskSubmitted / taskExpected) * 100).toFixed(0) : (students.length > 0 ? '100' : '0');
                 taskStatsMap[task.id] = {
                     submitted: taskSubmitted,
                     expected: taskExpected,

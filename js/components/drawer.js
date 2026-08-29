@@ -761,8 +761,8 @@
                     return ta.localeCompare(tb);
                 });
 
-                function formatCellContent(record) {
-                    if (!record) return '';
+                function formatCellContent(record, isExempt) {
+                    if (!record) return isExempt ? '免交' : '';
                     const { status, badge } = record;
                     if (badge && String(badge).trim()) {
                         const badgeStr = String(badge).trim();
@@ -771,6 +771,7 @@
                         return badgeStr;
                     }
                     if (status === 'dark') return '√';
+                    if (isExempt) return '免交';
                     if (status === 'muted') return '/';
                     return '';
                 }
@@ -798,7 +799,8 @@
                         escapeCsvCell(student.name),
                         ...tasks.map(t => {
                             const rec = (state.records[t.id] && state.records[t.id][student.id]) || null;
-                            return escapeCsvCell(formatCellContent(rec));
+                            const isExempt = store.isEnglishTask(t) && student.isNonEnglish && (!rec || rec.status === 'muted');
+                            return escapeCsvCell(formatCellContent(rec, isExempt));
                         })
                     ];
                     return row.join(',');
@@ -1119,7 +1121,7 @@
         // 7. 渲染当前代码版本的 UTC+8 编辑时间戳
         const drawerFooterText = drawer ? drawer.querySelector('.drawer-footer-text') : null;
         if (drawerFooterText) {
-            const buildTime = window.TWS3.BUILD_INFO ? window.TWS3.BUILD_INFO.time : '2026-08-29 22:35:24';
+            const buildTime = window.TWS3.BUILD_INFO ? window.TWS3.BUILD_INFO.time : '2026-08-29 22:39:14';
             drawerFooterText.textContent = buildTime;
             drawerFooterText.title = `代码版本时间: ${buildTime} (点击复制或查看)`;
             drawerFooterText.style.cursor = 'pointer';

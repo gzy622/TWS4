@@ -1651,8 +1651,8 @@
                 }
             }
 
-            const required = Math.max(1, total - exempt);
-            const percentage = total > 0 ? (submitted / required) * 100 : 0;
+            const required = Math.max(0, total - exempt);
+            const percentage = required > 0 ? (submitted / required) * 100 : (total > 0 ? 100 : 0);
             return { total, submitted, exempt, required, percentage: Math.min(100, percentage) };
         }
 
