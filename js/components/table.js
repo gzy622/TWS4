@@ -84,18 +84,6 @@
 
                 <!-- 记分册表格主卡片 -->
                 <div class="table-card" id="table-card">
-                    <div class="table-card-header-bar">
-                        <div class="table-card-title-wrap">
-                            <span class="table-card-title">记分册表格</span>
-                            <span class="table-badge-count" id="table-filtered-count">0 人</span>
-                            <span class="table-stat-mini" id="table-stat-mini">提交率 0%</span>
-                        </div>
-                        <div class="table-legend-wrap">
-                            <span class="table-legend-item"><span class="legend-dot dark"></span>已交</span>
-                            <span class="table-legend-item"><span class="legend-dot white"></span>未交</span>
-                            <span class="table-legend-item"><span class="legend-dot muted"></span>免交</span>
-                        </div>
-                    </div>
                     <div class="table-scroll-wrapper" id="table-scroll-wrapper">
                         <div id="table-body-container"></div>
                     </div>
@@ -239,13 +227,7 @@
             const overallRate = totalRecordsCount > 0
                 ? ((totalSubmittedCount / totalRecordsCount) * 100).toFixed(1)
                 : '0.0';
-
-            // 4. 更新卡片头部迷你统计
-            const miniStat = document.getElementById('table-stat-mini');
-            if (miniStat) {
-                miniStat.textContent = `提交率 ${overallRate}%`;
-            }
-
+            // 4. 过滤学生列表（默认按学号升序）
             // 5. 过滤学生列表（默认按学号升序）
             let studentStatsList = students.map(student => {
                 let submitted = 0;
@@ -290,11 +272,6 @@
                 return String(a.student.studentNo || a.student.id).localeCompare(String(b.student.studentNo || b.student.id));
             });
 
-            // 更新展示人数徽标
-            const countBadge = document.getElementById('table-filtered-count');
-            if (countBadge) {
-                countBadge.textContent = `${studentStatsList.length} 人`;
-            }
 
             const bodyContainer = document.getElementById('table-body-container');
             if (!bodyContainer) return;
