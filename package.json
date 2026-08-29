@@ -10,6 +10,7 @@
     "cap:sync": "npm run build && npx cap sync android",
     "cap:open": "npx cap open android",
     "cap:run": "npx cap run android",
+    "build:apk": "npm run cap:sync && cd android && gradlew.bat assembleRelease",
     "check": "node --check server.js && node --check js/app.js && node --check js/state/store.js && node --check js/components/grid.js && node --check js/components/seat.js"
   },
   "engines": {
