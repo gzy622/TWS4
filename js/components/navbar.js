@@ -454,8 +454,10 @@
                     const groupHeader = document.createElement('div');
                     groupHeader.className = 'task-group-header';
                     groupHeader.innerHTML = `
-                        <span class="task-group-title">进行中</span>
-                        <span class="task-group-count">${ongoingTasks.length}</span>
+                        <div class="task-group-header-left">
+                            <span class="task-group-title">进行中</span>
+                            <span class="task-group-count">${ongoingTasks.length}</span>
+                        </div>
                     `;
                     listContainer.appendChild(groupHeader);
                 }
