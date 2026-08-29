@@ -97,9 +97,14 @@
             initBackHandler();
         }
 
-        // 9. 初始化调试录制器与悬浮球
-        if (logger && logger.initLogger) {
-            logger.initLogger();
-        }
+        // 9. 延后初始化调试录制器与悬浮球，让首屏视觉渲染即刻完成
+        const runIdle = typeof window.requestIdleCallback === 'function'
+            ? window.requestIdleCallback
+            : (cb => setTimeout(cb, 60));
+        runIdle(() => {
+            if (logger && logger.initLogger) {
+                logger.initLogger();
+            }
+        });
     });
 })();

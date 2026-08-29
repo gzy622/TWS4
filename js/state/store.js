@@ -96,6 +96,16 @@
         return entity[deleted ? 'deletedAt' : 'updatedAt'] || entity.updatedAt || entity.createdAt || EMPTY_TIME;
     }
 
+    function deepClone(obj) {
+        if (obj === null || typeof obj !== 'object') return obj;
+        if (typeof structuredClone === 'function') {
+            try {
+                return structuredClone(obj);
+            } catch (_) {}
+        }
+        return JSON.parse(JSON.stringify(obj));
+    }
+
     function stableStringify(value) {
         if (Array.isArray(value)) return '[' + value.map(stableStringify).join(',') + ']';
         if (value && typeof value === 'object') {
@@ -105,7 +115,7 @@
     }
 
     function scheduleTemplatePayload(schedule) {
-        const payload = JSON.parse(JSON.stringify(schedule));
+        const payload = deepClone(schedule);
         delete payload.updatedAt;
         delete payload.templateVersion;
         return payload;
@@ -113,68 +123,82 @@
 
     function isLegacyDefaultSchedule(schedule) {
         if (!schedule || typeof schedule !== 'object' || Array.isArray(schedule)) return false;
-        if (Number(schedule.templateVersion) >= Number(INITIAL_SCHEDULE_TEMPLATE_VERSION)) return false;
+        if (schedule.templateVersion === INITIAL_SCHEDULE_TEMPLATE_VERSION || Number(schedule.templateVersion) >= Number(INITIAL_SCHEDULE_TEMPLATE_VERSION)) return false;
+        if (!schedule.grid || Object.keys(schedule.grid).length === 0) return false;
         return stableStringify(scheduleTemplatePayload(schedule)) === stableStringify(LEGACY_SCHEDULE_TEMPLATE);
     }
 
     function normalizeSchedule(schedule) {
         if (!schedule || typeof schedule !== 'object' || Array.isArray(schedule)) {
-            return { schedule: JSON.parse(JSON.stringify(INITIAL_SCHEDULE)), changed: true };
+            return { schedule: deepClone(INITIAL_SCHEDULE), changed: true };
         }
 
         if (isLegacyDefaultSchedule(schedule)) {
-            return { schedule: JSON.parse(JSON.stringify(INITIAL_SCHEDULE)), changed: true, migrated: true };
+            return { schedule: deepClone(INITIAL_SCHEDULE), changed: true, migrated: true };
         }
 
-        const normalized = JSON.parse(JSON.stringify(schedule));
+        // 版本与结构完整时直接快速返回，避免对大数据集执行深拷贝与二次解析
+        if (
+            schedule.templateVersion === INITIAL_SCHEDULE_TEMPLATE_VERSION &&
+            Array.isArray(schedule.days) &&
+            Array.isArray(schedule.periods) &&
+            Array.isArray(schedule.courseLibrary) &&
+            schedule.grid && typeof schedule.grid === 'object' &&
+            schedule.lunchBreak && typeof schedule.lunchBreak === 'object' &&
+            schedule.updatedAt
+        ) {
+            return { schedule, changed: false };
+        }
+
+        const normalized = deepClone(schedule);
         let changed = false;
         if (!Array.isArray(normalized.days)) {
-            normalized.days = JSON.parse(JSON.stringify(INITIAL_SCHEDULE.days));
+            normalized.days = deepClone(INITIAL_SCHEDULE.days);
             changed = true;
         }
         if (!Array.isArray(normalized.periods)) {
-            normalized.periods = JSON.parse(JSON.stringify(INITIAL_SCHEDULE.periods));
+            normalized.periods = deepClone(INITIAL_SCHEDULE.periods);
             changed = true;
         }
         if (!Array.isArray(normalized.courseLibrary)) {
-            normalized.courseLibrary = JSON.parse(JSON.stringify(INITIAL_SCHEDULE.courseLibrary));
+            normalized.courseLibrary = deepClone(INITIAL_SCHEDULE.courseLibrary);
             changed = true;
         }
         if (!normalized.grid || typeof normalized.grid !== 'object' || Array.isArray(normalized.grid)) {
-            normalized.grid = JSON.parse(JSON.stringify(INITIAL_SCHEDULE.grid));
+            normalized.grid = deepClone(INITIAL_SCHEDULE.grid);
             changed = true;
         }
         if (!normalized.lunchBreak || typeof normalized.lunchBreak !== 'object') {
             normalized.lunchBreak = {
                 enabled: true,
                 afterPeriod: 4,
-                name: '午间休息'
-            };
-            changed = true;
-        } else {
-            if (typeof normalized.lunchBreak.enabled !== 'boolean') {
-                normalized.lunchBreak.enabled = true;
-                changed = true;
-            }
-            if (typeof normalized.lunchBreak.afterPeriod !== 'number') {
-                normalized.lunchBreak.afterPeriod = 4;
-                changed = true;
-            }
-            if (typeof normalized.lunchBreak.name !== 'string' || !normalized.lunchBreak.name.trim()) {
-                normalized.lunchBreak.name = '午间休息';
-                changed = true;
-            }
-        }
-        if (!normalized.updatedAt) {
-            normalized.updatedAt = getUtcNowIso();
-            changed = true;
-        }
-        if (normalized.templateVersion !== INITIAL_SCHEDULE_TEMPLATE_VERSION) {
-            normalized.templateVersion = INITIAL_SCHEDULE_TEMPLATE_VERSION;
-            changed = true;
-        }
-        return { schedule: normalized, changed };
-    }
+                 name: '午间休息'
+             };
+             changed = true;
+         } else {
+             if (typeof normalized.lunchBreak.enabled !== 'boolean') {
+                 normalized.lunchBreak.enabled = true;
+                 changed = true;
+             }
+             if (typeof normalized.lunchBreak.afterPeriod !== 'number') {
+                 normalized.lunchBreak.afterPeriod = 4;
+                 changed = true;
+             }
+             if (typeof normalized.lunchBreak.name !== 'string' || !normalized.lunchBreak.name.trim()) {
+                 normalized.lunchBreak.name = '午间休息';
+                 changed = true;
+             }
+         }
+         if (!normalized.updatedAt) {
+             normalized.updatedAt = getUtcNowIso();
+             changed = true;
+         }
+         if (normalized.templateVersion !== INITIAL_SCHEDULE_TEMPLATE_VERSION) {
+             normalized.templateVersion = INITIAL_SCHEDULE_TEMPLATE_VERSION;
+             changed = true;
+         }
+         return { schedule: normalized, changed };
+     }
 
     function hasScheduleData(state) {
         return !!(state && state.schedule && typeof state.schedule === 'object' && !Array.isArray(state.schedule));
@@ -415,20 +439,20 @@
 
             let officerTable = cls.officerTable;
             if (!officerTable || typeof officerTable !== 'object') {
-                officerTable = JSON.parse(JSON.stringify(INITIAL_OFFICERS));
+                officerTable = deepClone(INITIAL_OFFICERS);
             } else {
                 if (!Array.isArray(officerTable.roles)) officerTable.roles = [];
-                if (!officerTable.updatedAt) officerTable.updatedAt = getUtcNowIso();
+                if (!officerTable.updatedAt) officerTable.updatedAt = classUpdatedAt;
             }
 
             let dutyTable = cls.dutyTable;
             if (!dutyTable || typeof dutyTable !== 'object') {
-                dutyTable = JSON.parse(JSON.stringify(INITIAL_DUTY));
+                dutyTable = deepClone(INITIAL_DUTY);
             } else {
                 if (!Array.isArray(dutyTable.days)) dutyTable.days = [];
                 if (!Array.isArray(dutyTable.roles)) dutyTable.roles = [];
                 if (!dutyTable.assignments || typeof dutyTable.assignments !== 'object') dutyTable.assignments = {};
-                if (!dutyTable.updatedAt) dutyTable.updatedAt = getUtcNowIso();
+                if (!dutyTable.updatedAt) dutyTable.updatedAt = classUpdatedAt;
             }
 
             return {

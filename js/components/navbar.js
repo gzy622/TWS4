@@ -656,12 +656,11 @@
             }
         });
 
-        // 初始渲染
-        renderTaskList();
+        // 初始渲染：仅更新可见头部状态与进度，列表 DOM 延后至首次打开下拉时构建
+        taskListDirty = true;
         updateHeaderTitle();
         updateModeSwitcher();
         updateProgress();
-
         return {
             updateProgress,
             renderTasks: () => {

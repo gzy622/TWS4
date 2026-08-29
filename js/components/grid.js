@@ -9,12 +9,7 @@
     function initGrid({ onOpenEdit }) {
         const gridContainer = document.getElementById('card-grid');
 
-        function createCardElement(student, record) {
-            const card = document.createElement('div');
-            card.className = `card ${record.status || 'white'}`;
-            card.classList.toggle('number-hidden', !store.getShowStudentNumbers());
-            card.dataset.id = student.id;
-
+        function getCardInnerHtml(student, record, isEnglishTask) {
             let badgeHtml = '';
             const score = record.score !== null && record.score !== undefined && record.score !== ''
                 ? record.score
@@ -22,12 +17,11 @@
             const note = record.note || (!score ? record.badge : '');
             if (score) {
                 badgeHtml = `<span class="badge">${score}分</span>`;
-            } else if (store.isEnglishTask() && student.isNonEnglish && record.status === 'muted') {
+            } else if (isEnglishTask && student.isNonEnglish && record.status === 'muted') {
                 badgeHtml = `<span class="badge non-english">免交</span>`;
             }
             const noteHtml = note ? `<span class="card-note">${note}</span>` : '';
-
-            card.innerHTML = `
+            return `
                 ${badgeHtml}
                 <span class="card-number">${student.studentNo || student.id}</span>
                 <span class="card-text">
@@ -35,6 +29,14 @@
                     ${noteHtml}
                 </span>
             `;
+        }
+
+        function createCardElement(student, record, isEnglishTask = store.isEnglishTask(), showNumbers = store.getShowStudentNumbers()) {
+            const card = document.createElement('div');
+            card.className = `card ${record.status || 'white'}`;
+            if (!showNumbers) card.classList.add('number-hidden');
+            card.dataset.id = student.id;
+            card.innerHTML = getCardInnerHtml(student, record, isEnglishTask);
             return card;
         }
 
@@ -54,16 +56,19 @@
                 gridContainer.style.animation = 'fadeInGrid 0.28s ease-out';
             }
 
-            gridContainer.innerHTML = '';
-            const fragment = document.createDocumentFragment();
+            const showNumbers = store.getShowStudentNumbers();
+            const isEnglish = store.isEnglishTask();
+            const students = state.students || [];
 
-            state.students.forEach(student => {
+            let html = '';
+            for (let i = 0; i < students.length; i++) {
+                const student = students[i];
                 const record = records[student.id] || { status: 'white', badge: null };
-                const card = createCardElement(student, record);
-                fragment.appendChild(card);
-            });
+                const hiddenClass = showNumbers ? '' : ' number-hidden';
+                html += `<div class="card ${record.status || 'white'}${hiddenClass}" data-id="${student.id}">${getCardInnerHtml(student, record, isEnglish)}</div>`;
+            }
 
-            gridContainer.appendChild(fragment);
+            gridContainer.innerHTML = html;
         }
 
         function updateSingleCard(studentId) {
