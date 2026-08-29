@@ -17,6 +17,7 @@ html, body {
     margin: 0;
     padding: 0;
     overflow: hidden;
+    overscroll-behavior: none;
 }
 
 body {
@@ -47,4 +48,5 @@ button, input, textarea, select {
     background-color: var(--bg-page);
     position: relative;
     overflow: hidden;
+    overscroll-behavior: none;
 }

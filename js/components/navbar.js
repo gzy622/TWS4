@@ -509,6 +509,7 @@
         }
 
         function toggleDropdown(forceState) {
+            const wasShown = taskDropdown.classList.contains('show');
             const isShown = typeof forceState === 'boolean'
                 ? taskDropdown.classList.toggle('show', forceState)
                 : taskDropdown.classList.toggle('show');
@@ -516,14 +517,15 @@
             if (taskDropdownOverlay) {
                 taskDropdownOverlay.classList.toggle('show', isShown);
             }
-            if (isShown) {
-                // 打开时重置搜索
+            if (isShown && !wasShown) {
+                // 每次新打开时重置搜索；手势收尾重复写入打开态时不重建列表。
                 if (searchInput) searchInput.value = '';
                 searchQuery = '';
                 if (searchClearBtn) searchClearBtn.style.display = 'none';
                 isArchivedGroupExpanded = null;
                 renderTaskList();
             }
+            return isShown;
         }
 
         function closeDropdown() {
@@ -637,6 +639,7 @@
                 updateHeaderTitle();
                 updateModeSwitcher();
             },
+            toggleDropdown,
             closeDropdown
         };
     }

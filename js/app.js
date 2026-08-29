@@ -8,6 +8,7 @@
         initEditSheet,
         initModal,
         initBackHandler,
+        gestures,
         logger,
         store
     } = window.TWS3;
@@ -37,11 +38,24 @@
         // 2. 初始化编辑面板
         const editSheet = initEditSheet();
 
-        // 3. 初始化导航栏
-        initNavbar({});
+        // 3. 初始化导航栏与侧边抽屉
+        const navbar = initNavbar({});
+        const drawer = initDrawer();
 
-        // 4. 初始化侧边抽屉
-        initDrawer();
+        // 4. 统一接管横纵面板手势，避免组件分别监听造成方向竞争
+        if (gestures && typeof gestures.initGlobalPanelGestures === 'function') {
+            gestures.initGlobalPanelGestures({
+                setDrawerOpen: open => drawer.toggleDrawer(open),
+                setTaskDropdownOpen: open => {
+                    if (open) navbar.toggleDropdown(true);
+                    else navbar.closeDropdown();
+                },
+                canOpenTaskDropdown: () => {
+                    const mode = store.getViewMode();
+                    return mode === 'grid' || mode === 'seat';
+                }
+            });
+        }
 
         // 5. 主视图首次打开时再初始化，避免首屏构建不可见内容
         const initializedViews = new Set();
