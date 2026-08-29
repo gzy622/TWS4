@@ -180,10 +180,8 @@
         const DIRECTION_SLOP = 10;
         const DIRECTION_RATIO = 1.2;
         const FLING_VELOCITY = 0.45;
-        const PROJECTION_MS = 180;
-        const MIN_SETTLE_MS = 160;
-        const MAX_SETTLE_MS = 300;
-        const DECELERATION_EASING = 'cubic-bezier(0.2, 0, 0, 1)';
+        const MIN_SETTLE_MS = 140;
+        const MAX_SETTLE_MS = 340;
         let gesture = null;
         let renderFrame = 0;
         let settleTimer = 0;
@@ -299,11 +297,13 @@
         }
 
         function recordSample(x, y, time) {
-            gesture.samples.push({ x, y, time });
-            const cutoff = time - 120;
-            while (gesture.samples.length > 2 && gesture.samples[0].time < cutoff) {
-                gesture.samples.shift();
-            }
+            const samples = gesture.samples;
+            samples.push({ x, y, time });
+            // 保留最近 200ms 窗口用于速度估算
+            const cutoff = time - 200;
+            let i = 0;
+            while (i < samples.length - 2 && samples[i].time < cutoff) i++;
+            if (i > 0) samples.splice(0, i);
         }
 
         function lockGesture(axis, currentX, currentY, time) {
@@ -381,12 +381,43 @@
 
         function getAxisVelocity() {
             if (!gesture || gesture.samples.length < 2) return 0;
-            const first = gesture.samples[0];
-            const last = gesture.samples[gesture.samples.length - 1];
-            const elapsed = Math.max(1, last.time - first.time);
-            if (gesture.axis === 'drawer') return (last.x - first.x) / elapsed;
-            const velocityY = (last.y - first.y) / elapsed;
-            return gesture.axis === 'sheet' ? -velocityY : velocityY;
+            const samples = gesture.samples;
+            const last = samples[samples.length - 1];
+            const isDrawer = gesture.axis === 'drawer';
+            const isSheet = gesture.axis === 'sheet';
+
+            // 相邻样本对的瞬时速度，按时间接近度加权平均
+            let weightedV = 0, wTotal = 0;
+            for (let i = 1; i < samples.length; i++) {
+                const prev = samples[i - 1];
+                const curr = samples[i];
+                const dt = curr.time - prev.time;
+                if (dt < 0.5) continue;
+                const dp = isDrawer
+                    ? curr.x - prev.x
+                    : (isSheet ? -(curr.y - prev.y) : curr.y - prev.y);
+                const v = dp / dt;
+                // 越近的样本对权重越大
+                const age = last.time - curr.time;
+                const w = 1 / (1 + age * 0.025);
+                weightedV += v * w;
+                wTotal += w;
+            }
+            return wTotal > 0 ? weightedV / wTotal : 0;
+        }
+
+        /**
+         * 根据释放时的归一化速度生成自定义 cubic-bezier，
+         * 让 CSS transition 的起始斜率匹配手指离开瞬间的实际速度，消除突变顿挫。
+         */
+        function buildSettleEasing(normalizedV) {
+            // normalizedV: 释放瞬间速度占 (剩余距离/持续时间) 的比值
+            // 低速 → 标准减速 (0.2,0,0,1)；高速 → 起始段更陡
+            const v = clamp(Math.abs(normalizedV), 0, 4);
+            // P1.x 越小起始越陡；P1.y 按速度比例拉高
+            const p1x = clamp(0.18 - v * 0.03, 0.02, 0.18);
+            const p1y = clamp(v * 0.28, 0, 1.2);
+            return `cubic-bezier(${p1x.toFixed(3)},${p1y.toFixed(3)},0,1)`;
         }
 
         function settleGesture(cancelled) {
@@ -398,67 +429,72 @@
                 cancelAnimationFrame(renderFrame);
                 renderFrame = 0;
             }
+            // 先同步写入当前跟踪位置（transition:none），确保浏览器提交此帧
             renderProgress(gesture.axis, gesture.progress);
 
             const axis = gesture.axis;
             const progress = gesture.progress;
             const size = gesture.size;
             const velocity = cancelled ? 0 : getAxisVelocity();
-            const projectedProgress = progress + velocity * PROJECTION_MS / size;
+            const absV = Math.abs(velocity);
             const shouldOpen = cancelled
                 ? gesture.initialProgress === 1
-                : (Math.abs(velocity) >= FLING_VELOCITY ? velocity > 0 : projectedProgress >= 0.5);
+                : (absV >= FLING_VELOCITY ? velocity > 0 : progress + velocity * 180 / size >= 0.5);
             const targetProgress = shouldOpen ? 1 : 0;
-            const remainingDistance = Math.abs(targetProgress - progress) * size;
-            const velocityDuration = Math.abs(velocity) > 0.05
-                ? remainingDistance / Math.abs(velocity)
-                : 240;
-            const duration = Math.round(clamp(velocityDuration, MIN_SETTLE_MS, MAX_SETTLE_MS));
-            const transition = `${duration}ms ${DECELERATION_EASING}`;
+            const remaining = Math.abs(targetProgress - progress) * size;
+
+            // 根据速度动态计算时长：匀减速模型
+            let duration;
+            if (absV > 0.05 && remaining > 0.5) {
+                duration = Math.round(clamp(remaining / absV, MIN_SETTLE_MS, MAX_SETTLE_MS));
+            } else {
+                duration = 220;
+            }
+
+            // 归一化速度 = 实际速度 / (剩余距离 / 持续时间)
+            const refSpeed = remaining > 0.5 ? remaining / duration : 1;
+            const normalizedV = absV / refSpeed;
+            const easing = cancelled ? 'cubic-bezier(0.2,0,0,1)' : buildSettleEasing(normalizedV);
+            const transition = `${duration}ms ${easing}`;
 
             gesture = null;
 
-            // renderProgress 已在本帧设置 transition:none + 当前位置
-            // 双 rAF 确保浏览器先提交当前位置再设置过渡目标，替代 offsetWidth 同步回流
-            requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                if (axis === 'drawer') {
-                    drawer.style.transition = `transform ${transition}`;
-                    drawerOverlay.style.transition = `opacity ${transition}`;
-                    drawer.style.transform = `translate3d(${targetProgress === 1 ? 0 : -size}px, 0, 0)`;
-                    drawer.style.boxShadow = targetProgress === 1
-                        ? '2px 0 12px rgba(0, 0, 0, 0.12)'
-                        : 'none';
-                    drawerOverlay.style.opacity = String(targetProgress);
-                    setDrawerOpen(shouldOpen);
-                } else if (axis === 'task') {
-                    taskDropdown.style.transition = `transform ${transition}`;
-                    taskDropdownOverlay.style.transition = `opacity ${transition}`;
-                    taskDropdown.style.transform = `translate3d(0, ${targetProgress === 1 ? 0 : -size}px, 0)`;
-                    taskDropdown.style.boxShadow = targetProgress === 1
-                        ? '0 14px 30px rgba(0, 0, 0, 0.12)'
-                        : 'none';
-                    taskDropdownOverlay.style.opacity = String(targetProgress);
-                    setTaskDropdownOpen(shouldOpen);
-                } else {
-                    editSheetPanel.style.transition = `transform ${transition}`;
-                    editSheetOverlay.style.transition = `background-color ${transition}`;
-                    editSheetPanel.style.transform = `translate3d(0, ${targetProgress === 1 ? 0 : size}px, 0)`;
-                    editSheetPanel.style.boxShadow = targetProgress === 1
-                        ? '0 -10px 30px rgba(0, 0, 0, 0.12)'
-                        : 'none';
-                    editSheetOverlay.style.backgroundColor = targetProgress === 1
-                        ? 'rgba(15, 23, 42, 0.32)'
-                        : 'rgba(15, 23, 42, 0)';
-                    if (!shouldOpen && typeof closeEditSheet === 'function') closeEditSheet();
-                }
-            });
-            });
+            // 单次 offsetWidth 强制提交 transition:none 状态，然后立即设置过渡目标
+            // 比双 rAF 少一帧空白（~16ms），消除快速滑动时的停顿感
+            if (axis === 'drawer') {
+                void drawer.offsetWidth;
+                drawer.style.transition = `transform ${transition}`;
+                drawerOverlay.style.transition = `opacity ${transition}`;
+                drawer.style.transform = `translate3d(${targetProgress === 1 ? 0 : -size}px, 0, 0)`;
+                drawer.style.boxShadow = targetProgress === 1
+                    ? '2px 0 12px rgba(0, 0, 0, 0.12)' : 'none';
+                drawerOverlay.style.opacity = String(targetProgress);
+                setDrawerOpen(shouldOpen);
+            } else if (axis === 'task') {
+                void taskDropdown.offsetWidth;
+                taskDropdown.style.transition = `transform ${transition}`;
+                taskDropdownOverlay.style.transition = `opacity ${transition}`;
+                taskDropdown.style.transform = `translate3d(0, ${targetProgress === 1 ? 0 : -size}px, 0)`;
+                taskDropdown.style.boxShadow = targetProgress === 1
+                    ? '0 14px 30px rgba(0, 0, 0, 0.12)' : 'none';
+                taskDropdownOverlay.style.opacity = String(targetProgress);
+                setTaskDropdownOpen(shouldOpen);
+            } else {
+                void editSheetPanel.offsetWidth;
+                editSheetPanel.style.transition = `transform ${transition}`;
+                editSheetOverlay.style.transition = `background-color ${transition}`;
+                editSheetPanel.style.transform = `translate3d(0, ${targetProgress === 1 ? 0 : size}px, 0)`;
+                editSheetPanel.style.boxShadow = targetProgress === 1
+                    ? '0 -10px 30px rgba(0, 0, 0, 0.12)' : 'none';
+                editSheetOverlay.style.backgroundColor = targetProgress === 1
+                    ? 'rgba(15, 23, 42, 0.32)' : 'rgba(15, 23, 42, 0)';
+                if (!shouldOpen && typeof closeEditSheet === 'function') closeEditSheet();
+            }
 
             settleTimer = window.setTimeout(() => {
                 settleTimer = 0;
                 clearInlineStyles();
-            }, duration + 68);
+            }, duration + 34);
         }
 
         app.addEventListener('touchstart', event => {
