@@ -5,6 +5,7 @@
   "description": "独立的班级网格视图与座位表视图项目",
   "scripts": {
     "start": "node server.js",
+    "sync:version": "node scripts/sync-version.js",
     "check": "node --check server.js && node --check js/app.js && node --check js/state/store.js && node --check js/components/grid.js && node --check js/components/seat.js"
   },
   "engines": {
