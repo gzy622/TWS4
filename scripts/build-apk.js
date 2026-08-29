@@ -10,19 +10,21 @@ function buildApk() {
     const gradlewCmd = isWindows ? path.join(androidDir, 'gradlew.bat') : path.join(androidDir, 'gradlew');
 
     console.log('[APK构建] 开始执行 Gradle assembleRelease...');
-    const result = spawnSync(gradlewCmd, ['assembleRelease'], {
+    const startTime = Date.now();
+    const result = spawnSync(gradlewCmd, ['assembleRelease', '--daemon'], {
         cwd: androidDir,
         stdio: 'inherit',
-        shell: true
+        shell: isWindows
     });
 
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     if (result.status !== 0) {
-        console.error('[APK构建失败] 退出码:', result.status);
+        console.error(`[APK构建失败] 耗时 ${duration}s, 退出码:`, result.status);
         process.exit(result.status || 1);
     }
 
     const apkPath = path.join(androidDir, 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk');
-    console.log(`[APK构建成功] 产物路径: ${apkPath}`);
+    console.log(`[APK构建成功] 耗时: ${duration}s | 产物路径: ${apkPath}`);
 }
 
 if (require.main === module) {
