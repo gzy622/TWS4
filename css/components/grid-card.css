@@ -13,6 +13,10 @@
     will-change: opacity, transform;
 }
 
+.grid-container[hidden] {
+    display: none !important;
+}
+
 .card {
     position: relative;
     height: 62px;

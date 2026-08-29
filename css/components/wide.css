@@ -13,6 +13,10 @@
     will-change: opacity, transform;
 }
 
+.wide-view[hidden] {
+    display: none !important;
+}
+
 .wide-card {
     position: relative;
     height: 56px;

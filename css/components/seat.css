@@ -8,9 +8,8 @@
     will-change: opacity, transform;
 }
 
-.seat-view[hidden],
-.grid-container[hidden] {
-    display: none;
+.seat-view[hidden] {
+    display: none !important;
 }
 
 .seat-toolbar {

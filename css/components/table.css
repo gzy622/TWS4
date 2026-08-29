@@ -14,7 +14,7 @@
 }
 
 .table-view[hidden] {
-    display: none;
+    display: none !important;
 }
 
 /* 精简顶层控制栏（单行紧凑排列） */

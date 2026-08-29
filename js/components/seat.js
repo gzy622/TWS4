@@ -101,8 +101,6 @@
 
         function syncView(mode = store.getViewMode()) {
             const isSeat = mode === 'seat';
-            gridContainer.hidden = mode !== 'grid';
-            seatContainer.hidden = !isSeat;
             if (!isSeat) leaveLandscape();
         }
 
