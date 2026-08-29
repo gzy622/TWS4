@@ -1,8 +1,9 @@
 (function() {
     window.TWS3 = window.TWS3 || {};
 
-    const BASE_TIME = "2026-06-20T08:00:00.000Z";
+    const BASE_TIME = "2026-08-28T08:00:00.000Z";
 
+    // 班级 1：高二 (3) 班学生花名册 (50人)
     const INITIAL_STUDENT_NAMES = [
         "林澈", "何予安", "罗知夏", "周宁", "谢明澈",
         "邵清禾", "许禾", "钟以宁", "余景然", "沈川",
@@ -16,75 +17,280 @@
         "廖予墨", "金明希", "石以南", "赖云舒", "毛安澄"
     ];
 
+    // 学号 5、18、32、45 设为非英语生（日语/俄语），用于展示多语种豁免特性
+    const NON_ENGLISH_IDS_CLASS_1 = new Set([5, 18, 32, 45]);
+
     const INITIAL_STUDENTS = INITIAL_STUDENT_NAMES.map((name, index) => {
         const id = index + 1;
         return {
             id: id,
             studentNo: String(id),
             name: name,
-            isNonEnglish: false,
+            isNonEnglish: NON_ENGLISH_IDS_CLASS_1.has(id),
             updatedAt: BASE_TIME
         };
     });
 
+    // 多维度作业集（包含进行中与已归档、不同科目与模式）
     const INITIAL_TASKS = [
-        { id: "task_0618", name: "0618语文默写", subject: "语文", archived: true, createdAt: "2026-06-18T08:00:00.000Z", updatedAt: "2026-06-18T08:00:00.000Z" },
-        { id: "task_0619", name: "0619数学复习", subject: "数学", archived: true, createdAt: "2026-06-19T08:00:00.000Z", updatedAt: "2026-06-19T08:00:00.000Z" },
-        { id: "task_0620", name: "0620作业", subject: "未设置", archived: false, createdAt: "2026-06-20T08:00:00.000Z", updatedAt: "2026-06-20T08:00:00.000Z" }
+        {
+            id: "task_0828_yw",
+            name: "0828 语文《赤壁赋》背诵默写",
+            subject: "语文",
+            archived: false,
+            createdAt: "2026-08-28T08:00:00.000Z",
+            updatedAt: "2026-08-28T08:00:00.000Z"
+        },
+        {
+            id: "task_0828_sx",
+            name: "0828 数学导数与切线综合练习",
+            subject: "数学",
+            archived: false,
+            createdAt: "2026-08-28T07:30:00.000Z",
+            updatedAt: "2026-08-28T07:30:00.000Z"
+        },
+        {
+            id: "task_0828_yy",
+            name: "0828 英语Unit3核心词汇背诵",
+            subject: "英语",
+            archived: false,
+            createdAt: "2026-08-28T07:00:00.000Z",
+            updatedAt: "2026-08-28T07:00:00.000Z"
+        },
+        {
+            id: "task_0827_wl",
+            name: "0827 物理电磁感应大题专练",
+            subject: "物理",
+            archived: false,
+            createdAt: "2026-08-27T08:00:00.000Z",
+            updatedAt: "2026-08-27T08:00:00.000Z"
+        },
+        {
+            id: "task_0825_hx",
+            name: "0825 化学有机推断综合周练",
+            subject: "化学",
+            archived: true,
+            createdAt: "2026-08-25T08:00:00.000Z",
+            updatedAt: "2026-08-25T08:00:00.000Z"
+        },
+        {
+            id: "task_0822_sw",
+            name: "0822 生物伴性遗传考点测验",
+            subject: "生物",
+            archived: true,
+            createdAt: "2026-08-22T08:00:00.000Z",
+            updatedAt: "2026-08-22T08:00:00.000Z"
+        },
+        {
+            id: "task_0818_ls",
+            name: "0818 历史近代史主观题巩固",
+            subject: "历史",
+            archived: true,
+            createdAt: "2026-08-18T08:00:00.000Z",
+            updatedAt: "2026-08-18T08:00:00.000Z"
+        }
     ];
 
-    const RAW_0620_RECORDS = {
-        3: { status: "dark", badge: "2分" },
-        7: { status: "white", badge: "未订正" },
-        9: { status: "dark", badge: null },
-        12: { status: "muted", badge: null },
-        13: { status: "dark", badge: null },
-        14: { status: "dark", badge: null },
-        15: { status: "dark", badge: null },
-        18: { status: "dark", badge: "迟交" },
-        19: { status: "dark", badge: null },
-        20: { status: "dark", badge: null },
-        21: { status: "white", badge: "补交" },
-        23: { status: "dark", badge: null },
-        24: { status: "dark", badge: null },
-        25: { status: "dark", badge: null },
-        26: { status: "dark", badge: null },
-        28: { status: "dark", badge: null },
-        29: { status: "dark", badge: "1分" },
-        30: { status: "dark", badge: null },
-        33: { status: "dark", badge: null },
-        34: { status: "dark", badge: null },
-        35: { status: "dark", badge: null },
-        37: { status: "muted", badge: null },
-        38: { status: "dark", badge: null },
-        39: { status: "dark", badge: null },
-        40: { status: "dark", badge: null },
-        41: { status: "dark", badge: null },
-        43: { status: "dark", badge: null },
-        44: { status: "dark", badge: null },
-        45: { status: "dark", badge: null },
-        48: { status: "dark", badge: null },
-        49: { status: "dark", badge: null },
-        50: { status: "dark", badge: null }
+    // 作业 1（语文默写）详细提交记录
+    const RAW_YW_RECORDS = {
+        1: { status: "dark", badge: "全对", score: 100, note: "字迹工整" },
+        2: { status: "dark", badge: "优", score: 98, note: null },
+        3: { status: "dark", badge: null, score: 95, note: null },
+        4: { status: "white", badge: "请假", score: null, note: "病假" },
+        5: { status: "dark", badge: null, score: 92, note: null },
+        6: { status: "dark", badge: "全对", score: 100, note: null },
+        7: { status: "muted", badge: "订正中", score: 78, note: "第3段错别字" },
+        8: { status: "dark", badge: null, score: 90, note: null },
+        9: { status: "dark", badge: null, score: 96, note: null },
+        10: { status: "dark", badge: "补交", score: 88, note: "已补交" },
+        11: { status: "dark", badge: null, score: 94, note: null },
+        12: { status: "muted", badge: "订正中", score: 82, note: "尾句漏字" },
+        13: { status: "dark", badge: null, score: 95, note: null },
+        14: { status: "dark", badge: null, score: 91, note: null },
+        15: { status: "dark", badge: "优+", score: 100, note: "优秀" },
+        16: { status: "dark", badge: null, score: 96, note: null },
+        17: { status: "dark", badge: null, score: 93, note: null },
+        18: { status: "dark", badge: "迟交", score: 85, note: "迟交10分钟" },
+        19: { status: "dark", badge: null, score: 97, note: null },
+        20: { status: "dark", badge: null, score: 92, note: null },
+        21: { status: "white", badge: "未交", score: null, note: null },
+        22: { status: "dark", badge: null, score: 90, note: null },
+        23: { status: "dark", badge: null, score: 94, note: null },
+        24: { status: "dark", badge: null, score: 95, note: null },
+        25: { status: "dark", badge: "全对", score: 100, note: null },
+        26: { status: "dark", badge: null, score: 89, note: null },
+        27: { status: "dark", badge: null, score: 93, note: null },
+        28: { status: "dark", badge: null, score: 91, note: null },
+        29: { status: "muted", badge: "订正中", score: 75, note: "错2处通假字" },
+        30: { status: "dark", badge: null, score: 96, note: null },
+        31: { status: "dark", badge: null, score: 94, note: null },
+        32: { status: "dark", badge: null, score: 92, note: null },
+        33: { status: "dark", badge: null, score: 98, note: null },
+        34: { status: "dark", badge: null, score: 95, note: null },
+        35: { status: "white", badge: "未交", score: null, note: null },
+        36: { status: "dark", badge: null, score: 91, note: null },
+        37: { status: "muted", badge: "订正中", score: 80, note: "重默第一段" },
+        38: { status: "dark", badge: null, score: 96, note: null },
+        39: { status: "dark", badge: null, score: 93, note: null },
+        40: { status: "dark", badge: null, score: 97, note: null },
+        41: { status: "dark", badge: null, score: 95, note: null },
+        42: { status: "dark", badge: null, score: 90, note: null },
+        43: { status: "dark", badge: null, score: 92, note: null },
+        44: { status: "dark", badge: null, score: 94, note: null },
+        45: { status: "dark", badge: null, score: 88, note: null },
+        46: { status: "dark", badge: "优", score: 99, note: null },
+        47: { status: "dark", badge: null, score: 91, note: null },
+        48: { status: "dark", badge: null, score: 93, note: null },
+        49: { status: "dark", badge: null, score: 96, note: null },
+        50: { status: "dark", badge: null, score: 95, note: null }
     };
 
+    // 作业 2（数学练习）详细打分记录
+    const RAW_SX_RECORDS = {
+        1: { status: "dark", badge: "100", score: 100, note: null },
+        2: { status: "dark", badge: "96", score: 96, note: "-4 倒数第二步失误" },
+        3: { status: "dark", badge: "92", score: 92, note: "-8 漏分类讨论" },
+        4: { status: "dark", badge: "88", score: 88, note: null },
+        5: { status: "dark", badge: "95", score: 95, note: null },
+        6: { status: "dark", badge: "100", score: 100, note: "解法巧妙" },
+        7: { status: "dark", badge: "76", score: 76, note: "-24 选填错2题" },
+        8: { status: "dark", badge: "90", score: 90, note: null },
+        9: { status: "dark", badge: "94", score: 94, note: null },
+        10: { status: "white", badge: "未交", score: null, note: null },
+        11: { status: "dark", badge: "91", score: 91, note: null },
+        12: { status: "dark", badge: "85", score: 85, note: "-15 步骤欠规范" },
+        13: { status: "dark", badge: "98", score: 98, note: null },
+        14: { status: "dark", badge: "89", score: 89, note: null },
+        15: { status: "dark", badge: "100", score: 100, note: null },
+        16: { status: "dark", badge: "97", score: 97, note: null },
+        17: { status: "dark", badge: "93", score: 93, note: null },
+        18: { status: "dark", badge: "82", score: 82, note: "-18 计算粗心" },
+        19: { status: "dark", badge: "99", score: 99, note: null },
+        20: { status: "dark", badge: "90", score: 90, note: null },
+        21: { status: "dark", badge: "86", score: 86, note: null },
+        22: { status: "dark", badge: "92", score: 92, note: null },
+        23: { status: "dark", badge: "94", score: 94, note: null },
+        24: { status: "dark", badge: "95", score: 95, note: null },
+        25: { status: "dark", badge: "100", score: 100, note: null },
+        26: { status: "dark", badge: "87", score: 87, note: null },
+        27: { status: "white", badge: "未交", score: null, note: null },
+        28: { status: "dark", badge: "91", score: 91, note: null },
+        29: { status: "muted", badge: "68", score: 68, note: "需面批第21题" },
+        30: { status: "dark", badge: "96", score: 96, note: null },
+        31: { status: "dark", badge: "93", score: 93, note: null },
+        32: { status: "dark", badge: "89", score: 89, note: null },
+        33: { status: "dark", badge: "97", score: 97, note: null },
+        34: { status: "dark", badge: "94", score: 94, note: null },
+        35: { status: "dark", badge: "85", score: 85, note: null },
+        36: { status: "dark", badge: "90", score: 90, note: null },
+        37: { status: "dark", badge: "78", score: 78, note: "-22 第20题未作答" },
+        38: { status: "dark", badge: "96", score: 96, note: null },
+        39: { status: "dark", badge: "92", score: 92, note: null },
+        40: { status: "dark", badge: "98", score: 98, note: null },
+        41: { status: "dark", badge: "95", score: 95, note: null },
+        42: { status: "dark", badge: "88", score: 88, note: null },
+        43: { status: "dark", badge: "91", score: 91, note: null },
+        44: { status: "dark", badge: "93", score: 93, note: null },
+        45: { status: "dark", badge: "86", score: 86, note: null },
+        46: { status: "dark", badge: "100", score: 100, note: null },
+        47: { status: "dark", badge: "90", score: 90, note: null },
+        48: { status: "dark", badge: "92", score: 92, note: null },
+        49: { status: "dark", badge: "97", score: 97, note: null },
+        50: { status: "dark", badge: "95", score: 95, note: null }
+    };
+
+    // 构建完整初始记录
     const INITIAL_RECORDS = {
-        "task_0620": {}
+        "task_0828_yw": {},
+        "task_0828_sx": {},
+        "task_0828_yy": {},
+        "task_0827_wl": {},
+        "task_0825_hx": {},
+        "task_0822_sw": {},
+        "task_0818_ls": {}
     };
 
     for (let i = 1; i <= 50; i++) {
-        const raw = RAW_0620_RECORDS[i] || { status: "white", badge: null };
-        INITIAL_RECORDS["task_0620"][i] = {
-            status: raw.status,
-            badge: raw.badge,
-            score: null,
+        // 语文
+        const rawYw = RAW_YW_RECORDS[i] || { status: "dark", badge: null, score: 90, note: null };
+        INITIAL_RECORDS["task_0828_yw"][i] = {
+            status: rawYw.status,
+            badge: rawYw.badge,
+            score: rawYw.score,
+            note: rawYw.note,
+            updatedAt: BASE_TIME
+        };
+
+        // 数学
+        const rawSx = RAW_SX_RECORDS[i] || { status: "dark", badge: "90", score: 90, note: null };
+        INITIAL_RECORDS["task_0828_sx"][i] = {
+            status: rawSx.status,
+            badge: rawSx.badge,
+            score: rawSx.score,
+            note: rawSx.note,
+            updatedAt: BASE_TIME
+        };
+
+        // 英语（非英语生自动豁免）
+        if (NON_ENGLISH_IDS_CLASS_1.has(i)) {
+            INITIAL_RECORDS["task_0828_yy"][i] = {
+                status: "muted",
+                badge: "非英语",
+                score: null,
+                note: "日语生豁免",
+                updatedAt: BASE_TIME
+            };
+        } else {
+            const isDone = i % 7 !== 0;
+            INITIAL_RECORDS["task_0828_yy"][i] = {
+                status: isDone ? "dark" : "white",
+                badge: isDone ? null : "未交",
+                score: isDone ? (90 + (i % 11)) : null,
+                note: null,
+                updatedAt: BASE_TIME
+            };
+        }
+
+        // 物理
+        const isWlDone = i % 9 !== 0;
+        INITIAL_RECORDS["task_0827_wl"][i] = {
+            status: isWlDone ? "dark" : (i === 9 ? "muted" : "white"),
+            badge: isWlDone ? null : (i === 9 ? "订正" : null),
+            score: isWlDone ? (85 + (i % 16)) : null,
+            note: i === 9 ? "待订正第2问" : null,
+            updatedAt: BASE_TIME
+        };
+
+        // 化学 (已归档)
+        INITIAL_RECORDS["task_0825_hx"][i] = {
+            status: i === 13 ? "white" : "dark",
+            badge: i === 13 ? "缺卡" : "完成",
+            score: 88 + (i % 13),
+            note: null,
+            updatedAt: BASE_TIME
+        };
+
+        // 生物 (已归档)
+        INITIAL_RECORDS["task_0822_sw"][i] = {
+            status: "dark",
+            badge: null,
+            score: 90 + (i % 11),
+            note: null,
+            updatedAt: BASE_TIME
+        };
+
+        // 历史 (已归档)
+        INITIAL_RECORDS["task_0818_ls"][i] = {
+            status: i % 12 === 0 ? "white" : "dark",
+            badge: null,
+            score: 86 + (i % 14),
             note: null,
             updatedAt: BASE_TIME
         };
     }
 
+    // 班级 2：高二 (4) 班数据
     const INITIAL_CLASS_2_NAME = "高二 (4) 班";
-
     const INITIAL_STUDENT_NAMES_CLASS_2 = [
         "安晨", "白宇", "陈思源", "程锦", "崔皓",
         "邓嘉敏", "杜若", "方博", "高睿", "顾远",
@@ -98,32 +304,50 @@
         "魏铭", "吴优", "肖凡", "谢天", "徐诺"
     ];
 
+    const NON_ENGLISH_IDS_CLASS_2 = new Set([8, 23, 41]);
+
     const INITIAL_STUDENTS_CLASS_2 = INITIAL_STUDENT_NAMES_CLASS_2.map((name, index) => {
         const id = index + 1;
         return {
             id: id,
             studentNo: String(id),
             name: name,
-            isNonEnglish: false,
+            isNonEnglish: NON_ENGLISH_IDS_CLASS_2.has(id),
             updatedAt: BASE_TIME
         };
     });
 
     const INITIAL_TASKS_CLASS_2 = [
-        { id: "task_c2_0618", name: "0618语文默写", subject: "语文", archived: true, createdAt: "2026-06-18T08:00:00.000Z", updatedAt: "2026-06-18T08:00:00.000Z" },
-        { id: "task_c2_0619", name: "0619数学复习", subject: "数学", archived: true, createdAt: "2026-06-19T08:00:00.000Z", updatedAt: "2026-06-19T08:00:00.000Z" },
-        { id: "task_c2_0620", name: "0620作业", subject: "未设置", archived: false, createdAt: "2026-06-20T08:00:00.000Z", updatedAt: "2026-06-20T08:00:00.000Z" }
+        { id: "task_c2_0828", name: "0828 语文基础字词默写", subject: "语文", archived: false, createdAt: "2026-08-28T08:00:00.000Z", updatedAt: "2026-08-28T08:00:00.000Z" },
+        { id: "task_c2_0827", name: "0827 英语课后阅读练习", subject: "英语", archived: false, createdAt: "2026-08-27T08:00:00.000Z", updatedAt: "2026-08-27T08:00:00.000Z" },
+        { id: "task_c2_0824", name: "0824 数学立体几何作图", subject: "数学", archived: true, createdAt: "2026-08-24T08:00:00.000Z", updatedAt: "2026-08-24T08:00:00.000Z" }
     ];
 
     const INITIAL_RECORDS_CLASS_2 = {
-        "task_c2_0620": {}
+        "task_c2_0828": {},
+        "task_c2_0827": {},
+        "task_c2_0824": {}
     };
 
     for (let i = 1; i <= 50; i++) {
-        INITIAL_RECORDS_CLASS_2["task_c2_0620"][i] = {
-            status: "white",
+        INITIAL_RECORDS_CLASS_2["task_c2_0828"][i] = {
+            status: i % 5 === 0 ? "white" : "dark",
+            badge: i % 5 === 0 ? "未交" : (i % 8 === 0 ? "订正" : null),
+            score: i % 5 === 0 ? null : (88 + (i % 13)),
+            note: null,
+            updatedAt: BASE_TIME
+        };
+        INITIAL_RECORDS_CLASS_2["task_c2_0827"][i] = {
+            status: NON_ENGLISH_IDS_CLASS_2.has(i) ? "muted" : (i % 6 === 0 ? "white" : "dark"),
+            badge: NON_ENGLISH_IDS_CLASS_2.has(i) ? "非英语" : null,
+            score: NON_ENGLISH_IDS_CLASS_2.has(i) ? null : 90,
+            note: null,
+            updatedAt: BASE_TIME
+        };
+        INITIAL_RECORDS_CLASS_2["task_c2_0824"][i] = {
+            status: "dark",
             badge: null,
-            score: null,
+            score: 95,
             note: null,
             updatedAt: BASE_TIME
         };
@@ -132,7 +356,6 @@
     const INITIAL_CLASS_NAME = "高二 (3) 班";
     const INITIAL_SCHEDULE_TEMPLATE_VERSION = 2;
 
-    // bcb74a7 中使用的默认课程表，仅用于识别未修改的旧模板。
     const LEGACY_SCHEDULE_TEMPLATE = {
         days: [
             { id: "day_1", name: "星期一", order: 1 },
@@ -142,66 +365,69 @@
             { id: "day_5", name: "星期五", order: 5 }
         ],
         periods: [
-            { id: "p_1", name: "第1节", order: 1 },
-            { id: "p_2", name: "第2节", order: 2 },
-            { id: "p_3", name: "第3节", order: 3 },
-            { id: "p_4", name: "第4节", order: 4 },
-            { id: "p_5", name: "第5节", order: 5 },
-            { id: "p_6", name: "第6节", order: 6 },
-            { id: "p_7", name: "第7节", order: 7 }
+            { id: "p_1", name: "1", order: 1 },
+            { id: "p_2", name: "2", order: 2 },
+            { id: "p_3", name: "3", order: 3 },
+            { id: "p_4", name: "4", order: 4 },
+            { id: "p_5", name: "5", order: 5 },
+            { id: "p_6", name: "6", order: 6 },
+            { id: "p_7", name: "7", order: 7 }
         ],
         courseLibrary: [
-            { id: "c_yw", name: "语文", color: "blue" },
-            { id: "c_sx", name: "数学", color: "amber" },
-            { id: "c_yy", name: "英语", color: "purple" },
-            { id: "c_wl", name: "物理", color: "cyan" },
-            { id: "c_hx", name: "化学", color: "emerald" },
-            { id: "c_sw", name: "生物", color: "green" },
-            { id: "c_zz", name: "政治", color: "red" },
-            { id: "c_ls", name: "历史", color: "orange" },
-            { id: "c_dl", name: "地理", color: "teal" },
-            { id: "c_ty", name: "体育", color: "rose" },
-            { id: "c_ms", name: "美术", color: "pink" },
-            { id: "c_yy2", name: "音乐", color: "indigo" },
-            { id: "c_xx", name: "信息技术", color: "sky" },
-            { id: "c_bh", name: "班会", color: "slate" }
+            { id: "c_yy", name: "英语", color: "english" },
+            { id: "c_yw", name: "语文", color: "default" },
+            { id: "c_sx", name: "数学", color: "default" },
+            { id: "c_ls", name: "历史", color: "default" },
+            { id: "c_ty", name: "通用", color: "default" },
+            { id: "c_zz", name: "政治", color: "default" },
+            { id: "c_ms", name: "美术", color: "default" },
+            { id: "c_sw", name: "生物", color: "default" },
+            { id: "c_bh", name: "班会", color: "default" },
+            { id: "c_wh", name: "物合", color: "default" },
+            { id: "c_xx", name: "信息", color: "default" },
+            { id: "c_pe", name: "体育", color: "default" },
+            { id: "c_mu", name: "音乐", color: "default" },
+            { id: "c_dh", name: "地合", color: "default" },
+            { id: "c_hh", name: "化合", color: "default" },
+            { id: "c_wl", name: "物理", color: "default" },
+            { id: "c_hx", name: "化学", color: "default" },
+            { id: "c_dl", name: "地理", color: "default" }
         ],
         grid: {
-            "day_1_p_1": { courseId: "c_yw", customName: "" },
+            "day_1_p_1": { courseId: "c_yy", customName: "" },
             "day_1_p_2": { courseId: "c_sx", customName: "" },
-            "day_1_p_3": { courseId: "c_yy", customName: "" },
-            "day_1_p_4": { courseId: "c_wl", customName: "" },
-            "day_1_p_5": { courseId: "c_hx", customName: "" },
+            "day_1_p_3": { courseId: "c_ty", customName: "" },
+            "day_1_p_4": { courseId: "c_zz", customName: "" },
+            "day_1_p_5": { courseId: "c_ms", customName: "" },
             "day_1_p_6": { courseId: "c_sw", customName: "" },
             "day_1_p_7": { courseId: "c_bh", customName: "" },
-            "day_2_p_1": { courseId: "c_sx", customName: "" },
-            "day_2_p_2": { courseId: "c_yw", customName: "" },
-            "day_2_p_3": { courseId: "c_yy", customName: "" },
-            "day_2_p_4": { courseId: "c_ls", customName: "" },
-            "day_2_p_5": { courseId: "c_dl", customName: "" },
-            "day_2_p_6": { courseId: "c_zz", customName: "" },
-            "day_2_p_7": { courseId: "c_ty", customName: "" },
+            "day_2_p_1": { courseId: "c_yw", customName: "" },
+            "day_2_p_2": { courseId: "c_ls", customName: "" },
+            "day_2_p_3": { courseId: "c_sx", customName: "" },
+            "day_2_p_4": { courseId: "c_yy", customName: "" },
+            "day_2_p_5": { courseId: "c_wh", customName: "" },
+            "day_2_p_6": { courseId: "c_xx", customName: "" },
+            "day_2_p_7": { courseId: "c_pe", customName: "" },
             "day_3_p_1": { courseId: "c_yy", customName: "" },
-            "day_3_p_2": { courseId: "c_sx", customName: "" },
+            "day_3_p_2": { courseId: "c_ls", customName: "" },
             "day_3_p_3": { courseId: "c_yw", customName: "" },
-            "day_3_p_4": { courseId: "c_wl", customName: "" },
-            "day_3_p_5": { courseId: "c_hx", customName: "" },
-            "day_3_p_6": { courseId: "c_yy2", customName: "" },
-            "day_3_p_7": { courseId: "c_xx", customName: "" },
+            "day_3_p_4": { courseId: "c_sx", customName: "" },
+            "day_3_p_5": { courseId: "c_mu", customName: "" },
+            "day_3_p_6": { courseId: "c_dh", customName: "" },
+            "day_3_p_7": { courseId: "c_zz", customName: "" },
             "day_4_p_1": { courseId: "c_yw", customName: "" },
-            "day_4_p_2": { courseId: "c_sx", customName: "" },
-            "day_4_p_3": { courseId: "c_yy", customName: "" },
+            "day_4_p_2": { courseId: "c_yw", customName: "" },
+            "day_4_p_3": { courseId: "c_ls", customName: "" },
             "day_4_p_4": { courseId: "c_sw", customName: "" },
-            "day_4_p_5": { courseId: "c_zz", customName: "" },
-            "day_4_p_6": { courseId: "c_ls", customName: "" },
-            "day_4_p_7": { courseId: "c_ms", customName: "" },
-            "day_5_p_1": { courseId: "c_sx", customName: "" },
-            "day_5_p_2": { courseId: "c_yy", customName: "" },
-            "day_5_p_3": { courseId: "c_yw", customName: "" },
-            "day_5_p_4": { courseId: "c_dl", customName: "" },
-            "day_5_p_5": { courseId: "c_wl", customName: "" },
-            "day_5_p_6": { courseId: "c_hx", customName: "" },
-            "day_5_p_7": { courseId: "c_ty", customName: "" }
+            "day_4_p_5": { courseId: "c_yy", customName: "" },
+            "day_4_p_6": { courseId: "c_sx", customName: "" },
+            "day_5_p_1": { courseId: "c_yy", customName: "" },
+            "day_5_p_2": { courseId: "c_sx", customName: "" },
+            "day_5_p_3": { courseId: "c_sw", customName: "" },
+            "day_5_p_4": { courseId: "c_yw", customName: "" },
+            "day_5_p_5": { courseId: "c_hh", customName: "" },
+            "day_5_p_6": { courseId: "c_zz", customName: "" },
+            "day_5_p_7": { courseId: "c_pe", customName: "" }
         }
     };
 
@@ -279,7 +505,6 @@
         "day_4_p_4": { courseId: "c_sw", customName: "" },
         "day_4_p_5": { courseId: "c_yy", customName: "" },
         "day_4_p_6": { courseId: "c_sx", customName: "" },
-        // 星期四第7节为用户确认参考图中的空白项
 
         // 周五
         "day_5_p_1": { courseId: "c_yy", customName: "" },
@@ -304,15 +529,203 @@
         },
         updatedAt: BASE_TIME
     };
+
+    // 预设班干部结构与任职学生
     const INITIAL_OFFICERS = {
-        roles: [],
+        roles: [
+            {
+                id: "role_monitor",
+                name: "班长",
+                order: 1,
+                students: [
+                    { studentId: 1, nameSnapshot: "林澈" },
+                    { studentId: 16, nameSnapshot: "苏遥" }
+                ]
+            },
+            {
+                id: "role_secretary",
+                name: "团支书",
+                order: 2,
+                students: [
+                    { studentId: 2, nameSnapshot: "何予安" }
+                ]
+            },
+            {
+                id: "role_study",
+                name: "学习委员",
+                order: 3,
+                students: [
+                    { studentId: 3, nameSnapshot: "罗知夏" }
+                ]
+            },
+            {
+                id: "role_discipline",
+                name: "纪律委员",
+                order: 4,
+                students: [
+                    { studentId: 5, nameSnapshot: "谢明澈" },
+                    { studentId: 22, nameSnapshot: "程野" }
+                ]
+            },
+            {
+                id: "role_hygiene",
+                name: "卫生委员",
+                order: 5,
+                students: [
+                    { studentId: 6, nameSnapshot: "邵清禾" }
+                ]
+            },
+            {
+                id: "role_sports",
+                name: "体育委员",
+                order: 6,
+                students: [
+                    { studentId: 10, nameSnapshot: "沈川" }
+                ]
+            },
+            {
+                id: "role_art",
+                name: "文艺委员",
+                order: 7,
+                students: [
+                    { studentId: 15, nameSnapshot: "白念初" }
+                ]
+            },
+            {
+                id: "role_rep_yw",
+                name: "语文课代表",
+                order: 8,
+                students: [
+                    { studentId: 4, nameSnapshot: "周宁" }
+                ]
+            },
+            {
+                id: "role_rep_sx",
+                name: "数学课代表",
+                order: 9,
+                students: [
+                    { studentId: 7, nameSnapshot: "许禾" }
+                ]
+            },
+            {
+                id: "role_rep_yy",
+                name: "英语课代表",
+                order: 10,
+                students: [
+                    { studentId: 8, nameSnapshot: "钟以宁" }
+                ]
+            },
+            {
+                id: "role_rep_wl",
+                name: "物理课代表",
+                order: 11,
+                students: [
+                    { studentId: 17, nameSnapshot: "魏予晴" }
+                ]
+            },
+            {
+                id: "role_rep_hx",
+                name: "化学课代表",
+                order: 12,
+                students: [
+                    { studentId: 11, nameSnapshot: "杜星遥" }
+                ]
+            }
+        ],
         updatedAt: BASE_TIME
     };
 
+    // 预设值日生表（周一至周五，4类岗位分工）
     const INITIAL_DUTY = {
-        days: [],
-        roles: [],
-        assignments: {},
+        days: [
+            { id: "dday_1", name: "周一", order: 1 },
+            { id: "dday_2", name: "周二", order: 2 },
+            { id: "dday_3", name: "周三", order: 3 },
+            { id: "dday_4", name: "周四", order: 4 },
+            { id: "dday_5", name: "周五", order: 5 }
+        ],
+        roles: [
+            { id: "drole_clean", name: "地面扫拖", order: 1 },
+            { id: "drole_board", name: "黑板讲台", order: 2 },
+            { id: "drole_trash", name: "垃圾清运", order: 3 },
+            { id: "drole_window", name: "门窗电源", order: 4 }
+        ],
+        assignments: {
+            // 周一
+            "dday_1_drole_clean": [
+                { studentId: 1, nameSnapshot: "林澈" },
+                { studentId: 2, nameSnapshot: "何予安" }
+            ],
+            "dday_1_drole_board": [
+                { studentId: 3, nameSnapshot: "罗知夏" }
+            ],
+            "dday_1_drole_trash": [
+                { studentId: 4, nameSnapshot: "周宁" }
+            ],
+            "dday_1_drole_window": [
+                { studentId: 5, nameSnapshot: "谢明澈" }
+            ],
+
+            // 周二
+            "dday_2_drole_clean": [
+                { studentId: 6, nameSnapshot: "邵清禾" },
+                { studentId: 7, nameSnapshot: "许禾" }
+            ],
+            "dday_2_drole_board": [
+                { studentId: 8, nameSnapshot: "钟以宁" }
+            ],
+            "dday_2_drole_trash": [
+                { studentId: 9, nameSnapshot: "余景然" }
+            ],
+            "dday_2_drole_window": [
+                { studentId: 10, nameSnapshot: "沈川" }
+            ],
+
+            // 周三
+            "dday_3_drole_clean": [
+                { studentId: 11, nameSnapshot: "杜星遥" },
+                { studentId: 12, nameSnapshot: "袁书言" }
+            ],
+            "dday_3_drole_board": [
+                { studentId: 13, nameSnapshot: "唐安" }
+            ],
+            "dday_3_drole_trash": [
+                { studentId: 14, nameSnapshot: "孟舒然" }
+            ],
+            "dday_3_drole_window": [
+                { studentId: 15, nameSnapshot: "白念初" }
+            ],
+
+            // 周四
+            "dday_4_drole_clean": [
+                { studentId: 16, nameSnapshot: "苏遥" },
+                { studentId: 17, nameSnapshot: "魏予晴" }
+            ],
+            "dday_4_drole_board": [
+                { studentId: 18, nameSnapshot: "夏嘉树" }
+            ],
+            "dday_4_drole_trash": [
+                { studentId: 19, nameSnapshot: "陆晴" }
+            ],
+            "dday_4_drole_window": [
+                { studentId: 20, nameSnapshot: "彭知远" }
+            ],
+
+            // 周五
+            "dday_5_drole_clean": [
+                { studentId: 21, nameSnapshot: "侯若溪" },
+                { studentId: 22, nameSnapshot: "程野" }
+            ],
+            "dday_5_drole_board": [
+                { studentId: 23, nameSnapshot: "冯安禾" }
+            ],
+            "dday_5_drole_trash": [
+                { studentId: 24, nameSnapshot: "郑沐川" }
+            ],
+            "dday_5_drole_window": [
+                { studentId: 25, nameSnapshot: "叶舟" }
+            ]
+        },
         updatedAt: BASE_TIME
     };
 
