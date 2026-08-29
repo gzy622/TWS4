@@ -21,7 +21,7 @@
         // 构建持久化容器节点
         taskDropdown.innerHTML = '';
 
-        // 顶部工具栏：搜索过滤与快捷新建
+        // 顶部工具栏：搜索过滤
         const toolbar = document.createElement('div');
         toolbar.className = 'task-dropdown-toolbar';
         toolbar.innerHTML = `
@@ -33,12 +33,6 @@
                 <input type="text" class="task-search-input" placeholder="搜索作业..." aria-label="搜索作业">
                 <button type="button" class="task-search-clear" aria-label="清空搜索" style="display: none;">✕</button>
             </div>
-            <button type="button" class="task-quick-add-btn" title="新建作业" aria-label="新建作业">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>新建</span>
-            </button>
         `;
 
         const listContainer = document.createElement('div');
@@ -131,7 +125,6 @@
         const segmentBtns = footer.querySelectorAll('.mode-segment-btn');
         const searchInput = toolbar.querySelector('.task-search-input');
         const searchClearBtn = toolbar.querySelector('.task-search-clear');
-        const quickAddBtn = toolbar.querySelector('.task-quick-add-btn');
 
         let searchQuery = '';
         let isArchivedGroupExpanded = null; // null 表示随当前作业自动决定
@@ -159,13 +152,6 @@
             });
         }
 
-        // 工具栏新建作业按钮
-        if (quickAddBtn) {
-            quickAddBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                handleCreateNewTask();
-            });
-        }
 
         // 绑定模式切换点击事件与即时触感/动画反馈
         segmentBtns.forEach(btn => {
@@ -218,7 +204,8 @@
                 closeDropdown();
 
                 let titleText = '视图';
-                if (viewMode === 'schedule') titleText = `课程表 · ${currentClass}`;
+                if (viewMode === 'table') titleText = `记分册表格 · ${currentClass}`;
+                else if (viewMode === 'schedule') titleText = `课程表 · ${currentClass}`;
                 else if (viewMode === 'officers') titleText = `班干部表 · ${currentClass}`;
                 else if (viewMode === 'duty') titleText = `值日生表 · ${currentClass}`;
                 currentTaskNameEl.innerHTML = `<span class="nav-view-title">${escapeHtml(titleText)}</span>`;

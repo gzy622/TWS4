@@ -237,7 +237,7 @@
     pointer-events: auto;
 }
 
-/* 顶部工具栏：搜索与快捷新建 */
+/* 顶部工具栏：搜索 */
 .task-dropdown-toolbar {
     display: flex;
     align-items: center;
@@ -296,36 +296,6 @@
     color: var(--text-dark);
 }
 
-.task-quick-add-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    height: 32px;
-    padding: 0 10px;
-    border: 1px solid var(--border-light, #e5e9ee);
-    background-color: var(--surface-white, #ffffff);
-    border-radius: 8px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--surface-dark, #1b3831);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
-}
-
-.task-quick-add-btn:hover {
-    background-color: var(--surface-muted, #f1f3f5);
-    border-color: #cbd5e1;
-}
-
-.task-quick-add-btn:active {
-    transform: scale(0.96);
-}
-
-.task-quick-add-btn svg {
-    width: 13px;
-    height: 13px;
-}
 
 /* 列表主容器 */
 .task-list-container {
