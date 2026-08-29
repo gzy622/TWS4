@@ -7,20 +7,19 @@
     bottom: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(15, 23, 42, 0.48);
+    background-color: rgba(15, 23, 42, 0);
     z-index: 50;
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    opacity: 0;
     pointer-events: none;
-    transition: opacity 0.26s cubic-bezier(0.2, 0, 0, 1);
-    will-change: opacity;
+    transition: background-color 0.26s cubic-bezier(0.2, 0, 0, 1);
+    will-change: background-color;
     box-sizing: border-box;
 }
 
 .edit-sheet-overlay.show {
-    opacity: 1;
+    background-color: rgba(15, 23, 42, 0.32);
     pointer-events: auto;
 }
 

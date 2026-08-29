@@ -248,6 +248,7 @@
                 element.style.removeProperty('transition');
                 element.style.removeProperty('transform');
                 element.style.removeProperty('opacity');
+                element.style.removeProperty('background-color');
                 element.style.removeProperty('visibility');
                 element.style.removeProperty('pointer-events');
                 element.style.removeProperty('box-shadow');
@@ -283,7 +284,7 @@
                 editSheetPanel.style.boxShadow = `0 -10px 30px rgba(0, 0, 0, ${0.12 * progress})`;
                 editSheetOverlay.style.transition = 'none';
                 editSheetOverlay.style.pointerEvents = 'none';
-                editSheetOverlay.style.opacity = String(progress);
+                editSheetOverlay.style.backgroundColor = `rgba(15, 23, 42, ${0.32 * progress})`;
                 return;
             }
 
@@ -448,13 +449,15 @@
                 setTaskDropdownOpen(shouldOpen);
             } else {
                 editSheetPanel.style.transition = `transform ${transition}, box-shadow ${transition}`;
-                editSheetOverlay.style.transition = `opacity ${transition}`;
+                editSheetOverlay.style.transition = `background-color ${transition}`;
                 void editSheetPanel.offsetWidth;
                 editSheetPanel.style.transform = `translate3d(0, ${targetProgress === 1 ? 0 : size}px, 0)`;
                 editSheetPanel.style.boxShadow = targetProgress === 1
                     ? '0 -10px 30px rgba(0, 0, 0, 0.12)'
                     : '0 -10px 30px rgba(0, 0, 0, 0)';
-                editSheetOverlay.style.opacity = String(targetProgress);
+                editSheetOverlay.style.backgroundColor = targetProgress === 1
+                    ? 'rgba(15, 23, 42, 0.32)'
+                    : 'rgba(15, 23, 42, 0)';
                 if (!shouldOpen && typeof closeEditSheet === 'function') closeEditSheet();
             }
 
