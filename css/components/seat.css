@@ -1,4 +1,8 @@
 .seat-view {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 10px 8px 18px;
     animation: fadeInGrid 0.28s ease-out;
 }

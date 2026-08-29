@@ -1,9 +1,14 @@
 /* 网格及卡片 */
 .grid-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 10px 8px 16px 8px;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 7px 6px;
+    align-content: start;
     animation: fadeInGrid 0.3s ease-out;
     transition: opacity 0.2s ease;
 }

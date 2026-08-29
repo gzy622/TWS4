@@ -1,7 +1,6 @@
 (function() {
     window.TWS3 = window.TWS3 || {};
     const store = window.TWS3.store;
-    const { bindCardGestures } = window.TWS3.gestures || {};
 
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
@@ -34,8 +33,6 @@
 
         let searchQuery = '';
         let subjectFilter = 'all';
-        let statusFilter = 'all';
-        let sortField = 'number';
         let renderPending = false;
 
         function requestRender() {
@@ -49,68 +46,49 @@
             });
         }
 
-        // 构建表格外层结构
+        // 构建精简顶栏与主卡片结构
         function buildStructure() {
+            const showNo = store.getShowStudentNumbers();
             tableContainer.innerHTML = `
-                <!-- 顶部统计概览卡片 -->
-                <div class="table-stats-bar" id="table-stats-bar"></div>
-
-                <!-- 检索与筛选工具栏 -->
-                <div class="table-toolbar-card">
-                    <div class="table-toolbar-row">
-                        <div class="table-search-wrap">
-                            <svg class="table-search-icon" viewBox="0 0 24 24">
-                                <circle cx="11" cy="11" r="8"/>
-                                <path d="M21 21l-4.35-4.35" stroke-linecap="round"/>
-                            </svg>
-                            <input type="text" class="table-search-input" id="table-search-input" placeholder="搜索姓名、学号..." value="${escapeHtml(searchQuery)}" />
-                            <button type="button" class="table-search-clear" id="table-search-clear" style="display: ${searchQuery ? 'flex' : 'none'};">×</button>
-                        </div>
-
-                        <div class="table-filter-select-wrap">
-                            <select class="table-select" id="table-subject-select" aria-label="科目筛选">
-                                <option value="all">全部科目</option>
-                            </select>
-                            <svg class="table-select-arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
-
-                        <div class="table-filter-select-wrap">
-                            <select class="table-select" id="table-status-select" aria-label="状态筛选">
-                                <option value="all">全部学生</option>
-                                <option value="missing">仅看有未交</option>
-                                <option value="completed">仅看全勤已交</option>
-                                <option value="nonEnglish">仅看非英语生</option>
-                            </select>
-                            <svg class="table-select-arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
-
-                        <div class="table-filter-select-wrap">
-                            <select class="table-select" id="table-sort-select" aria-label="排序方式">
-                                <option value="number">按学号升序</option>
-                                <option value="name">按姓名排序</option>
-                                <option value="rate_asc">按提交率从低到高</option>
-                                <option value="rate_desc">按提交率从高到低</option>
-                            </select>
-                            <svg class="table-select-arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
-
-                        <button type="button" class="table-btn-export" id="table-export-btn" title="导出标准 Excel 记分册">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                                <path d="M14 2v6h6"/>
-                                <path d="M12 12v6m0 0l-2.5-2.5M12 18l2.5-2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <span>导出记分册</span>
-                        </button>
+                <!-- 精简紧凑工具栏 -->
+                <div class="table-toolbar-compact">
+                    <div class="table-search-wrap">
+                        <svg class="table-search-icon" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35" stroke-linecap="round"/>
+                        </svg>
+                        <input type="text" class="table-search-input" id="table-search-input" placeholder="搜索姓名、学号..." value="${escapeHtml(searchQuery)}" />
+                        <button type="button" class="table-search-clear" id="table-search-clear" style="display: ${searchQuery ? 'flex' : 'none'};">×</button>
                     </div>
+
+                    <div class="table-select-wrap">
+                        <select class="table-select-compact" id="table-subject-select" aria-label="科目筛选">
+                            <option value="all">全部科目</option>
+                        </select>
+                        <svg class="table-select-arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+
+                    <button type="button" class="table-btn-toggle-no ${showNo ? 'active' : ''}" id="table-toggle-no-btn" title="显示或隐藏学号列">
+                        <span># 学号</span>
+                    </button>
+
+                    <button type="button" class="table-btn-export-compact" id="table-export-btn" title="导出记分册 (.xlsx)">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <path d="M14 2v6h6"/>
+                            <path d="M12 12v6m0 0l-2.5-2.5M12 18l2.5-2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>导出</span>
+                    </button>
                 </div>
 
                 <!-- 记分册表格主卡片 -->
                 <div class="table-card" id="table-card">
                     <div class="table-card-header-bar">
-                        <div class="table-card-title">
-                            <span>记分册全览明细</span>
+                        <div class="table-card-title-wrap">
+                            <span class="table-card-title">记分册表格</span>
                             <span class="table-badge-count" id="table-filtered-count">0 人</span>
+                            <span class="table-stat-mini" id="table-stat-mini">提交率 0%</span>
                         </div>
                         <div class="table-legend-wrap">
                             <span class="table-legend-item"><span class="legend-dot dark"></span>已交</span>
@@ -131,8 +109,7 @@
             const searchInput = document.getElementById('table-search-input');
             const searchClear = document.getElementById('table-search-clear');
             const subjectSelect = document.getElementById('table-subject-select');
-            const statusSelect = document.getElementById('table-status-select');
-            const sortSelect = document.getElementById('table-sort-select');
+            const toggleNoBtn = document.getElementById('table-toggle-no-btn');
             const exportBtn = document.getElementById('table-export-btn');
 
             if (searchInput) {
@@ -162,17 +139,10 @@
                 });
             }
 
-            if (statusSelect) {
-                statusSelect.addEventListener('change', (e) => {
-                    statusFilter = e.target.value;
-                    renderTableData();
-                });
-            }
-
-            if (sortSelect) {
-                sortSelect.addEventListener('change', (e) => {
-                    sortField = e.target.value;
-                    renderTableData();
+            if (toggleNoBtn) {
+                toggleNoBtn.addEventListener('click', () => {
+                    const nextVal = !store.getShowStudentNumbers();
+                    store.setShowStudentNumbers(nextVal);
                 });
             }
 
@@ -225,6 +195,7 @@
             const allTasks = state.tasks || [];
             const recordsByTask = state.records || {};
             const currentTaskId = state.currentTaskId;
+            const showNo = store.getShowStudentNumbers();
 
             // 1. 同步科目下拉选项
             const subjectSelect = document.getElementById('table-subject-select');
@@ -249,8 +220,6 @@
             // 3. 计算汇总指标
             let totalRecordsCount = 0;
             let totalSubmittedCount = 0;
-            let totalScoreSum = 0;
-            let totalScoredCount = 0;
 
             allTasks.forEach(task => {
                 const taskRecords = recordsByTask[task.id] || {};
@@ -264,48 +233,20 @@
                             totalSubmittedCount++;
                         }
                     }
-                    if (record.score !== null && record.score !== undefined && record.score !== '') {
-                        const num = Number(record.score);
-                        if (Number.isFinite(num)) {
-                            totalScoreSum += num;
-                            totalScoredCount++;
-                        }
-                    }
                 });
             });
 
             const overallRate = totalRecordsCount > 0
                 ? ((totalSubmittedCount / totalRecordsCount) * 100).toFixed(1)
                 : '0.0';
-            const overallAvgScore = totalScoredCount > 0
-                ? (totalScoreSum / totalScoredCount).toFixed(1)
-                : '--';
 
-            // 4. 渲染统计概览卡片
-            const statsBar = document.getElementById('table-stats-bar');
-            if (statsBar) {
-                const nonEnglishCount = students.filter(s => s.isNonEnglish).length;
-                statsBar.innerHTML = `
-                    <div class="table-stat-card">
-                        <div class="table-stat-value">${students.length}<span style="font-size: 11px; font-weight: 600; margin-left: 2px;">人</span></div>
-                        <div class="table-stat-label">在籍学生${nonEnglishCount ? ` (${nonEnglishCount}免)` : ''}</div>
-                    </div>
-                    <div class="table-stat-card">
-                        <div class="table-stat-value">${allTasks.length}<span style="font-size: 11px; font-weight: 600; margin-left: 2px;">项</span></div>
-                        <div class="table-stat-label">登记任务</div>
-                    </div>
-                    <div class="table-stat-card">
-                        <div class="table-stat-value accent">${overallRate}%</div>
-                        <div class="table-stat-label">全班提交率</div>
-                    </div>
-                    <div class="table-stat-card">
-                        <div class="table-stat-value">${overallAvgScore}</div>
-                        <div class="table-stat-label">均分${totalScoredCount ? ` (${totalScoredCount}条)` : ''}</div>
-                    </div>
-                `;
+            // 4. 更新卡片头部迷你统计
+            const miniStat = document.getElementById('table-stat-mini');
+            if (miniStat) {
+                miniStat.textContent = `提交率 ${overallRate}%`;
             }
 
-            // 5. 过滤与排序学生
+            // 5. 过滤学生列表（默认按学号升序）
             let studentStatsList = students.map(student => {
                 let submitted = 0;
                 let total = 0;
@@ -341,27 +282,8 @@
                 });
             }
 
-            // 状态过滤
-            if (statusFilter === 'missing') {
-                studentStatsList = studentStatsList.filter(item => item.uncompleted > 0);
-            } else if (statusFilter === 'completed') {
-                studentStatsList = studentStatsList.filter(item => item.total > 0 && item.uncompleted === 0);
-            } else if (statusFilter === 'nonEnglish') {
-                studentStatsList = studentStatsList.filter(item => !!item.student.isNonEnglish);
-            }
-
-            // 排序
+            // 按学号升序排序
             studentStatsList.sort((a, b) => {
-                if (sortField === 'name') {
-                    return String(a.student.name).localeCompare(String(b.student.name), 'zh-CN');
-                }
-                if (sortField === 'rate_asc') {
-                    return a.rate - b.rate || (Number(a.student.studentNo || 0) - Number(b.student.studentNo || 0));
-                }
-                if (sortField === 'rate_desc') {
-                    return b.rate - a.rate || (Number(a.student.studentNo || 0) - Number(b.student.studentNo || 0));
-                }
-                // default: number
                 const noA = Number(a.student.studentNo || a.student.id);
                 const noB = Number(b.student.studentNo || b.student.id);
                 if (Number.isFinite(noA) && Number.isFinite(noB)) return noA - noB;
@@ -432,7 +354,7 @@
             });
 
             // 8. 组装数据表格 HTML
-            let tableHtml = '<table class="score-table">';
+            let tableHtml = `<table class="score-table ${showNo ? '' : 'hide-student-no'}">`;
 
             // 表头
             tableHtml += '<thead><tr>';
@@ -683,7 +605,13 @@
 
         // 订阅 store 数据变更
         store.subscribe((state, eventType, payload) => {
-            if (
+            if (eventType === 'STUDENT_NUMBER_VISIBILITY_CHANGED') {
+                const show = store.getShowStudentNumbers();
+                const btn = document.getElementById('table-toggle-no-btn');
+                if (btn) btn.classList.toggle('active', show);
+                const tbl = document.querySelector('.score-table');
+                if (tbl) tbl.classList.toggle('hide-student-no', !show);
+            } else if (
                 eventType === 'TASK_CHANGED' ||
                 eventType === 'TASK_ADDED' ||
                 eventType === 'TASK_DELETED' ||
