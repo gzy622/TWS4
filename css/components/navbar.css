@@ -1,15 +1,16 @@
 /* 顶部导航栏 */
 .navbar {
     flex-shrink: 0;
-    height: 50px;
+    height: var(--navbar-height, 50px);
     background-color: var(--surface-white);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
+    padding: var(--safe-top, 0px) calc(16px + var(--safe-right, 0px)) 0 calc(16px + var(--safe-left, 0px));
     position: relative;
     z-index: 20;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
 }
 
 .nav-icon {
@@ -194,10 +195,10 @@
 /* 任务下拉菜单背景遮罩 */
 .dropdown-overlay {
     position: absolute;
-    top: 50px;
+    top: var(--navbar-height, 50px);
     left: 0;
     width: 100%;
-    height: calc(100% - 50px);
+    height: calc(100% - var(--navbar-height, 50px));
     background-color: rgba(0, 0, 0, 0.32);
     z-index: 15;
     opacity: 0;
@@ -214,7 +215,7 @@
 /* 任务下拉列表菜单 */
 .task-dropdown {
     position: absolute;
-    top: 50px;
+    top: var(--navbar-height, 50px);
     left: 0;
     width: 100%;
     background: var(--surface-white);

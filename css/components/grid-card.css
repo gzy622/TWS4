@@ -4,7 +4,7 @@
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 10px 8px 16px 8px;
+    padding: 10px calc(8px + var(--safe-right, 0px)) calc(16px + var(--safe-bottom, 0px)) calc(8px + var(--safe-left, 0px));
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 7px 6px;

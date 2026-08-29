@@ -32,9 +32,17 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        // 0. Capacitor 原生状态栏初始化 (沉浸式 + 浅色底深色图标)
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar) {
+            try {
+                const { StatusBar } = window.Capacitor.Plugins;
+                StatusBar.setOverlaysWebView({ overlay: true });
+                StatusBar.setStyle({ style: 'DARK' });
+            } catch (_) {}
+        }
+
         // 1. 初始化通用模态服务
         initModal();
-
         // 2. 初始化编辑面板
         const editSheet = initEditSheet();
 

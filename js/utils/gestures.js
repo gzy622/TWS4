@@ -11,13 +11,20 @@
      * @returns {boolean|undefined} navigator.vibrate 的返回值，便于上层诊断
      */
     function haptic(strength = 'light') {
-        if (window.AndroidHaptics && typeof window.AndroidHaptics.vibrate === 'function') {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
             try {
-                window.AndroidHaptics.vibrate(40);
+                const style = strength === 'medium' ? 'MEDIUM' : 'LIGHT';
+                window.Capacitor.Plugins.Haptics.impact({ style });
                 return true;
             } catch (_) {}
         }
-        return vibrate(40);
+        if (window.AndroidHaptics && typeof window.AndroidHaptics.vibrate === 'function') {
+            try {
+                window.AndroidHaptics.vibrate(strength === 'medium' ? 60 : 40);
+                return true;
+            } catch (_) {}
+        }
+        return vibrate(strength === 'medium' ? 60 : 40);
     }
 
     function vibrate(pattern) {
@@ -356,6 +363,11 @@
                     }
                     lockGesture('task', touch.clientX, touch.clientY, time);
                 } else if (absX > absY * DIRECTION_RATIO && deltaX > 0) {
+                    // 避开 Android 全面屏边缘返回热区 (0~22px)，防止与系统返回手势冲突
+                    if (gesture.startX < 22) {
+                        gesture = null;
+                        return false;
+                    }
                     const scroller = getScrollableAncestor(gesture.target, 'x');
                     if (canConsumeDrag(scroller, 'x', deltaX)) {
                         gesture = null;

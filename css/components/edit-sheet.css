@@ -50,7 +50,7 @@
     max-width: 440px;
     border-top-left-radius: 22px;
     border-top-right-radius: 22px;
-    padding: 16px 16px 26px 16px;
+    padding: 16px calc(16px + var(--safe-right, 0px)) calc(26px + var(--safe-bottom, 0px)) calc(16px + var(--safe-left, 0px));
     box-shadow: none;
     transform: translate3d(0, 100%, 0);
     will-change: transform;

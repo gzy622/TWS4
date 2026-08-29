@@ -139,11 +139,25 @@
         // 初始注入保护状态
         pushGuardState();
 
-        // 监听浏览器自带后退事件 (popstate)
+        // 1. 监听 Capacitor 原生硬件/手势返回事件
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+            try {
+                window.Capacitor.Plugins.App.addListener('backButton', () => {
+                    const result = onSystemBackPressed();
+                    if (result === 'exit') {
+                        window.Capacitor.Plugins.App.exitApp();
+                    }
+                });
+            } catch (_) {}
+        }
+
+        // 2. 监听浏览器自带后退事件 (popstate)
         window.addEventListener('popstate', () => {
             const result = onSystemBackPressed();
             if (result === 'exit') {
-                if (window.AndroidApp && typeof window.AndroidApp.exit === 'function') {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+                    window.Capacitor.Plugins.App.exitApp();
+                } else if (window.AndroidApp && typeof window.AndroidApp.exit === 'function') {
                     window.AndroidApp.exit();
                 } else if (window.AndroidFiles && typeof window.AndroidFiles.exit === 'function') {
                     window.AndroidFiles.exit();
