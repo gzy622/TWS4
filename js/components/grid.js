@@ -120,8 +120,42 @@
             }
         });
 
+        let gridDirty = false;
+
         // 订阅状态变更
         store.subscribe((state, eventType, payload) => {
+            if (eventType === 'VIEW_MODE_CHANGED') {
+                if (payload.mode === 'grid' && gridDirty) {
+                    gridDirty = false;
+                    renderGrid(false);
+                }
+                return;
+            }
+
+            // 非当前网格视图时仅记录脏标记，避免后台大量不可见 DOM 计算与重排
+            if (store.getViewMode() !== 'grid') {
+                if (
+                    eventType === 'TASK_CHANGED' ||
+                    eventType === 'TASK_ADDED' ||
+                    eventType === 'TASK_DELETED' ||
+                    eventType === 'TASK_SUBJECT_CHANGED' ||
+                    eventType === 'STUDENT_ADDED' ||
+                    eventType === 'STUDENT_DELETED' ||
+                    eventType === 'STUDENT_UPDATED' ||
+                    eventType === 'STUDENT_NON_ENGLISH_CHANGED' ||
+                    eventType === 'STORE_OVERRIDDEN' ||
+                    eventType === 'STORE_SMART_MERGED' ||
+                    eventType === 'CLASS_CHANGED' ||
+                    eventType === 'ROSTER_RESET' ||
+                    eventType === 'STUDENT_STATUS_CHANGED' ||
+                    eventType === 'STUDENT_BADGE_CHANGED' ||
+                    eventType === 'STUDENT_RECORD_UPDATED'
+                ) {
+                    gridDirty = true;
+                }
+                return;
+            }
+
             if (
                 eventType === 'TASK_CHANGED' ||
                 eventType === 'TASK_ADDED' ||

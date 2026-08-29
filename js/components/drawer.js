@@ -236,11 +236,13 @@
                 if (cardItem) {
                     const classId = cardItem.dataset.id;
                     if (classId !== store.getCurrentClassId()) {
-                        const target = store.switchClass(classId);
                         closeClassModal();
-                        if (target) {
-                            showToast(`已切换至 ${target.name}`);
-                        }
+                        setTimeout(() => {
+                            const target = store.switchClass(classId);
+                            if (target) {
+                                showToast(`已切换至 ${target.name}`);
+                            }
+                        }, 160);
                     } else {
                         closeClassModal();
                     }
@@ -943,9 +945,10 @@
             }
             updateDrawerViewActive(targetMode);
             toggleDrawer(false);
-            requestAnimationFrame(() => {
+            // 抽屉收起平滑动画（~220ms）后再调度视图切换，彻底消除抽屉位移动画与大视图渲染争抢主线程导致的掉帧卡顿
+            setTimeout(() => {
                 store.setViewMode(targetMode);
-            });
+            }, 180);
         }
 
         if (viewGridBtn) {
@@ -1116,7 +1119,7 @@
         // 7. 渲染当前代码版本的 UTC+8 编辑时间戳
         const drawerFooterText = drawer ? drawer.querySelector('.drawer-footer-text') : null;
         if (drawerFooterText) {
-            const buildTime = window.TWS3.BUILD_INFO ? window.TWS3.BUILD_INFO.time : '2026-08-29 22:22:43';
+            const buildTime = window.TWS3.BUILD_INFO ? window.TWS3.BUILD_INFO.time : '2026-08-29 22:35:24';
             drawerFooterText.textContent = buildTime;
             drawerFooterText.title = `代码版本时间: ${buildTime} (点击复制或查看)`;
             drawerFooterText.style.cursor = 'pointer';

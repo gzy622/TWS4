@@ -39,13 +39,19 @@
         let searchQuery = '';
         let subjectFilter = 'all';
         let renderPending = false;
+        let tableDirty = false;
 
         function requestRender() {
+            if (store.getViewMode() !== 'table') {
+                tableDirty = true;
+                return;
+            }
             if (renderPending) return;
             renderPending = true;
             requestAnimationFrame(() => {
                 renderPending = false;
                 if (store.getViewMode() === 'table') {
+                    tableDirty = false;
                     renderTableData();
                 }
             });
@@ -587,6 +593,16 @@
 
         // 订阅 store 数据变更
         store.subscribe((state, eventType, payload) => {
+            if (eventType === 'VIEW_MODE_CHANGED') {
+                if (payload.mode === 'table') {
+                    if (tableDirty) {
+                        tableDirty = false;
+                        renderTableData();
+                    }
+                }
+                return;
+            }
+
             if (eventType === 'STUDENT_NUMBER_VISIBILITY_CHANGED') {
                 const show = store.getShowStudentNumbers();
                 const btn = document.getElementById('table-toggle-no-btn');
@@ -610,8 +626,7 @@
                 eventType === 'ROSTER_RESET' ||
                 eventType === 'STORE_OVERRIDDEN' ||
                 eventType === 'STORE_SMART_MERGED' ||
-                eventType === 'CLASS_CHANGED' ||
-                eventType === 'VIEW_MODE_CHANGED'
+                eventType === 'CLASS_CHANGED'
             ) {
                 requestRender();
             }

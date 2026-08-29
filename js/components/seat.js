@@ -334,14 +334,50 @@
             if (enteredFullscreen && !document.fullscreenElement && landscapeActive) leaveLandscape(false);
         });
 
+        let seatDirty = false;
+
         store.subscribe((state, eventType, payload) => {
             if (eventType === 'VIEW_MODE_CHANGED') {
                 if (payload.mode !== 'seat') {
                     adjustMode = false;
                     selectedStudentId = null;
+                } else if (seatDirty || seatContainer.children.length === 0) {
+                    seatDirty = false;
+                    renderSeatView();
                 }
                 syncView(payload.mode);
-            } else if (
+                return;
+            }
+
+            // 非座位表视图时仅标记脏状态，避免后台冗余 DOM 计算与卡顿
+            if (store.getViewMode() !== 'seat') {
+                if (
+                    eventType === 'SEAT_LAYOUT_CHANGED' ||
+                    eventType === 'SEAT_PODIUM_CHANGED' ||
+                    eventType === 'TASK_CHANGED' ||
+                    eventType === 'TASK_ADDED' ||
+                    eventType === 'TASK_DELETED' ||
+                    eventType === 'TASK_SUBJECT_CHANGED' ||
+                    eventType === 'STUDENT_ADDED' ||
+                    eventType === 'STUDENT_DELETED' ||
+                    eventType === 'STUDENT_UPDATED' ||
+                    eventType === 'STUDENT_NON_ENGLISH_CHANGED' ||
+                    eventType === 'STORE_OVERRIDDEN' ||
+                    eventType === 'STORE_SMART_MERGED' ||
+                    eventType === 'CLASS_CHANGED' ||
+                    eventType === 'ROSTER_RESET' ||
+                    eventType === 'TASK_ARCHIVE_TOGGLED' ||
+                    eventType === 'STUDENT_STATUS_CHANGED' ||
+                    eventType === 'STUDENT_BADGE_CHANGED' ||
+                    eventType === 'STUDENT_RECORD_UPDATED'
+                ) {
+                    seatDirty = true;
+                    if (eventType === 'SEAT_LAYOUT_CHANGED') selectedStudentId = null;
+                }
+                return;
+            }
+
+            if (
                 eventType === 'SEAT_LAYOUT_CHANGED' ||
                 eventType === 'SEAT_PODIUM_CHANGED' ||
                 eventType === 'TASK_CHANGED' ||

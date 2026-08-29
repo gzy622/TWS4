@@ -4,7 +4,8 @@
     min-height: 0;
     overflow: hidden;
     padding: 8px calc(8px + var(--safe-right, 0px)) calc(12px + var(--safe-bottom, 0px)) calc(8px + var(--safe-left, 0px));
-    animation: fadeInGrid 0.28s ease-out;
+    animation: fadeInView 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: opacity, transform;
     display: flex;
     flex-direction: column;
     gap: 8px;

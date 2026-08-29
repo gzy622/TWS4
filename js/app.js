@@ -27,7 +27,20 @@
     function syncAllViews(mode = store.getViewMode()) {
         const els = getViewElements();
         for (const [key, el] of Object.entries(els)) {
-            if (el) el.hidden = key !== mode;
+            if (el) {
+                const isTarget = key === mode;
+                if (isTarget) {
+                    if (el.hidden) {
+                        el.hidden = false;
+                        el.classList.remove('view-enter-smooth');
+                        void el.offsetWidth;
+                        el.classList.add('view-enter-smooth');
+                    }
+                } else {
+                    el.hidden = true;
+                    el.classList.remove('view-enter-smooth');
+                }
+            }
         }
     }
 

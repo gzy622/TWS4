@@ -9,13 +9,8 @@
     grid-template-columns: repeat(5, 1fr);
     gap: 7px 6px;
     align-content: start;
-    animation: fadeInGrid 0.3s ease-out;
-    transition: opacity 0.2s ease;
-}
-
-@keyframes fadeInGrid {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
+    animation: fadeInView 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: opacity, transform;
 }
 
 .card {
