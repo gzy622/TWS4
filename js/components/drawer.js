@@ -2,21 +2,57 @@
     window.TWS3 = window.TWS3 || {};
     const store = window.TWS3.store;
 
+    function escapeHtml(value) {
+        return String(value === null || value === undefined ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function showToast(msg, duration) {
+        if (window.TWS3.showToast) {
+            window.TWS3.showToast(msg, duration);
+        }
+    }
+
+    function saveBlob(blob, fileName) {
+        if (window.TWS3 && typeof window.TWS3.saveBlob === 'function') {
+            return window.TWS3.saveBlob(blob, fileName);
+        }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+            if (link.parentNode) document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }, 1000);
+    }
+
     function initDrawer() {
         const navDrawerBtn = document.getElementById('nav-drawer-btn');
         const drawer = document.getElementById('drawer');
         const drawerOverlay = document.getElementById('drawer-overlay');
-        const drawerTitle = drawer.querySelector('.drawer-title');
-        const drawerSubtitle = drawer.querySelector('.drawer-subtitle');
+        const drawerTaskSubtitle = document.getElementById('drawer-task-subtitle');
+        const drawerTaskList = document.getElementById('drawer-task-list');
+        const drawerSearchInput = document.getElementById('drawer-task-search-input');
+        const drawerSearchClear = document.getElementById('drawer-task-search-clear');
+        const drawerActionMenu = document.getElementById('drawer-task-action-menu');
+        const drawerOpenSettingsBtn = document.getElementById('drawer-open-settings-btn');
 
+        // 二级全屏设置界面节点
+        const settingsView = document.getElementById('settings-view');
+        const settingsBackBtn = document.getElementById('settings-back-btn');
+        const settingsClassTitle = document.getElementById('settings-class-title');
+        const settingsClassSubtitle = document.getElementById('settings-class-subtitle');
+        const settingsCardHeader = settingsView ? settingsView.querySelector('.settings-card-header') : null;
+
+        // 设置界面中的菜单项
         const switchClassBtn = document.getElementById('drawer-switch-class-btn');
-        const viewGridBtn = document.getElementById('drawer-view-grid-btn');
-        const viewWideBtn = document.getElementById('drawer-view-wide-btn');
-        const viewSeatBtn = document.getElementById('drawer-view-seat-btn');
-        const viewTableBtn = document.getElementById('drawer-view-table-btn');
-        const viewScheduleBtn = document.getElementById('drawer-view-schedule-btn');
-        const viewOfficersBtn = document.getElementById('drawer-view-officers-btn');
-        const viewDutyBtn = document.getElementById('drawer-view-duty-btn');
         const manageRosterBtn = document.getElementById('drawer-manage-roster-btn');
         const importSeatBtn = document.getElementById('drawer-import-seat-btn');
         const exportSeatBtn = document.getElementById('drawer-export-seat-btn');
@@ -27,12 +63,15 @@
         const exportDataBtn = document.getElementById('drawer-export-data-btn');
         const resetRosterBtn = document.getElementById('drawer-reset-roster-btn');
         const studentNumberToggle = document.getElementById('drawer-student-number-toggle');
+        const subjectTagToggle = document.getElementById('drawer-subject-tag-toggle');
         const toggleDebuggerBtn = document.getElementById('drawer-toggle-debugger-btn');
-        const drawerCardHeader = drawer.querySelector('.drawer-card-header');
+
+        // 班级弹窗
         const classModal = document.getElementById('class-modal');
         const classModalCloseBtn = document.getElementById('class-modal-close-btn');
         const classListBody = document.getElementById('class-list-body');
 
+        // 花名册弹窗
         const rosterModal = document.getElementById('roster-modal');
         const rosterModalContainer = rosterModal ? rosterModal.querySelector('.roster-modal-container') : null;
         const rosterCloseBtn = document.getElementById('roster-close-btn');
@@ -40,9 +79,13 @@
         const rosterAddBtn = document.getElementById('roster-add-btn');
         const rosterListBody = document.getElementById('roster-list-body');
         const rosterCountBadge = document.getElementById('roster-count-badge');
+
+        // 文件上传 Input
         const xlsxFileInput = document.getElementById('xlsx-file-input');
         const seatXlsxFileInput = document.getElementById('seat-xlsx-file-input');
         const jsonFileInput = document.getElementById('json-file-input');
+
+        // 差异比对弹窗
         const diffModal = document.getElementById('diff-modal');
         const diffSourceTag = document.getElementById('diff-source-tag');
         const diffSourceInfo = document.getElementById('diff-source-info');
@@ -56,27 +99,484 @@
         const diffBtnOverride = document.getElementById('diff-btn-override');
         const diffBtnMerge = document.getElementById('diff-btn-merge');
         const diffBtnCancel = document.getElementById('diff-btn-cancel');
+        const diffModalBody = document.getElementById('diff-modal-body');
 
         let currentParsedImportData = null;
         let currentDiffResult = null;
         let currentDiffFilter = 'all';
         let diffVisibleCount = 40;
-        const diffModalBody = document.getElementById('diff-modal-body');
 
-        function showToast(msg, duration) {
-            if (window.TWS3.showToast) {
-                window.TWS3.showToast(msg, duration);
+        let taskSearchQuery = '';
+        let isArchivedGroupExpanded = null;
+        let activeMenuTaskId = null;
+        let activeMoreBtn = null;
+
+        // =======================================================
+        // 侧边抽屉控制与作业列表逻辑
+        // =======================================================
+
+        function toggleDrawer(open) {
+            if (!drawer) return;
+            const isShown = typeof open === 'boolean' ? open : !drawer.classList.contains('show');
+            drawer.classList.toggle('show', isShown);
+            if (drawerOverlay) drawerOverlay.classList.toggle('show', isShown);
+            if (isShown) {
+                closeAllActionMenus();
+                if (drawerSearchInput) drawerSearchInput.value = '';
+                taskSearchQuery = '';
+                if (drawerSearchClear) drawerSearchClear.style.display = 'none';
+                renderDrawerTaskList();
+                renderDrawerHeader();
+            } else {
+                closeAllActionMenus();
             }
         }
-        function escapeHtml(value) {
-            return String(value === null || value === undefined ? '' : value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+
+        function renderDrawerHeader() {
+            const state = store.getState();
+            const currentClass = state.currentClass || '班级';
+            const tasksCount = (state.tasks || []).length;
+            if (drawerTaskSubtitle) {
+                drawerTaskSubtitle.textContent = `${currentClass} · 共 ${tasksCount} 项作业`;
+            }
         }
 
+        function closeAllActionMenus() {
+            activeMenuTaskId = null;
+            if (activeMoreBtn) {
+                activeMoreBtn.classList.remove('active');
+                activeMoreBtn.setAttribute('aria-expanded', 'false');
+                activeMoreBtn = null;
+            }
+            if (drawerActionMenu) drawerActionMenu.classList.remove('show');
+        }
+
+        function openActionMenu(task, btnElement) {
+            if (!drawerActionMenu) return;
+            const isSame = activeMenuTaskId === task.id && drawerActionMenu.classList.contains('show');
+            closeAllActionMenus();
+            if (isSame) return;
+
+            activeMenuTaskId = task.id;
+            activeMoreBtn = btnElement;
+
+            const isArchived = !!task.archived;
+            const state = store.getState();
+            const canDelete = state.tasks.length > 1;
+
+            const archiveText = drawerActionMenu.querySelector('.archive-action-text');
+            if (archiveText) archiveText.textContent = isArchived ? '解除归档' : '归档';
+
+            const deleteBtn = drawerActionMenu.querySelector('.delete-task-action');
+            if (deleteBtn) {
+                deleteBtn.classList.toggle('disabled', !canDelete);
+                deleteBtn.disabled = !canDelete;
+            }
+
+            const drawerRect = drawer.getBoundingClientRect();
+            const btnRect = btnElement.getBoundingClientRect();
+
+            drawerActionMenu.style.visibility = 'hidden';
+            drawerActionMenu.style.display = 'flex';
+            const menuHeight = drawerActionMenu.offsetHeight || 130;
+            drawerActionMenu.style.visibility = '';
+            drawerActionMenu.style.display = '';
+
+            const spaceBelow = drawerRect.bottom - btnRect.bottom;
+            const spaceAbove = btnRect.top - drawerRect.top;
+
+            let topOffset;
+            if (spaceBelow < menuHeight + 8 && spaceAbove > menuHeight) {
+                topOffset = btnRect.top - drawerRect.top - menuHeight - 4;
+            } else {
+                topOffset = btnRect.bottom - drawerRect.top + 4;
+            }
+
+            const rightOffset = drawerRect.right - btnRect.right;
+
+            drawerActionMenu.style.top = `${Math.max(8, topOffset)}px`;
+            drawerActionMenu.style.right = `${Math.max(10, rightOffset)}px`;
+            drawerActionMenu.style.left = 'auto';
+            drawerActionMenu.style.bottom = 'auto';
+            drawerActionMenu.classList.add('show');
+            btnElement.classList.add('active');
+            btnElement.setAttribute('aria-expanded', 'true');
+        }
+
+        async function handleRenameTask(task) {
+            const modal = window.TWS3.modal;
+            if (modal) {
+                const newName = await modal.prompt({
+                    title: '重命名作业',
+                    defaultValue: task.name,
+                    placeholder: '作业名称'
+                });
+                if (newName && newName.trim()) {
+                    store.updateTaskName(task.id, newName.trim());
+                    showToast(`已重命名为「${newName.trim()}」`);
+                }
+            }
+        }
+
+        async function handleSetSubject(task) {
+            const modal = window.TWS3.modal;
+            const subjects = store.SUBJECT_OPTIONS || ['未设置', '语文', '数学', '英语', '物理', '化学', '生物', '政治', '历史', '地理', '其他'];
+            if (modal) {
+                const newSub = await modal.prompt({
+                    title: `设置作业科目`,
+                    message: `当前作业：${task.name}\n可选科目：${subjects.join(' / ')}`,
+                    defaultValue: task.subject || '未设置',
+                    placeholder: '请输入科目名称'
+                });
+                if (newSub !== null && newSub !== undefined && newSub.trim()) {
+                    store.setTaskSubject(task.id, newSub.trim());
+                    showToast(`已设置科目为「${newSub.trim()}」`);
+                }
+            }
+        }
+
+        async function handleDeleteTask(task) {
+            const state = store.getState();
+            const modal = window.TWS3.modal;
+            if (state.tasks.length <= 1) {
+                if (modal) modal.alert({ title: '无法删除', message: '至少需保留一个作业。' });
+                else alert('至少需保留一个作业。');
+                return;
+            }
+
+            const confirmed = modal
+                ? await modal.confirm({
+                    title: '删除作业',
+                    message: `确定删除「${task.name}」？该作业下的所有提交与评分记录将被清除。`,
+                    danger: true,
+                    confirmText: '删除'
+                })
+                : confirm(`确定删除「${task.name}」吗？`);
+
+            if (confirmed) {
+                const res = store.deleteTask(task.id);
+                if (!res.success && modal) {
+                    modal.alert({ title: '删除失败', message: res.reason || '删除失败' });
+                } else {
+                    showToast(`已删除作业「${task.name}」`);
+                }
+            }
+        }
+
+        // 绑定 Action Menu 按钮操作
+        if (drawerActionMenu) {
+            drawerActionMenu.querySelector('.edit-task-action')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const taskId = activeMenuTaskId;
+                closeAllActionMenus();
+                if (taskId) {
+                    const targetTask = store.getState().tasks.find(t => t.id === taskId);
+                    if (targetTask) handleRenameTask(targetTask);
+                }
+            });
+
+            drawerActionMenu.querySelector('.set-subject-action')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const taskId = activeMenuTaskId;
+                closeAllActionMenus();
+                if (taskId) {
+                    const targetTask = store.getState().tasks.find(t => t.id === taskId);
+                    if (targetTask) handleSetSubject(targetTask);
+                }
+            });
+
+            drawerActionMenu.querySelector('.archive-task-action')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const taskId = activeMenuTaskId;
+                closeAllActionMenus();
+                if (taskId) {
+                    const targetTask = store.getState().tasks.find(t => t.id === taskId);
+                    store.toggleArchiveTask(taskId);
+                    if (targetTask) {
+                        showToast(targetTask.archived ? '已归档' : '已解除归档');
+                    }
+                }
+            });
+
+            drawerActionMenu.querySelector('.delete-task-action')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const taskId = activeMenuTaskId;
+                closeAllActionMenus();
+                if (taskId) {
+                    const targetTask = store.getState().tasks.find(t => t.id === taskId);
+                    if (targetTask) handleDeleteTask(targetTask);
+                }
+            });
+        }
+
+        function createDrawerTaskItemElement(task, state) {
+            const isCurrent = task.id === state.currentTaskId;
+            const isArchived = !!task.archived;
+            const item = document.createElement('div');
+            item.className = `task-item ${isCurrent ? 'active' : ''} ${isArchived ? 'archived' : ''}`;
+            item.dataset.taskId = task.id;
+            const subject = task.subject || '未设置';
+            const isEnglish = subject === '英语';
+            const subjectBadgeClass = isEnglish ? 'task-chip chip-english' : 'task-chip chip-subject';
+            const showSubject = store.getShowSubjectTags();
+
+            item.innerHTML = `
+                <div class="task-main">
+                    <div class="task-active-indicator" aria-hidden="true"></div>
+                    <div class="task-content">
+                        <div class="task-title-row">
+                            <span class="task-name" title="${escapeHtml(task.name)}">${escapeHtml(task.name)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="task-meta-actions">
+                    ${showSubject ? `
+                    <button type="button" class="${subjectBadgeClass}" title="点击修改科目" aria-label="科目：${escapeHtml(subject)}">
+                        <span>${escapeHtml(subject)}</span>
+                    </button>` : ''}
+                    <button type="button" class="task-more-btn" title="更多操作" aria-label="更多操作" aria-haspopup="true" aria-expanded="false">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="5" r="1.75" fill="currentColor"/>
+                            <circle cx="12" cy="12" r="1.75" fill="currentColor"/>
+                            <circle cx="12" cy="19" r="1.75" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+
+            // 点击条目主体切换当前作业
+            item.addEventListener('click', () => {
+                store.setCurrentTask(task.id);
+                toggleDrawer(false);
+            });
+
+            // 科目标签点击切换
+            const subjectBtn = item.querySelector('.task-chip.chip-subject, .task-chip.chip-english');
+            if (subjectBtn) {
+                subjectBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeAllActionMenus();
+                    handleSetSubject(task);
+                });
+            }
+
+            // 三圆点更多操作菜单切换
+            const moreBtn = item.querySelector('.task-more-btn');
+            if (moreBtn) {
+                moreBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openActionMenu(task, moreBtn);
+                });
+            }
+
+            return item;
+        }
+
+        function renderDrawerTaskList() {
+            if (!drawerTaskList) return;
+            const state = store.getState();
+            const fragment = document.createDocumentFragment();
+
+            let allTasks = state.tasks || [];
+
+            // 搜索过滤
+            if (taskSearchQuery) {
+                allTasks = allTasks.filter(t => {
+                    const nameMatch = (t.name || '').toLowerCase().includes(taskSearchQuery);
+                    const subjectMatch = (t.subject || '').toLowerCase().includes(taskSearchQuery);
+                    return nameMatch || subjectMatch;
+                });
+            }
+
+            if (allTasks.length === 0) {
+                const emptyEl = document.createElement('div');
+                emptyEl.className = 'task-empty-state';
+                emptyEl.innerHTML = `<span>未找到匹配的作业</span>`;
+                fragment.appendChild(emptyEl);
+                drawerTaskList.innerHTML = '';
+                drawerTaskList.appendChild(fragment);
+                return;
+            }
+
+            const ongoingTasks = allTasks.filter(t => !t.archived);
+            const archivedTasks = allTasks.filter(t => !!t.archived);
+
+            const currentIsArchived = archivedTasks.some(t => t.id === state.currentTaskId);
+            const shouldExpandArchived = isArchivedGroupExpanded !== null
+                ? isArchivedGroupExpanded
+                : (currentIsArchived || (ongoingTasks.length === 0));
+
+            // 1. 渲染进行中分组
+            if (ongoingTasks.length > 0) {
+                if (archivedTasks.length > 0) {
+                    const groupHeader = document.createElement('div');
+                    groupHeader.className = 'task-group-header';
+                    groupHeader.innerHTML = `
+                        <div class="task-group-header-left">
+                            <span class="task-group-title">进行中</span>
+                            <span class="task-group-count">${ongoingTasks.length}</span>
+                        </div>
+                    `;
+                    fragment.appendChild(groupHeader);
+                }
+                const ongoingGroup = document.createElement('div');
+                ongoingGroup.className = 'task-group-list';
+                ongoingTasks.forEach(task => {
+                    ongoingGroup.appendChild(createDrawerTaskItemElement(task, state));
+                });
+                fragment.appendChild(ongoingGroup);
+            }
+
+            // 2. 渲染已归档分组
+            if (archivedTasks.length > 0) {
+                const archivedHeader = document.createElement('div');
+                archivedHeader.className = `task-group-header clickable ${shouldExpandArchived ? 'expanded' : ''}`;
+                archivedHeader.innerHTML = `
+                    <div class="task-group-header-left">
+                        <span class="task-group-title">已归档</span>
+                        <span class="task-group-count">${archivedTasks.length}</span>
+                    </div>
+                    <svg class="task-group-chevron" viewBox="0 0 24 24">
+                        <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                `;
+
+                archivedHeader.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    isArchivedGroupExpanded = !shouldExpandArchived;
+                    renderDrawerTaskList();
+                });
+
+                fragment.appendChild(archivedHeader);
+
+                if (shouldExpandArchived) {
+                    const archivedGroup = document.createElement('div');
+                    archivedGroup.className = 'task-group-list archived-list';
+                    archivedTasks.forEach(task => {
+                        archivedGroup.appendChild(createDrawerTaskItemElement(task, state));
+                    });
+                    fragment.appendChild(archivedGroup);
+                }
+            }
+
+            drawerTaskList.innerHTML = '';
+            drawerTaskList.appendChild(fragment);
+        }
+
+        // 搜索事件监听
+        if (drawerSearchInput) {
+            drawerSearchInput.addEventListener('input', (e) => {
+                taskSearchQuery = e.target.value.trim().toLowerCase();
+                if (drawerSearchClear) {
+                    drawerSearchClear.style.display = taskSearchQuery ? 'flex' : 'none';
+                }
+                renderDrawerTaskList();
+            });
+        }
+
+        if (drawerSearchClear) {
+            drawerSearchClear.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (drawerSearchInput) {
+                    drawerSearchInput.value = '';
+                    taskSearchQuery = '';
+                    drawerSearchClear.style.display = 'none';
+                    drawerSearchInput.focus();
+                }
+                renderDrawerTaskList();
+            });
+        }
+
+        if (navDrawerBtn) {
+            navDrawerBtn.addEventListener('click', () => toggleDrawer(true));
+        }
+
+        if (drawerOverlay) {
+            drawerOverlay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleDrawer(false);
+            });
+        }
+
+        const drawerScrollArea = drawer ? drawer.querySelector('.drawer-scroll-area') : null;
+        if (drawerScrollArea) {
+            drawerScrollArea.addEventListener('scroll', closeAllActionMenus, { passive: true });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (drawerActionMenu && !drawerActionMenu.contains(e.target) && !e.target.closest('.task-more-btn')) {
+                closeAllActionMenus();
+            }
+        });
+
+        // =======================================================
+        // 二级全屏界面 (数据管理与设置) 控制逻辑
+        // =======================================================
+
+        function openSettingsView() {
+            toggleDrawer(false);
+            renderSettingsHeader();
+            renderStudentNumberToggle();
+            renderSubjectTagToggle();
+            if (settingsView) {
+                settingsView.classList.add('show');
+                const scrollArea = settingsView.querySelector('.settings-scroll-area');
+                if (scrollArea) scrollArea.scrollTop = 0;
+            }
+        }
+        function closeSettingsView() {
+            if (settingsView) settingsView.classList.remove('show');
+        }
+
+        function isSettingsViewOpen() {
+            return !!(settingsView && settingsView.classList.contains('show'));
+        }
+
+        if (drawerOpenSettingsBtn) {
+            drawerOpenSettingsBtn.addEventListener('click', () => {
+                openSettingsView();
+            });
+        }
+
+        if (settingsBackBtn) {
+            settingsBackBtn.addEventListener('click', () => {
+                closeSettingsView();
+            });
+        }
+
+        function renderSettingsHeader() {
+            const state = store.getState();
+            if (settingsClassTitle) settingsClassTitle.textContent = state.currentClass || '班级';
+            if (settingsClassSubtitle) settingsClassSubtitle.textContent = `在籍学生：${(state.students || []).length} 人`;
+        }
+
+        function renderStudentNumberToggle() {
+            if (!studentNumberToggle) return;
+            const isVisible = store.getShowStudentNumbers();
+            studentNumberToggle.classList.toggle('active', isVisible);
+            studentNumberToggle.setAttribute('aria-pressed', String(isVisible));
+        }
+
+        function renderSubjectTagToggle() {
+            if (!subjectTagToggle) return;
+            const isVisible = store.getShowSubjectTags();
+            subjectTagToggle.classList.toggle('active', isVisible);
+            subjectTagToggle.setAttribute('aria-pressed', String(isVisible));
+        }
+
+        if (studentNumberToggle) {
+            studentNumberToggle.addEventListener('click', () => {
+                store.setShowStudentNumbers(!store.getShowStudentNumbers());
+            });
+        }
+
+        if (subjectTagToggle) {
+            subjectTagToggle.addEventListener('click', () => {
+                store.setShowSubjectTags(!store.getShowSubjectTags());
+            });
+        }
+
+        // 1. 切换班级
         function openClassModal() {
             renderClassList();
             if (classModal) classModal.classList.add('show');
@@ -128,69 +628,16 @@
             classListBody.appendChild(frag);
         }
 
-        function saveBlob(blob, fileName) {
-            if (window.TWS3 && typeof window.TWS3.saveBlob === 'function') {
-                return window.TWS3.saveBlob(blob, fileName);
-            }
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            setTimeout(() => {
-                if (link.parentNode) document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            }, 1000);
-        }
-
-        function toggleDrawer(open) {
-            drawer.classList.toggle('show', open);
-            drawerOverlay.classList.toggle('show', open);
-        }
-
-        function renderHeader() {
-            const state = store.getState();
-            if (drawerTitle) drawerTitle.textContent = state.currentClass;
-            if (drawerSubtitle) drawerSubtitle.textContent = `在籍学生：${state.students.length} 人`;
-        }
-
-        function renderStudentNumberToggle() {
-            if (!studentNumberToggle) return;
-            const isVisible = store.getShowStudentNumbers();
-            studentNumberToggle.classList.toggle('active', isVisible);
-            studentNumberToggle.setAttribute('aria-pressed', String(isVisible));
-        }
-
-        if (navDrawerBtn) {
-            navDrawerBtn.addEventListener('click', () => toggleDrawer(true));
-        }
-        if (drawerOverlay) {
-            drawerOverlay.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleDrawer(false);
-            });
-        }
-
-        if (studentNumberToggle) {
-            studentNumberToggle.addEventListener('click', () => {
-                store.setShowStudentNumbers(!store.getShowStudentNumbers());
-            });
-        }
-
-        // 1. 切换班级
         if (switchClassBtn) {
             switchClassBtn.addEventListener('click', () => {
-                toggleDrawer(false);
                 openClassModal();
             });
         }
 
-        if (drawerCardHeader) {
-            drawerCardHeader.style.cursor = 'pointer';
-            drawerCardHeader.title = '点击切换班级';
-            drawerCardHeader.addEventListener('click', () => {
-                toggleDrawer(false);
+        if (settingsCardHeader) {
+            settingsCardHeader.style.cursor = 'pointer';
+            settingsCardHeader.title = '点击切换班级';
+            settingsCardHeader.addEventListener('click', () => {
                 openClassModal();
             });
         }
@@ -227,7 +674,8 @@
                     if (newName && newName.trim() && newName.trim() !== targetCls.name) {
                         store.renameClass(classId, newName.trim());
                         renderClassList();
-                        renderHeader();
+                        renderSettingsHeader();
+                        renderDrawerHeader();
                         showToast(`已重命名为 ${newName.trim()}`);
                     }
                     return;
@@ -251,10 +699,9 @@
             });
         }
 
-
+        // 2. 导入导出座位表
         if (importSeatBtn) {
             importSeatBtn.addEventListener('click', () => {
-                toggleDrawer(false);
                 if (!seatXlsxFileInput) return;
                 seatXlsxFileInput.value = '';
                 seatXlsxFileInput.click();
@@ -278,6 +725,7 @@
                     store.setViewMode('seat');
                     const unmatchedText = result.unmatched.length ? `，${result.unmatched.length} 个座位未匹配` : '';
                     showToast(`已导入 ${result.matchedCount} 个座位${unmatchedText}`, 3200);
+                    closeSettingsView();
                 } catch (error) {
                     console.error('座位表导入失败:', error);
                     const modal = window.TWS3.modal;
@@ -291,7 +739,6 @@
 
         if (exportSeatBtn) {
             exportSeatBtn.addEventListener('click', async () => {
-                toggleDrawer(false);
                 const seatWorkbook = window.TWS3.seatWorkbook;
                 if (!seatWorkbook) {
                     showToast('座位表模块未准备就绪');
@@ -310,10 +757,9 @@
             });
         }
 
-        // 2. 导出标准记分册 (.xlsx)
+        // 3. 导出标准记分册 (.xlsx)
         if (exportXlsxBtn) {
             exportXlsxBtn.addEventListener('click', async () => {
-                toggleDrawer(false);
                 const state = store.getState();
                 const workbook = window.TWS3.workbook;
                 if (!workbook) {
@@ -333,7 +779,7 @@
                     })
                     : prompt('表格大标题：', defaultTitle);
 
-                if (confirmedTitle === null) return; // 用户取消
+                if (confirmedTitle === null) return;
 
                 try {
                     const { blob, fileName } = await workbook.exportWorkbook({
@@ -342,7 +788,6 @@
                     });
 
                     saveBlob(blob, fileName);
-
                     showToast('记分册已导出');
                 } catch (err) {
                     console.error('导出失败:', err);
@@ -355,8 +800,7 @@
             });
         }
 
-        // 3. 导入标准记分册 (.xlsx)
-
+        // 4. 差异比对弹窗与导入
         function formatDiffTime(value) {
             if (!value) return '时间未知';
             const date = new Date(value);
@@ -553,7 +997,6 @@
 
         if (importXlsxBtn) {
             importXlsxBtn.addEventListener('click', () => {
-                toggleDrawer(false);
                 if (xlsxFileInput) {
                     xlsxFileInput.value = '';
                     xlsxFileInput.click();
@@ -582,7 +1025,7 @@
                     const diffResult = store.diff(parsedResult);
 
                     if (!diffResult.hasDifference) {
-                    showToast('数据与备份一致');
+                        showToast('数据与备份一致');
                         xlsxFileInput.value = '';
                         return;
                     }
@@ -599,10 +1042,10 @@
                 }
             });
         }
-        // 导入 JSON 备份
+
+        // 5. 导入 JSON 备份
         if (importJsonBtn) {
             importJsonBtn.addEventListener('click', () => {
-                toggleDrawer(false);
                 if (jsonFileInput) {
                     jsonFileInput.value = '';
                     jsonFileInput.click();
@@ -668,7 +1111,6 @@
             return { students, tasks, records };
         }
 
-        // 差异弹窗操作：使用文件覆盖
         if (diffBtnOverride) {
             diffBtnOverride.addEventListener('click', async () => {
                 if (!currentParsedImportData) return;
@@ -693,7 +1135,6 @@
             });
         }
 
-        // 差异弹窗操作：智能合并
         if (diffBtnMerge) {
             diffBtnMerge.addEventListener('click', async () => {
                 if (!currentParsedImportData) return;
@@ -722,7 +1163,6 @@
             });
         }
 
-        // 差异弹窗操作：保留本地 (取消)
         if (diffBtnCancel) {
             diffBtnCancel.addEventListener('click', () => {
                 closeDiffModal();
@@ -730,10 +1170,9 @@
             });
         }
 
-        // 导出 JSON 备份
+        // 6. 导出 JSON 备份
         if (exportJsonBtn) {
             exportJsonBtn.addEventListener('click', () => {
-                toggleDrawer(false);
                 const state = store.getState();
                 const snapshot = store.exportStateSnapshot();
                 const jsonStr = JSON.stringify(snapshot, null, 2);
@@ -749,13 +1188,11 @@
                 showToast('JSON 备份已导出');
             });
         }
-        // 4. 导出原有 CSV 报表
+
+        // 7. 导出 CSV 报表
         if (exportDataBtn) {
             exportDataBtn.addEventListener('click', () => {
-                toggleDrawer(false);
-
                 const state = store.getState();
-                // 任务按时间顺序排列（最早在左，最新在右）
                 const tasks = [...state.tasks].sort((a, b) => {
                     const ta = a.createdAt || a.id;
                     const tb = b.createdAt || b.id;
@@ -786,14 +1223,10 @@
                     return str;
                 }
 
-                // 第 1 行：大标题行
                 const titleText = `${state.currentClass}学生作业提交名单${state.students.length}人`;
                 const titleRow = [escapeCsvCell(titleText), ...Array(tasks.length + 1).fill('')].join(',');
-
-                // 第 2 行：表头 (学号, 姓名, 任务1, 任务2...)
                 const headerRow = ['学号', '姓名', ...tasks.map(t => escapeCsvCell(t.name))].join(',');
 
-                // 数据行 (每个学生一行)
                 const dataRows = state.students.map(student => {
                     const row = [
                         student.studentNo || student.id,
@@ -808,8 +1241,6 @@
                 });
 
                 const csvContent = `\uFEFF${[titleRow, headerRow, ...dataRows].join('\n')}`;
-
-                // 触发下载
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 saveBlob(blob, `${state.currentClass}_学生作业提交汇总表.csv`);
 
@@ -817,7 +1248,7 @@
             });
         }
 
-        // 5. 重置全员状态
+        // 8. 重置全员状态
         if (resetRosterBtn) {
             resetRosterBtn.addEventListener('click', async () => {
                 const currentTask = store.getCurrentTask();
@@ -829,11 +1260,9 @@
                             message: `当前作业「${currentTask.name}」已归档，请先解除归档。`
                         });
                     }
-                    toggleDrawer(false);
                     return;
                 }
 
-                toggleDrawer(false);
                 const confirmed = modal
                     ? await modal.confirm({
                         title: '重置当前作业',
@@ -849,13 +1278,13 @@
                 }
             });
         }
-        // 软键盘弹出会压缩布局视口，vh 单位随之缩小导致弹窗变矮；
-        // overlay 隐藏时容器仍有布局尺寸，打开瞬间键盘必然收起，
-        // 直接锁定当时测得的渲染高度即可，无需在 JS 中复刻 CSS 公式。
+
+        // 9. 花名册管理
         function lockRosterHeight() {
             if (!rosterModalContainer) return;
             rosterModalContainer.style.height = `${rosterModalContainer.offsetHeight}px`;
         }
+
         function openRosterModal() {
             if (rosterSearchInput) rosterSearchInput.value = '';
             renderRosterList();
@@ -927,56 +1356,9 @@
 
         if (manageRosterBtn) {
             manageRosterBtn.addEventListener('click', () => {
-                toggleDrawer(false);
                 openRosterModal();
             });
         }
-        // 视图切换菜单项绑定
-        function updateDrawerViewActive(mode = store.getViewMode()) {
-            if (viewGridBtn) viewGridBtn.classList.toggle('active', mode === 'grid');
-            if (viewWideBtn) viewWideBtn.classList.toggle('active', mode === 'wide');
-            if (viewSeatBtn) viewSeatBtn.classList.toggle('active', mode === 'seat');
-            if (viewTableBtn) viewTableBtn.classList.toggle('active', mode === 'table');
-            if (viewScheduleBtn) viewScheduleBtn.classList.toggle('active', mode === 'schedule');
-            if (viewOfficersBtn) viewOfficersBtn.classList.toggle('active', mode === 'officers');
-            if (viewDutyBtn) viewDutyBtn.classList.toggle('active', mode === 'duty');
-        }
-        function switchView(targetMode) {
-            const currentMode = store.getViewMode();
-            if (currentMode === targetMode) {
-                toggleDrawer(false);
-                return;
-            }
-            updateDrawerViewActive(targetMode);
-            toggleDrawer(false);
-            // 抽屉收起平滑动画（~220ms）后再调度视图切换，彻底消除抽屉位移动画与大视图渲染争抢主线程导致的掉帧卡顿
-            setTimeout(() => {
-                store.setViewMode(targetMode);
-            }, 180);
-        }
-
-        if (viewGridBtn) {
-            viewGridBtn.addEventListener('click', () => switchView('grid'));
-        }
-        if (viewWideBtn) {
-            viewWideBtn.addEventListener('click', () => switchView('wide'));
-        }
-        if (viewSeatBtn) {
-            viewSeatBtn.addEventListener('click', () => switchView('seat'));
-        }
-        if (viewTableBtn) {
-            viewTableBtn.addEventListener('click', () => switchView('table'));
-        }
-        if (viewScheduleBtn) {
-            viewScheduleBtn.addEventListener('click', () => switchView('schedule'));
-        }
-        if (viewOfficersBtn) {
-            viewOfficersBtn.addEventListener('click', () => switchView('officers'));
-        }
-        if (viewDutyBtn) {
-            viewDutyBtn.addEventListener('click', () => switchView('duty'));
-        }
-        updateDrawerViewActive();
 
         if (rosterCloseBtn) {
             rosterCloseBtn.addEventListener('click', closeRosterModal);
@@ -1008,16 +1390,8 @@
                         const student = store.addStudent({ name: name.trim() });
                         if (student) {
                             renderRosterList();
+                            renderSettingsHeader();
                             showToast(`已添加学生：${student.name}（学号 ${student.studentNo}）`);
-                        }
-                    }
-                } else {
-                    const name = prompt('请输入新学生姓名：');
-                    if (name && name.trim()) {
-                        const student = store.addStudent({ name: name.trim() });
-                        if (student) {
-                            renderRosterList();
-                            showToast(`已添加学生：${student.name}`);
                         }
                     }
                 }
@@ -1079,6 +1453,7 @@
                         const res = store.deleteStudent(id);
                         if (res.success) {
                             renderRosterList();
+                            renderSettingsHeader();
                             showToast(`已删除学生：${s.name}`);
                         } else {
                             showToast(`删除失败: ${res.reason}`);
@@ -1088,7 +1463,7 @@
             });
         }
 
-        // 6. 调试录制悬浮球
+        // 10. 调试悬浮球切换
         if (toggleDebuggerBtn) {
             toggleDebuggerBtn.addEventListener('click', () => {
                 if (window.TWS3.logger) {
@@ -1098,15 +1473,53 @@
                         window.TWS3.logger.showFloatingBtn();
                     }
                 }
-                toggleDrawer(false);
             });
         }
 
+        // 11. 版本号与构建信息
+        function updateVersionFooters() {
+            const buildInfo = window.TWS3.BUILD_INFO || {};
+            const appVersion = buildInfo.appVersion || '1.0.0';
+            const buildTime = buildInfo.time || '2026-08-30 20:39:16';
+            const versionStr = `v${appVersion} · ${buildTime}`;
+
+            const footerEls = document.querySelectorAll('.drawer-footer-text, .settings-footer-text');
+            footerEls.forEach(el => {
+                el.textContent = versionStr;
+                el.title = `应用版本: v${appVersion}\n代码构建时间: ${buildTime} (点击复制)`;
+                el.style.cursor = 'pointer';
+                el.onclick = () => {
+                    const copyPayload = `TWS4 v${appVersion} (${buildInfo.version || buildTime})`;
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(copyPayload).then(() => {
+                            showToast(`已复制版本信息: ${copyPayload}`);
+                        }).catch(() => {
+                            showToast(`版本: ${copyPayload}`);
+                        });
+                    } else {
+                        showToast(`版本: ${copyPayload}`);
+                    }
+                };
+            });
+        }
+
+        // 12. 订阅 store 数据变更
         store.subscribe((state, eventType, payload) => {
-            if (eventType === 'VIEW_MODE_CHANGED') {
-                updateDrawerViewActive(payload.mode);
-            } else if (eventType === 'STUDENT_NUMBER_VISIBILITY_CHANGED') {
+            if (eventType === 'STUDENT_NUMBER_VISIBILITY_CHANGED') {
                 renderStudentNumberToggle();
+            } else if (eventType === 'SUBJECT_TAG_VISIBILITY_CHANGED') {
+                renderSubjectTagToggle();
+                renderDrawerTaskList();
+            } else if (
+                eventType === 'TASK_CHANGED' ||
+                eventType === 'TASK_ADDED' ||
+                eventType === 'TASK_DELETED' ||
+                eventType === 'TASK_RENAMED' ||
+                eventType === 'TASK_SUBJECT_CHANGED' ||
+                eventType === 'TASK_ARCHIVE_TOGGLED'
+            ) {
+                renderDrawerHeader();
+                renderDrawerTaskList();
             } else if (
                 eventType === 'CLASS_CHANGED' ||
                 eventType === 'STUDENT_ADDED' ||
@@ -1114,7 +1527,9 @@
                 eventType === 'STORE_OVERRIDDEN' ||
                 eventType === 'STORE_SMART_MERGED'
             ) {
-                renderHeader();
+                renderDrawerHeader();
+                renderDrawerTaskList();
+                renderSettingsHeader();
                 if (rosterModal && rosterModal.classList.contains('show')) {
                     renderRosterList();
                 }
@@ -1123,35 +1538,25 @@
                 }
             }
         });
-        // 7. 渲染当前代码版本的应用版本号与时间戳
-        const drawerFooterText = drawer ? drawer.querySelector('.drawer-footer-text') : null;
-        if (drawerFooterText) {
-            const buildInfo = window.TWS3.BUILD_INFO || {};
-            const appVersion = buildInfo.appVersion || '1.0.0';
-            const buildTime = buildInfo.time || '2026-08-29 22:53:59';
-            const versionStr = `v${appVersion} · ${buildTime}`;
-            drawerFooterText.textContent = versionStr;
-            drawerFooterText.title = `应用版本: v${appVersion}\n代码构建时间: ${buildTime} (点击复制)`;
-            drawerFooterText.style.cursor = 'pointer';
-            drawerFooterText.addEventListener('click', () => {
-                const copyPayload = `TWS4 v${appVersion} (${buildInfo.version || buildTime})`;
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(copyPayload).then(() => {
-                        showToast(`已复制版本信息: ${copyPayload}`);
-                    }).catch(() => {
-                        showToast(`版本: ${copyPayload}`);
-                    });
-                } else {
-                    showToast(`版本: ${copyPayload}`);
-                }
-            });
-        }
-        renderHeader();
-        renderStudentNumberToggle();
 
-        return {
-            toggleDrawer
+        // 初始渲染
+        renderDrawerHeader();
+        renderDrawerTaskList();
+        renderSettingsHeader();
+        renderStudentNumberToggle();
+        renderSubjectTagToggle();
+        updateVersionFooters();
+
+        const drawerService = {
+            toggleDrawer,
+            openSettingsView,
+            closeSettingsView,
+            isSettingsViewOpen,
+            renderDrawerTasks: renderDrawerTaskList
         };
+
+        window.TWS3.drawer = drawerService;
+        return drawerService;
     }
 
     window.TWS3.initDrawer = initDrawer;

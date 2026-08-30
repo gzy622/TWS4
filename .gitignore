@@ -7,3 +7,4 @@ android/app/build/
 Thumbs.db
 local.properties
 android/local.properties
+.debug-logs/

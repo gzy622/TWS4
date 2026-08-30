@@ -4,67 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TWS4</title>
-    <link rel="stylesheet" href="css/main.css?v=20260829-230809">
+    <link rel="stylesheet" href="css/main.css?v=20260830-211204">
 </head>
 <body>
     <div class="app-container">
-        <!-- 侧边栏抽屉 -->
+        <!-- 侧边栏抽屉：作业列表 -->
         <div id="drawer-overlay" class="drawer-overlay"></div>
         <aside id="drawer" class="drawer">
             <div class="drawer-card-header">
-                <div class="drawer-title">高二 (3) 班</div>
-                <div class="drawer-subtitle">在籍学生：50 人</div>
-                <div class="bg-tag">CLASS</div>
+                <div class="drawer-title">作业列表</div>
+                <div class="drawer-subtitle" id="drawer-task-subtitle">共 0 项作业</div>
+                <div class="bg-tag">TASKS</div>
+            </div>
+            <div class="drawer-search-bar">
+                <div class="drawer-search-wrapper">
+                    <svg class="drawer-search-icon" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" id="drawer-task-search-input" class="drawer-search-input" placeholder="搜索作业..." aria-label="搜索作业">
+                    <button type="button" id="drawer-task-search-clear" class="drawer-search-clear" aria-label="清空搜索" style="display: none;">✕</button>
+                </div>
             </div>
             <div class="drawer-scroll-area">
-                <div class="drawer-section">
-                    <div class="drawer-section-title">班级视图</div>
-                    <div class="drawer-menu">
-                        <div class="drawer-menu-item" id="drawer-view-grid-btn">
-                            <div class="drawer-item-icon icon-roster">
-                                <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                            </div>
-                            <div class="drawer-item-text">
-                                <div class="drawer-item-title">网格视图</div>
-                                <div class="drawer-item-desc">花名册网格与作业登记</div>
-                            </div>
-                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
-                        <div class="drawer-menu-item" id="drawer-view-wide-btn">
-                            <div class="drawer-item-icon icon-wide">
-                                <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-                            </div>
-                            <div class="drawer-item-text">
-                                <div class="drawer-item-title">宽栏视图</div>
-                                <div class="drawer-item-desc">双列卡片与名单登记</div>
-                            </div>
-                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
-                        <div class="drawer-menu-item" id="drawer-view-seat-btn">
-                            <div class="drawer-item-icon icon-seat">
-                                <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14m8-14v14M4 12h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-                            </div>
-                            <div class="drawer-item-text">
-                                <div class="drawer-item-title">座位视图</div>
-                                <div class="drawer-item-desc">班级座位排布与可视化</div>
-                            </div>
-                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
-                        <div class="drawer-menu-item" id="drawer-view-table-btn">
-                            <div class="drawer-item-icon icon-table">
-                                <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M3 15h18M9 5v14M15 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-                            </div>
-                            <div class="drawer-item-text">
-                                <div class="drawer-item-title">表格视图</div>
-                                <div class="drawer-item-desc">记分册全览与统计明细</div>
-                            </div>
-                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
-
+                <div class="drawer-task-list" id="drawer-task-list"></div>
+            </div>
+            <!-- 作业条目更多操作菜单 (抽屉内挂载) -->
+            <div id="drawer-task-action-menu" class="task-action-menu" role="menu">
+                <button type="button" class="task-action-menu-item edit-task-action" role="menuitem">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>重命名</span>
+                </button>
+                <button type="button" class="task-action-menu-item set-subject-action" role="menuitem">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>设置科目</span>
+                </button>
+                <button type="button" class="task-action-menu-item archive-task-action" role="menuitem">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="archive-action-text">归档</span>
+                </button>
+                <div class="task-action-menu-divider" role="separator"></div>
+                <button type="button" class="task-action-menu-item delete-task-action danger" role="menuitem">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>删除</span>
+                </button>
+            </div>
+            <div class="drawer-footer">
+                <button type="button" class="drawer-settings-entry-btn" id="drawer-open-settings-btn">
+                    <div class="drawer-settings-btn-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </div>
+                    <div class="drawer-settings-btn-text">
+                        <span class="drawer-settings-btn-title">数据与设置</span>
+                        <span class="drawer-settings-btn-desc">班级、花名册、导入导出</span>
+                    </div>
+                    <svg class="drawer-settings-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <span class="drawer-footer-text">v1.0.0 · 2026-08-30 21:12:04</span>
+            </div>
+        </aside>
+
+        <!-- 二级全屏界面：原侧边抽屉的数据管理与设置 -->
+        <div id="settings-view" class="fullscreen-panel">
+            <div class="settings-header">
+                <button type="button" class="settings-back-btn" id="settings-back-btn" aria-label="返回">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <div class="settings-title">数据与设置</div>
+                <div class="settings-header-right"></div>
+            </div>
+            <div class="settings-scroll-area">
+                <div class="settings-card-header">
+                    <div class="settings-card-title" id="settings-class-title">高二 (3) 班</div>
+                    <div class="settings-card-subtitle" id="settings-class-subtitle">在籍学生：50 人</div>
+                    <div class="bg-tag">CLASS</div>
                 </div>
+                <!-- 分组 1：班级与学生 -->
                 <div class="drawer-section">
-                    <div class="drawer-section-title">数据管理</div>
+                    <div class="drawer-section-title">班级与学生</div>
                     <div class="drawer-menu">
                         <div class="drawer-menu-item" id="drawer-switch-class-btn">
                             <div class="drawer-item-icon icon-class">
@@ -83,6 +113,33 @@
                             <div class="drawer-item-text">
                                 <div class="drawer-item-title">学生花名册</div>
                                 <div class="drawer-item-desc">学生姓名、学号及非英语生设置</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分组 2：表格与记分册 -->
+                <div class="drawer-section">
+                    <div class="drawer-section-title">表格与记分册</div>
+                    <div class="drawer-menu">
+                        <div class="drawer-menu-item" id="drawer-import-xlsx-btn">
+                            <div class="drawer-item-icon icon-import">
+                                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6m0 0l-3 3m3-3l3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">导入记分册</div>
+                                <div class="drawer-item-desc">智能比对与合并 .xlsx 表格</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-export-xlsx-btn">
+                            <div class="drawer-item-icon icon-export">
+                                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6m0 0l-3-3m3 3l3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">导出记分册</div>
+                                <div class="drawer-item-desc">标准多任务排版表格 (.xlsx)</div>
                             </div>
                             <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
@@ -106,46 +163,6 @@
                             </div>
                             <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
-                        <div class="drawer-menu-item" id="drawer-import-xlsx-btn">
-                            <div class="drawer-item-icon icon-import">
-                                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6m0 0l-3 3m3-3l3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </div>
-                            <div class="drawer-item-text">
-                                <div class="drawer-item-title">导入记分册</div>
-                                <div class="drawer-item-desc">智能比对与合并 .xlsx 表格</div>
-                            </div>
-                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
-                        <div class="drawer-menu-item" id="drawer-export-xlsx-btn">
-                            <div class="drawer-item-icon icon-export">
-                                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 12v6m0 0l-3-3m3 3l3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </div>
-                            <div class="drawer-item-text">
-                                <div class="drawer-item-title">导出记分册</div>
-                                <div class="drawer-item-desc">标准多任务排版表格 (.xlsx)</div>
-                            </div>
-                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
-                        <div class="drawer-menu-item" id="drawer-import-json-btn">
-                            <div class="drawer-item-icon icon-json-import">
-                                <svg viewBox="0 0 24 24"><path d="M4 4v16a2 2 0 002 2h12a2 2 0 002-2V8.342a2 2 0 00-.602-1.43l-4.44-4.342A2 2 0 0013.56 2H6a2 2 0 00-2 2z" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 18v-6m0 0l-2.5 2.5M12 12l2.5 2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </div>
-                            <div class="drawer-item-text">
-                                <div class="drawer-item-title">导入 JSON 备份</div>
-                                <div class="drawer-item-desc">还原快照与差异合并</div>
-                            </div>
-                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
-                        <div class="drawer-menu-item" id="drawer-export-json-btn">
-                            <div class="drawer-item-icon icon-json-export">
-                                <svg viewBox="0 0 24 24"><path d="M4 4v16a2 2 0 002 2h12a2 2 0 002-2V8.342a2 2 0 00-.602-1.43l-4.44-4.342A2 2 0 0013.56 2H6a2 2 0 00-2 2z" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 12v6m0 0l-2.5-2.5M12 18l2.5-2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </div>
-                            <div class="drawer-item-text">
-                                <div class="drawer-item-title">导出 JSON 备份</div>
-                                <div class="drawer-item-desc">全量作业与提交记录快照</div>
-                            </div>
-                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </div>
                         <div class="drawer-menu-item" id="drawer-export-data-btn">
                             <div class="drawer-item-icon icon-csv">
                                 <svg viewBox="0 0 24 24"><path d="M9 17v-6m4 6v-3m4 6v-9M4 21h16a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -158,8 +175,37 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 分组 3：备份与恢复 -->
                 <div class="drawer-section">
-                    <div class="drawer-section-title">快捷操作</div>
+                    <div class="drawer-section-title">备份与恢复</div>
+                    <div class="drawer-menu">
+                        <div class="drawer-menu-item" id="drawer-import-json-btn">
+                            <div class="drawer-item-icon icon-json-import">
+                                <svg viewBox="0 0 24 24"><path d="M4 4v16a2 2 0 002 2h12a2 2 0 002-2V8.342a2 2 0 00-.602-1.43l-4.44-4.342A2 2 0 0013.56 2H6a2 2 0 00-2 2z" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6"/><path d="M12 18v-6m0 0l-2.5 2.5M12 12l2.5 2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">导入 JSON 备份</div>
+                                <div class="drawer-item-desc">还原快照与差异合并</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="drawer-menu-item" id="drawer-export-json-btn">
+                            <div class="drawer-item-icon icon-json-export">
+                                <svg viewBox="0 0 24 24"><path d="M4 4v16a2 2 0 002 2h12a2 2 0 002-2V8.342a2 2 0 00-.602-1.43l-4.44-4.342A2 2 0 0013.56 2H6a2 2 0 00-2 2z" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6"/><path d="M12 12v6m0 0l-2.5-2.5M12 18l2.5-2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">导出 JSON 备份</div>
+                                <div class="drawer-item-desc">全量作业与提交记录快照</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分组 4：偏好与快捷操作 -->
+                <div class="drawer-section">
+                    <div class="drawer-section-title">偏好与快捷操作</div>
                     <div class="drawer-menu">
                         <div class="drawer-menu-item" id="drawer-reset-roster-btn">
                             <div class="drawer-item-icon icon-reset">
@@ -179,6 +225,17 @@
                                 <div class="drawer-item-title">显示学生学号</div>
                                 <div class="drawer-item-desc">网格与表格视图内显示学号</div>
                             </div>
+                            <div class="drawer-toggle"><span></span></div>
+                        </button>
+                        <button type="button" class="drawer-menu-item drawer-toggle-item" id="drawer-subject-tag-toggle" aria-pressed="true">
+                            <div class="drawer-item-icon icon-subject">
+                                <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/></svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title">显示科目标签</div>
+                                <div class="drawer-item-desc">作业标题与列表内显示科目</div>
+                            </div>
+                            <div class="drawer-toggle"><span></span></div>
                         </button>
                         <div class="drawer-menu-item" id="drawer-toggle-debugger-btn">
                             <div class="drawer-item-icon icon-debug">
@@ -192,11 +249,11 @@
                         </div>
                     </div>
                 </div>
+                <div class="settings-footer">
+                    <span class="settings-footer-text">v1.0.0 · 2026-08-30 20:39:16</span>
+                </div>
             </div>
-            <div class="drawer-footer">
-                <span class="drawer-footer-text">v1.0.0 · 2026-08-29 23:08:09</span>
-            </div>
-        </aside>
+        </div>
         <!-- 隐藏的文件上传 Input -->
         <input type="file" id="xlsx-file-input" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display: none;" />
         <input type="file" id="seat-xlsx-file-input" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display: none;" />
@@ -215,11 +272,6 @@
                 <span id="current-task-name">作业</span>
                 <svg viewBox="0 0 24 24">
                     <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </div>
-            <div class="nav-icon nav-plus-icon" id="nav-new-task-btn" aria-label="新建任务">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
         </header>
@@ -248,6 +300,54 @@
                 <div class="modal-actions">
                     <button type="button" class="modal-btn cancel" id="modal-cancel-btn">取消</button>
                     <button type="button" class="modal-btn confirm" id="modal-confirm-btn">确认</button>
+                </div>
+            </div>
+        </div>
+        <!-- 新建作业二级弹窗 -->
+        <div id="new-task-modal" class="modal-overlay">
+            <div class="modal new-task-modal-container">
+                <div class="new-task-modal-header">
+                    <div class="modal-title">新建作业</div>
+                    <button type="button" class="new-task-modal-close" id="new-task-modal-close-btn" aria-label="关闭">✕</button>
+                </div>
+                <div class="new-task-modal-body">
+                    <div class="new-task-field">
+                        <label class="new-task-label" for="new-task-name-input">作业名称</label>
+                        <input type="text" id="new-task-name-input" class="new-task-input" placeholder="输入作业名称（如：数学练习册P23）" autocomplete="off" />
+                    </div>
+                    <div class="new-task-field">
+                        <label class="new-task-label">所属科目</label>
+                        <div class="new-task-subject-chips" id="new-task-subject-chips"></div>
+                    </div>
+                    <div class="new-task-field">
+                        <label class="new-task-label">分配班级</label>
+                        <div class="new-task-target-classes" id="new-task-target-classes"></div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn cancel" id="new-task-cancel-btn">取消</button>
+                    <button type="button" class="modal-btn confirm" id="new-task-confirm-btn">确认创建</button>
+                </div>
+            </div>
+        </div>
+        <!-- 学生快速搜索弹窗 -->
+        <div id="student-search-modal" class="modal-overlay">
+            <div class="modal student-search-modal-container">
+                <div class="student-search-modal-header">
+                    <div class="modal-title">搜索学生</div>
+                    <button type="button" class="student-search-modal-close" id="student-search-close-btn" aria-label="关闭">✕</button>
+                </div>
+                <div class="student-search-input-wrap">
+                    <svg class="student-search-icon" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" id="student-search-modal-input" class="student-search-input" placeholder="输入姓名或学号搜索..." autocomplete="off" />
+                    <button type="button" id="student-search-modal-clear" class="student-search-clear" style="display: none;">✕</button>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn cancel" id="student-search-clear-btn">清空筛选</button>
+                    <button type="button" class="modal-btn confirm" id="student-search-confirm-btn">确定</button>
                 </div>
             </div>
         </div>
@@ -386,30 +486,30 @@
     </div>
 
     <!-- 1. 数据与状态层 -->
-    <script src="js/config/version.js?v=20260829-230809"></script>
-    <script src="js/config/initial-data.js?v=20260829-230809"></script>
-    <script src="js/state/store.js?v=20260829-230809"></script>
+    <script src="js/config/version.js?v=20260830-211204"></script>
+    <script src="js/config/initial-data.js?v=20260830-211204"></script>
+    <script src="js/state/store.js?v=20260830-211204"></script>
 
     <!-- 2. 通用工具与反馈层 -->
-    <script src="js/utils/toast.js?v=20260829-230809"></script>
-    <script src="js/utils/file-saver.js?v=20260829-230809"></script>
-    <script src="js/utils/gestures.js?v=20260829-230809"></script>
-    <script src="js/utils/logger.js?v=20260829-230809"></script>
-    <script src="js/utils/dependencies.js?v=20260829-230809"></script>
-    <script src="js/utils/back-handler.js?v=20260829-230809"></script>
-    <script src="js/modules/workbook.js?v=20260829-230809"></script>
-    <script src="js/modules/seat-workbook.js?v=20260829-230809"></script>
+    <script src="js/utils/toast.js?v=20260830-211204"></script>
+    <script src="js/utils/file-saver.js?v=20260830-211204"></script>
+    <script src="js/utils/gestures.js?v=20260830-211204"></script>
+    <script src="js/utils/logger.js?v=20260830-211204"></script>
+    <script src="js/utils/dependencies.js?v=20260830-211204"></script>
+    <script src="js/utils/back-handler.js?v=20260830-211204"></script>
+    <script src="js/modules/workbook.js?v=20260830-211204"></script>
+    <script src="js/modules/seat-workbook.js?v=20260830-211204"></script>
     <!-- 3. UI 组件层 -->
-    <script src="js/components/modal.js?v=20260829-230809"></script>
-    <script src="js/components/edit-sheet.js?v=20260829-230809"></script>
-    <script src="js/components/navbar.js?v=20260829-230809"></script>
-    <script src="js/components/drawer.js?v=20260829-230809"></script>
-    <script src="js/components/grid.js?v=20260829-230809"></script>
-    <script src="js/components/wide.js?v=20260829-230809"></script>
-    <script src="js/components/seat.js?v=20260829-230809"></script>
-    <script src="js/components/table.js?v=20260829-230809"></script>
+    <script src="js/components/modal.js?v=20260830-211204"></script>
+    <script src="js/components/edit-sheet.js?v=20260830-211204"></script>
+    <script src="js/components/navbar.js?v=20260830-211204"></script>
+    <script src="js/components/drawer.js?v=20260830-211204"></script>
+    <script src="js/components/grid.js?v=20260830-211204"></script>
+    <script src="js/components/wide.js?v=20260830-211204"></script>
+    <script src="js/components/seat.js?v=20260830-211204"></script>
+    <script src="js/components/table.js?v=20260830-211204"></script>
 
     <!-- 4. 入口装配 -->
-    <script src="js/app.js?v=20260829-230809"></script>
+    <script src="js/app.js?v=20260830-211204"></script>
 </body>
 </html>

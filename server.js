@@ -89,30 +89,77 @@ function ensureGitHooks() {
     } catch (_) {}
 }
 
+function getAllowedOrigin(request) {
+    const origin = request.headers.origin;
+    if (!origin) return null;
+    try {
+        const parsed = new URL(origin);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return null;
+        }
+        const hostname = parsed.hostname;
+
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return origin;
+        }
+
+        const ipv4Match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(hostname);
+        if (ipv4Match) {
+            const [, oct1, oct2, oct3, oct4] = ipv4Match.map(Number);
+            if (oct1 <= 255 && oct2 <= 255 && oct3 <= 255 && oct4 <= 255) {
+                if (oct1 === 10) {
+                    return origin;
+                }
+                if (oct1 === 172 && oct2 >= 16 && oct2 <= 31) {
+                    return origin;
+                }
+                if (oct1 === 192 && oct2 === 168) {
+                    return origin;
+                }
+            }
+        }
+    } catch (_) {}
+    return null;
+}
+
 function resolveRequestPath(url) {
     const pathname = decodeURIComponent(new URL(url, 'http://localhost').pathname);
     const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
     const filePath = path.resolve(root, relativePath);
-    return filePath.startsWith(`${root}${path.sep}`) ? filePath : null;
+    const rel = path.relative(root, filePath);
+    if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) {
+        return null;
+    }
+    const segments = rel.split(/[\\/]/);
+    if (segments.some(segment => segment.startsWith('.'))) {
+        return null;
+    }
+    return filePath;
 }
 
 const server = http.createServer((request, response) => {
+    const allowedOrigin = getAllowedOrigin(request);
+    const corsHeaders = {
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Requested-With'
+    };
+    if (allowedOrigin) {
+        corsHeaders['Access-Control-Allow-Origin'] = allowedOrigin;
+        corsHeaders['Vary'] = 'Origin';
+    }
+
     // 统一配置 CORS 跨域响应头
     const setCorsHeaders = (statusCode = 200, contentType = 'application/json; charset=utf-8') => {
         response.writeHead(statusCode, {
             'Content-Type': contentType,
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, X-Requested-With'
+            ...corsHeaders
         });
     };
 
     // 处理 CORS 预检请求
     if (request.method === 'OPTIONS') {
         response.writeHead(204, {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, X-Requested-With'
+            ...corsHeaders
         });
         response.end();
         return;
@@ -120,21 +167,34 @@ const server = http.createServer((request, response) => {
 
     // 接收手机端/前端调试日志回传
     if (request.method === 'POST' && request.url.startsWith('/api/logs')) {
+        const MAX_LOG_PAYLOAD = 2 * 1024 * 1024;
         const chunks = [];
         let receivedBytes = 0;
+        let exceeded = false;
 
         request.on('data', chunk => {
-            chunks.push(chunk);
             receivedBytes += chunk.length;
+            if (receivedBytes > MAX_LOG_PAYLOAD) {
+                if (!exceeded) {
+                    exceeded = true;
+                    chunks.length = 0;
+                    setCorsHeaders(413);
+                    response.end(JSON.stringify({ success: false, error: 'Payload Too Large' }));
+                }
+                return;
+            }
+            chunks.push(chunk);
         });
 
         request.on('error', err => {
+            if (exceeded || response.writableEnded) return;
             console.error('[接收请求流错误]', err);
             setCorsHeaders(500);
             response.end(JSON.stringify({ success: false, error: '数据传输中断: ' + err.message }));
         });
 
         request.on('end', () => {
+            if (exceeded || response.writableEnded) return;
             try {
                 const rawBuffer = Buffer.concat(chunks);
                 const rawText = rawBuffer.toString('utf-8').trim();
@@ -178,14 +238,13 @@ const server = http.createServer((request, response) => {
         const buf = Buffer.from(versionScript, 'utf8');
         response.writeHead(200, {
             'Content-Type': 'application/javascript; charset=utf-8',
-            'Access-Control-Allow-Origin': '*',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Content-Length': buf.length
+            'Content-Length': buf.length,
+            ...corsHeaders
         });
         response.end(buf);
         return;
     }
-
     const filePath = resolveRequestPath(request.url);
     if (!filePath) {
         response.writeHead(403).end('Forbidden');
