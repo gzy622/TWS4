@@ -75,7 +75,7 @@
         else if (value.status === 'muted') labels.push('灰色状态');
         else labels.push('未交');
         if (value.score !== null && value.score !== undefined && value.score !== '') labels.push(`${value.score}分`);
-        if (value.badge && String(value.badge).trim() && String(value.badge) !== `${value.score}分`) labels.push(String(value.badge));
+        if (value.badge && String(value.badge).trim() && String(value.badge) !== `${value.score}分` && String(value.badge) !== `${value.score}`) labels.push(String(value.badge));
         if (value.note && String(value.note).trim() && value.note !== value.badge) labels.push(String(value.note));
         return labels.join('，');
     }
@@ -497,7 +497,8 @@
                 classes: [class1, class2],
                 operationMode: 'check',
                 viewMode: 'grid',
-                showStudentNumbers: true
+                showStudentNumbers: true,
+                showSubjectTags: true
             };
             this._syncActiveClassPointers(state);
             return state;
@@ -578,6 +579,7 @@
                 }
                 if (!parsed.operationMode) parsed.operationMode = 'check';
                 if (typeof parsed.showStudentNumbers !== 'boolean') parsed.showStudentNumbers = true;
+                if (typeof parsed.showSubjectTags !== 'boolean') parsed.showSubjectTags = true;
                 const validViews = ['grid', 'wide', 'seat', 'table', 'schedule', 'officers', 'duty'];
                 if (!validViews.includes(parsed.viewMode)) parsed.viewMode = 'grid';
 
@@ -668,6 +670,17 @@
             this._notify('VIEW_MODE_CHANGED', { mode });
         }
 
+        getStudentFilter() {
+            return this.studentFilter || { query: '', status: 'all' };
+        }
+
+        setStudentFilter(filter = {}) {
+            const query = (filter.query !== undefined ? filter.query : (this.studentFilter?.query || '')).trim().toLowerCase();
+            const status = filter.status !== undefined ? filter.status : (this.studentFilter?.status || 'all');
+            this.studentFilter = { query, status };
+            this._notify('STUDENT_FILTER_CHANGED', { filter: this.studentFilter });
+        }
+
         getShowStudentNumbers() {
             return this.state.showStudentNumbers !== false;
         }
@@ -677,6 +690,17 @@
             if (this.state.showStudentNumbers === nextValue) return;
             this.state.showStudentNumbers = nextValue;
             this._notify('STUDENT_NUMBER_VISIBILITY_CHANGED', { show: nextValue });
+        }
+
+        getShowSubjectTags() {
+            return this.state.showSubjectTags !== false;
+        }
+
+        setShowSubjectTags(show) {
+            const nextValue = show !== false;
+            if (this.state.showSubjectTags === nextValue) return;
+            this.state.showSubjectTags = nextValue;
+            this._notify('SUBJECT_TAG_VISIBILITY_CHANGED', { show: nextValue });
         }
 
         // ==========================================
@@ -1304,37 +1328,64 @@
             this._notify('TASK_CHANGED', { taskId });
         }
 
-        addTask(name, subject = '未设置') {
+        addTaskToClasses(name, subject = '未设置', classIds = [this.state.currentClassId]) {
             const trimmed = (name || '').trim();
             if (!trimmed) return null;
 
             const finalSubject = subject && subject !== '未设置' ? subject : inferSubjectFromName(trimmed);
             const now = getUtcNowIso();
-            const id = 'task_' + Date.now();
-            const newTask = {
-                id,
-                name: trimmed,
-                subject: finalSubject,
-                archived: false,
-                createdAt: now,
-                updatedAt: now
+            const id = generateId('task');
+            const requestedIds = new Set(Array.isArray(classIds) ? classIds : [classIds]);
+            const targetClasses = (this.state.classes || []).filter(cls => requestedIds.has(cls.id));
+            if (targetClasses.length === 0) {
+                const activeClass = this.state.classes?.find(cls => cls.id === this.state.currentClassId);
+                if (activeClass) targetClasses.push(activeClass);
+            }
+
+            let activeTask = null;
+            targetClasses.forEach(cls => {
+                const newTask = {
+                    id,
+                    assignmentGroupId: id,
+                    name: trimmed,
+                    subject: finalSubject,
+                    archived: false,
+                    createdAt: now,
+                    updatedAt: now
+                };
+                cls.tasks.unshift(newTask);
+                cls.records[id] = {};
+                const isEnglish = finalSubject === '英语' || (finalSubject === '未设置' && /英语/.test(trimmed));
+                cls.students.forEach(student => {
+                    const defaultStatus = isEnglish && student.isNonEnglish ? 'muted' : 'white';
+                    cls.records[id][student.id] = {
+                        status: defaultStatus,
+                        badge: null,
+                        score: null,
+                        note: null,
+                        updatedAt: now
+                    };
+                });
+                if (cls.id === this.state.currentClassId) {
+                    cls.currentTaskId = id;
+                    activeTask = newTask;
+                }
+            });
+
+            this._syncActiveClassPointers(this.state);
+            this._notify('TASK_ADDED', {
+                task: activeTask || targetClasses[0]?.tasks[0] || null,
+                classIds: targetClasses.map(cls => cls.id)
+            });
+            return {
+                task: activeTask || targetClasses[0]?.tasks[0] || null,
+                classIds: targetClasses.map(cls => cls.id)
             };
+        }
 
-            this.state.tasks.unshift(newTask);
-            this.state.currentTaskId = id;
-            const activeClass = this.state.classes?.find(c => c.id === this.state.currentClassId);
-            if (activeClass) {
-                activeClass.currentTaskId = id;
-            }
-            this.state.records[id] = {};
-            const isEnglish = this.isEnglishTask(newTask);
-            for (const s of this.state.students) {
-                const defaultStatus = (isEnglish && s.isNonEnglish) ? 'muted' : 'white';
-                this.state.records[id][s.id] = { status: defaultStatus, badge: null, score: null, note: null, updatedAt: now };
-            }
-
-            this._notify('TASK_ADDED', { task: newTask });
-            return newTask;
+        addTask(name, subject = '未设置') {
+            const result = this.addTaskToClasses(name, subject, [this.state.currentClassId]);
+            return result ? result.task : null;
         }
 
         updateTaskName(taskId, newName) {
@@ -1634,26 +1685,113 @@
             return this.state.currentClassId || (this.state.classes && this.state.classes[0] ? this.state.classes[0].id : 'class_1');
         }
 
-        getStats(taskId = this.state.currentTaskId) {
+        getTaskComparison(taskId = this.state.currentTaskId, mode = this.state.operationMode) {
+            const sourceTask = this.state.tasks.find(task => task.id === taskId) || this.getCurrentTask();
+            if (!sourceTask) return { task: null, classes: [] };
+            const normalizedName = normalizeTaskName(sourceTask.name);
+
+            const classes = (this.state.classes || []).map(cls => {
+                const matchedTask = cls.tasks.find(task =>
+                    (sourceTask.assignmentGroupId && task.assignmentGroupId === sourceTask.assignmentGroupId) ||
+                    task.id === sourceTask.id
+                ) || cls.tasks.find(task =>
+                    normalizeTaskName(task.name) === normalizedName &&
+                    (task.subject || '未设置') === (sourceTask.subject || '未设置')
+                );
+                if (!matchedTask) {
+                    return {
+                        id: cls.id,
+                        name: cls.name,
+                        isCurrent: cls.id === this.state.currentClassId,
+                        taskId: null,
+                        total: cls.students.length,
+                        submitted: 0,
+                        graded: 0,
+                        exempt: 0,
+                        required: cls.students.length,
+                        percentage: 0
+                    };
+                }
+
+                const taskRecords = cls.records[matchedTask.id] || {};
+                const isEnglish = matchedTask.subject === '英语' ||
+                    (!matchedTask.subject && /英语/.test(matchedTask.name));
+                let submitted = 0;
+                let graded = 0;
+                let exempt = 0;
+                cls.students.forEach(student => {
+                    const record = taskRecords[student.id];
+                    if (record && record.status === 'dark') {
+                        submitted++;
+                    }
+                    if (record && ((record.score !== null && record.score !== undefined && record.score !== '') || (record.badge && String(record.badge).trim())) && record.status !== 'muted') {
+                        graded++;
+                    }
+                    if (isEnglish && student.isNonEnglish && (!record || record.status === 'muted')) {
+                        exempt++;
+                    }
+                });
+                const required = Math.max(0, cls.students.length - exempt);
+                const completed = mode === 'grade' ? graded : submitted;
+                const percentage = required > 0 ? (completed / required) * 100 : (cls.students.length ? 100 : 0);
+                return {
+                    id: cls.id,
+                    name: cls.name,
+                    isCurrent: cls.id === this.state.currentClassId,
+                    taskId: matchedTask.id,
+                    total: cls.students.length,
+                    submitted,
+                    graded,
+                    exempt,
+                    required,
+                    percentage: Math.min(100, percentage)
+                };
+            });
+            return { task: sourceTask, classes };
+        }
+
+        switchClassForTask(classId, taskId = this.state.currentTaskId) {
+            const comparison = this.getTaskComparison(taskId);
+            const targetSummary = comparison.classes.find(cls => cls.id === classId);
+            const targetClass = this.state.classes?.find(cls => cls.id === classId);
+            if (!targetClass) return null;
+            if (targetSummary?.taskId) targetClass.currentTaskId = targetSummary.taskId;
+            this.state.currentClassId = targetClass.id;
+            this._syncActiveClassPointers(this.state);
+            this._notify('CLASS_CHANGED', {
+                classId: targetClass.id,
+                className: targetClass.name,
+                taskId: targetSummary?.taskId || this.state.currentTaskId
+            });
+            return targetClass;
+        }
+
+        getStats(taskId = this.state.currentTaskId, mode = this.state.operationMode) {
             const task = this.state.tasks.find(t => t.id === taskId);
             const isEnglish = this.isEnglishTask(task);
             const records = this.getStudentRecords(taskId);
             const total = this.state.students.length;
             let submitted = 0;
+            let graded = 0;
             let exempt = 0;
 
             for (const s of this.state.students) {
                 const rec = records[s.id];
                 if (rec && rec.status === 'dark') {
                     submitted++;
-                } else if (isEnglish && s.isNonEnglish && (!rec || rec.status === 'muted')) {
+                }
+                if (rec && ((rec.score !== null && rec.score !== undefined && rec.score !== '') || (rec.badge && String(rec.badge).trim())) && rec.status !== 'muted') {
+                    graded++;
+                }
+                if (isEnglish && s.isNonEnglish && (!rec || rec.status === 'muted')) {
                     exempt++;
                 }
             }
 
             const required = Math.max(0, total - exempt);
-            const percentage = required > 0 ? (submitted / required) * 100 : (total > 0 ? 100 : 0);
-            return { total, submitted, exempt, required, percentage: Math.min(100, percentage) };
+            const completed = mode === 'grade' ? graded : submitted;
+            const percentage = required > 0 ? (completed / required) * 100 : (total > 0 ? 100 : 0);
+            return { total, submitted, graded, exempt, required, percentage: Math.min(100, percentage), mode };
         }
 
         /**
@@ -1689,6 +1827,7 @@
                 this.state.operationMode = incomingState.operationMode || 'check';
                 this.state.viewMode = incomingState.viewMode || 'grid';
                 this.state.showStudentNumbers = incomingState.showStudentNumbers !== false;
+                this.state.showSubjectTags = incomingState.showSubjectTags !== false;
                 this.state.schemaVersion = 4;
                 this._syncActiveClassPointers(this.state);
                 this._notify('STORE_OVERRIDDEN', { state: this.state });

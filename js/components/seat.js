@@ -25,9 +25,27 @@
             return { score, note, isExempt };
         }
 
+        function matchesFilter(student, record, filter) {
+            if (!filter) return true;
+            if (filter.query) {
+                const name = String(student.name || '').toLowerCase();
+                const no = String(student.studentNo || student.id || '').toLowerCase();
+                if (!name.includes(filter.query) && !no.includes(filter.query)) return false;
+            }
+            if (filter.status && filter.status !== 'all') {
+                const st = record.status || 'white';
+                if (filter.status === 'unsubmitted' && st !== 'white') return false;
+                if (filter.status === 'submitted' && st !== 'dark') return false;
+                if (filter.status === 'muted' && st !== 'muted') return false;
+            }
+            return true;
+        }
+
         function createSeatCard(student, record) {
+            const filter = typeof store.getStudentFilter === 'function' ? store.getStudentFilter() : null;
             const card = document.createElement('div');
-            card.className = `card seat-card ${record.status || 'white'}`;
+            const isMatch = matchesFilter(student, record, filter);
+            card.className = `card seat-card ${record.status || 'white'}${isMatch ? '' : ' filter-dim'}`;
             card.dataset.id = student.id;
 
             const name = document.createElement('span');
@@ -36,7 +54,7 @@
             card.appendChild(name);
 
             const { score, note, isExempt } = getSeatCardMeta(student, record);
-            const badgeText = score ? `${score}分` : (isExempt ? '免交' : '');
+            const badgeText = score ? `${score}` : (isExempt ? '免交' : '');
             if (badgeText) {
                 const badge = document.createElement('span');
                 badge.className = isExempt ? 'seat-card-badge non-english' : 'seat-card-badge';
@@ -227,7 +245,7 @@
 
             let badgeEl = card.querySelector('.seat-card-badge');
             const { score, note, isExempt } = getSeatCardMeta(student, record);
-            const badgeText = score ? `${score}分` : (isExempt ? '免交' : '');
+            const badgeText = score ? `${score}` : (isExempt ? '免交' : '');
 
             if (badgeText) {
                 if (!badgeEl) {
@@ -390,7 +408,8 @@
                 eventType === 'STORE_SMART_MERGED' ||
                 eventType === 'CLASS_CHANGED' ||
                 eventType === 'ROSTER_RESET' ||
-                eventType === 'TASK_ARCHIVE_TOGGLED'
+                eventType === 'TASK_ARCHIVE_TOGGLED' ||
+                eventType === 'STUDENT_FILTER_CHANGED'
             ) {
                 if (eventType === 'SEAT_LAYOUT_CHANGED') selectedStudentId = null;
                 renderSeatView();

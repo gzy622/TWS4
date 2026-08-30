@@ -260,7 +260,7 @@
                 }
             } else {
                 store.updateStudentRecord(currentStudentId, {
-                    badge: cleanScore ? `${cleanScore}分` : null,
+                    badge: cleanScore ? `${cleanScore}` : null,
                     score: cleanScore ? Number(cleanScore) : null,
                     note: remark || null
                 });

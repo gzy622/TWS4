@@ -22,7 +22,21 @@
             return true;
         }
 
-        // 2. 关闭作业下拉面板
+        // 2. 关闭新建作业弹窗
+        const newTaskModal = document.getElementById('new-task-modal');
+        if (newTaskModal && newTaskModal.classList.contains('show')) {
+            newTaskModal.classList.remove('show');
+            return true;
+        }
+
+        // 2.5. 关闭学生搜索弹窗
+        const studentSearchModal = document.getElementById('student-search-modal');
+        if (studentSearchModal && studentSearchModal.classList.contains('show')) {
+            studentSearchModal.classList.remove('show');
+            return true;
+        }
+
+        // 3. 关闭快捷面板下拉
         const taskDropdown = document.getElementById('task-dropdown');
         if (taskDropdown && taskDropdown.classList.contains('show')) {
             if (window.TWS3.navbar && typeof window.TWS3.navbar.closeDropdown === 'function') {
@@ -37,7 +51,7 @@
             return true;
         }
 
-        // 3. 关闭学生打分/编辑底部面板
+        // 4. 关闭学生打分/编辑底部面板
         const editSheetOverlay = document.getElementById('edit-sheet-overlay');
         if (editSheetOverlay && editSheetOverlay.classList.contains('show')) {
             const closeBtn = editSheetOverlay.querySelector('.sheet-close-btn');
@@ -46,7 +60,7 @@
             return true;
         }
 
-        // 4. 关闭花名册管理弹窗
+        // 5. 关闭花名册管理弹窗
         const rosterModal = document.getElementById('roster-modal');
         if (rosterModal && rosterModal.classList.contains('show')) {
             const closeBtn = document.getElementById('roster-close-btn');
@@ -55,7 +69,16 @@
             return true;
         }
 
-        // 5. 关闭差异比对合并弹窗
+        // 6. 关闭班级切换弹窗
+        const classModal = document.getElementById('class-modal');
+        if (classModal && classModal.classList.contains('show')) {
+            const closeBtn = document.getElementById('class-modal-close-btn');
+            if (closeBtn) closeBtn.click();
+            else classModal.classList.remove('show');
+            return true;
+        }
+
+        // 7. 关闭差异比对合并弹窗
         const diffModal = document.getElementById('diff-modal');
         if (diffModal && diffModal.classList.contains('show')) {
             const cancelBtn = document.getElementById('diff-btn-cancel');
@@ -64,7 +87,7 @@
             return true;
         }
 
-        // 6. 关闭通用模态弹窗 / 课程/职务/值日配置自定义弹窗
+        // 8. 关闭通用模态弹窗
         const appModal = document.getElementById('app-modal');
         if (appModal && appModal.classList.contains('show')) {
             const cancelBtn = document.getElementById('modal-cancel-btn');
@@ -78,7 +101,18 @@
             return true;
         }
 
-        // 7. 关闭左侧抽屉菜单
+        // 9. 关闭二级全屏设置界面
+        const settingsView = document.getElementById('settings-view');
+        if (settingsView && settingsView.classList.contains('show')) {
+            if (window.TWS3.drawer && typeof window.TWS3.drawer.closeSettingsView === 'function') {
+                window.TWS3.drawer.closeSettingsView();
+            } else {
+                settingsView.classList.remove('show');
+            }
+            return true;
+        }
+
+        // 10. 关闭左侧抽屉菜单
         const drawer = document.getElementById('drawer');
         const drawerOverlay = document.getElementById('drawer-overlay');
         if ((drawer && drawer.classList.contains('show')) || (drawerOverlay && drawerOverlay.classList.contains('show'))) {
@@ -86,7 +120,6 @@
             if (drawerOverlay) drawerOverlay.classList.remove('show');
             return true;
         }
-
         // 8. 若当前处于非网格视图（如座位表、课程表、班干部表、值日生表），返回网格视图（首页）
         if (store && typeof store.getViewMode === 'function') {
             const currentView = store.getViewMode();

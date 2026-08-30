@@ -16,7 +16,7 @@
                 : String(record.badge || '').match(/^(\d+(?:\.\d+)?)分?$/)?.[1];
             const note = record.note || (!score ? record.badge : '');
             if (score) {
-                badgeHtml = `<span class="badge">${score}分</span>`;
+                badgeHtml = `<span class="badge">${score}</span>`;
             } else if (isEnglishTask && student.isNonEnglish && record.status === 'muted') {
                 badgeHtml = `<span class="badge non-english">免交</span>`;
             }
@@ -40,6 +40,22 @@
             return card;
         }
 
+        function matchesFilter(student, record, filter) {
+            if (!filter) return true;
+            if (filter.query) {
+                const name = String(student.name || '').toLowerCase();
+                const no = String(student.studentNo || student.id || '').toLowerCase();
+                if (!name.includes(filter.query) && !no.includes(filter.query)) return false;
+            }
+            if (filter.status && filter.status !== 'all') {
+                const st = record.status || 'white';
+                if (filter.status === 'unsubmitted' && st !== 'white') return false;
+                if (filter.status === 'submitted' && st !== 'dark') return false;
+                if (filter.status === 'muted' && st !== 'muted') return false;
+            }
+            return true;
+        }
+
         function syncArchivedMode() {
             const currentTask = store.getCurrentTask();
             const isArchived = !!(currentTask && currentTask.archived);
@@ -49,6 +65,7 @@
         function renderGrid(animate = false) {
             const state = store.getState();
             const records = store.getStudentRecords();
+            const filter = typeof store.getStudentFilter === 'function' ? store.getStudentFilter() : null;
             syncArchivedMode();
             if (animate) {
                 gridContainer.style.animation = 'none';
@@ -61,16 +78,22 @@
             const students = state.students || [];
 
             let html = '';
+            let visibleCount = 0;
             for (let i = 0; i < students.length; i++) {
                 const student = students[i];
                 const record = records[student.id] || { status: 'white', badge: null };
+                if (!matchesFilter(student, record, filter)) continue;
+                visibleCount++;
                 const hiddenClass = showNumbers ? '' : ' number-hidden';
                 html += `<div class="card ${record.status || 'white'}${hiddenClass}" data-id="${student.id}">${getCardInnerHtml(student, record, isEnglish)}</div>`;
             }
 
+            if (visibleCount === 0 && students.length > 0) {
+                html = `<div class="grid-filter-empty" style="grid-column: 1 / -1; padding: 48px 16px; text-align: center; color: #94a3b8; font-size: 13px;">无匹配的学生</div>`;
+            }
+
             gridContainer.innerHTML = html;
         }
-
         function updateSingleCard(studentId) {
             const card = gridContainer.querySelector(`.card[data-id="${studentId}"]`);
             if (!card) return;
@@ -175,6 +198,8 @@
                     syncArchivedMode();
                 }
             } else if (eventType === 'ROSTER_RESET') {
+                renderGrid(false);
+            } else if (eventType === 'STUDENT_FILTER_CHANGED') {
                 renderGrid(false);
             } else if (eventType === 'STUDENT_NUMBER_VISIBILITY_CHANGED') {
                 gridContainer.querySelectorAll('.card').forEach(card => {

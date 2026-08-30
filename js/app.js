@@ -74,8 +74,7 @@
                     else navbar.closeDropdown();
                 },
                 canOpenTaskDropdown: () => {
-                    const mode = store.getViewMode();
-                    return mode === 'grid' || mode === 'wide' || mode === 'seat';
+                    return ['grid', 'wide', 'seat', 'table'].includes(store.getViewMode());
                 },
                 closeEditSheet: editSheet.close
             });

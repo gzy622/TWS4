@@ -352,7 +352,8 @@
             visibleTasks.forEach(task => {
                 const isCurrent = task.id === currentTaskId;
                 const stats = taskStatsMap[task.id] || { submitted: 0, expected: 0, rate: '0' };
-                const subjectBadge = task.subject && task.subject !== '未设置'
+                const showSubject = store.getShowSubjectTags();
+                const subjectBadge = (showSubject && task.subject && task.subject !== '未设置')
                     ? `<span class="task-subject-pill">${escapeHtml(task.subject)}</span>`
                     : '';
                 const currentBadge = isCurrent ? `<span class="task-current-badge">当前</span>` : '';
@@ -609,6 +610,8 @@
                 if (btn) btn.classList.toggle('active', show);
                 const tbl = document.querySelector('.score-table');
                 if (tbl) tbl.classList.toggle('hide-student-no', !show);
+            } else if (eventType === 'SUBJECT_TAG_VISIBILITY_CHANGED') {
+                requestRender();
             } else if (
                 eventType === 'TASK_CHANGED' ||
                 eventType === 'TASK_ADDED' ||

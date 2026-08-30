@@ -671,7 +671,7 @@
                         const scoreMatch = rawVal.match(/^(\d+(?:\.\d+)?)分?$/);
                         if (scoreMatch) {
                             status = 'dark';
-                            badge = rawVal.endsWith('分') ? rawVal : rawVal + '分';
+                            badge = scoreMatch[1];
                             score = parseFloat(scoreMatch[1]);
                         } else {
                             status = 'dark';

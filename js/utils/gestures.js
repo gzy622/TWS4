@@ -192,7 +192,7 @@
         let gesture = null;
         let renderFrame = 0;
         let settleTimer = 0;
-        let suppressClickUntil = 0;
+        let suppressClick = false;
 
         function clamp(value, min, max) {
             return Math.min(max, Math.max(min, value));
@@ -230,7 +230,7 @@
         }
 
         function hasBlockingLayer() {
-            return !!document.querySelector('.modal-overlay.show');
+            return !!document.querySelector('.modal-overlay.show, .fullscreen-panel.show');
         }
 
         function canDragOpenTask(target, deltaY) {
@@ -331,7 +331,7 @@
             }
 
             gesture.samples = [{ x: currentX, y: currentY, time }];
-            suppressClickUntil = time + 500;
+            suppressClick = true;
             renderProgress(axis, gesture.initialProgress);
         }
 
@@ -510,13 +510,14 @@
         }
 
         app.addEventListener('touchstart', event => {
+            suppressClick = false;
             finishSettlement();
             if (event.touches.length !== 1 || hasBlockingLayer()) {
                 gesture = null;
                 return;
             }
             const target = event.target instanceof Element ? event.target : app;
-            if (target.closest('input, textarea, select, [contenteditable="true"], .debugger-floating-btn')) {
+            if (target.closest('input, textarea, select, [contenteditable="true"], .debugger-floating-btn, .fullscreen-panel, .drawer-scroll-area')) {
                 gesture = null;
                 return;
             }
@@ -561,8 +562,8 @@
         }, { passive: true, capture: true });
 
         app.addEventListener('click', event => {
-            if (performance.now() > suppressClickUntil) return;
-            suppressClickUntil = 0;
+            if (!suppressClick) return;
+            suppressClick = false;
             event.preventDefault();
             event.stopPropagation();
         }, true);
