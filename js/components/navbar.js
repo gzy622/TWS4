@@ -27,68 +27,55 @@
         const newTaskSubjectChips = document.getElementById('new-task-subject-chips');
         const newTaskTargetClasses = document.getElementById('new-task-target-classes');
 
-        // 搜索学生二级弹窗节点
-        const searchModal = document.getElementById('student-search-modal');
-        const searchCloseBtn = document.getElementById('student-search-close-btn');
-        const searchClearBtn = document.getElementById('student-search-clear-btn');
-        const searchConfirmBtn = document.getElementById('student-search-confirm-btn');
-        const searchModalInput = document.getElementById('student-search-modal-input');
-        const searchModalClearIcon = document.getElementById('student-search-modal-clear');
 
         let selectedSubject = '未设置';
-        let currentSearchQuery = '';
-        let currentStatusFilter = 'all';
 
-        // 构建精简快捷面板 DOM
+        // 构建精简快捷面板 DOM (班级切换 + 视图切换 + 模式切换 + 新建作业)
         taskDropdown.innerHTML = `
-            <!-- 1. 视图切换行 -->
-            <div class="quick-panel-section quick-views" aria-label="视图切换">
-                <button type="button" class="quick-view-btn" data-view="grid" title="网格视图">
-                    <svg viewBox="0 0 24 24"><path d="M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z"/></svg><span>网格</span>
-                </button>
-                <button type="button" class="quick-view-btn" data-view="wide" title="宽栏视图">
-                    <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></svg><span>宽栏</span>
-                </button>
-                <button type="button" class="quick-view-btn" data-view="seat" title="座位视图">
-                    <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14m8-14v14M4 12h16"/></svg><span>座位</span>
-                </button>
-                <button type="button" class="quick-view-btn" data-view="table" title="表格视图">
-                    <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M9 5v14M15 5v14"/></svg><span>表格</span>
-                </button>
-            </div>
-
-            <!-- 2. 班级切换卡片行 -->
+            <!-- 1. 班级切换卡片行 (直观对比各班进度并一键切换) -->
             <div class="quick-panel-section quick-classes" id="quick-class-comparison" aria-label="班级切换"></div>
 
-            <!-- 3. 状态筛选胶囊行 -->
-            <div class="quick-panel-section quick-filters" aria-label="状态筛选">
-                <button type="button" class="quick-filter-pill active" data-status="all">全部</button>
-                <button type="button" class="quick-filter-pill" data-status="unsubmitted">未交</button>
-                <button type="button" class="quick-filter-pill" data-status="submitted">已交</button>
-                <button type="button" class="quick-filter-pill" data-status="muted">免交</button>
+            <!-- 2. 视图切换分段器 -->
+            <div class="quick-panel-section quick-views-section" aria-label="视图切换">
+                <div class="quick-views-segmented">
+                    <button type="button" class="quick-view-btn" data-view="grid" title="网格视图">
+                        <svg viewBox="0 0 24 24"><path d="M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z"/></svg><span>网格</span>
+                    </button>
+                    <button type="button" class="quick-view-btn" data-view="wide" title="宽栏视图">
+                        <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></svg><span>宽栏</span>
+                    </button>
+                    <button type="button" class="quick-view-btn" data-view="seat" title="座位视图">
+                        <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14m8-14v14M4 12h16"/></svg><span>座位</span>
+                    </button>
+                    <button type="button" class="quick-view-btn" data-view="table" title="表格视图">
+                        <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M9 5v14M15 5v14"/></svg><span>表格</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- 4. 核心三操作按钮行 (搜索、模式切换单个按钮、新建作业) -->
-            <div class="quick-panel-section quick-actions-grid">
-                <button type="button" class="quick-action-card search-btn" id="quick-search-trigger-btn">
-                    <svg viewBox="0 0 24 24" class="quick-action-icon">
-                        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <!-- 3. 操作模式切换 + 新建作业操作行 -->
+            <div class="quick-panel-section quick-actions-section">
+                <div class="quick-mode-segmented" role="group" aria-label="操作模式切换">
+                    <button type="button" class="quick-mode-segment-btn" data-mode="check" title="切换至登记模式">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="9 11 12 14 22 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>登记模式</span>
+                    </button>
+                    <button type="button" class="quick-mode-segment-btn" data-mode="grade" title="切换至打分模式">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 20h9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>打分模式</span>
+                    </button>
+                </div>
+                <button type="button" class="quick-new-task-btn" id="quick-new-task-btn" title="创建新作业">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 5v14m-7-7h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
                     </svg>
-                    <span class="quick-action-text" id="quick-search-btn-text">搜索学生</span>
-                </button>
-                <button type="button" class="quick-action-card mode-btn" id="quick-mode-toggle-btn" data-mode="check">
-                    <svg viewBox="0 0 24 24" class="quick-action-icon" id="quick-mode-icon">
-                        <polyline points="9 11 12 14 22 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span class="quick-action-text" id="quick-mode-btn-text">登记模式</span>
-                </button>
-                <button type="button" class="quick-action-card new-btn" id="quick-new-task-btn">
-                    <svg viewBox="0 0 24 24" class="quick-action-icon">
-                        <path d="M12 5v14m-7-7h14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                    </svg>
-                    <span class="quick-action-text">新建作业</span>
+                    <span>新建作业</span>
                 </button>
             </div>
 
@@ -97,12 +84,7 @@
 
         const viewButtons = taskDropdown.querySelectorAll('.quick-view-btn');
         const classComparisonContainer = taskDropdown.querySelector('#quick-class-comparison');
-        const filterPills = taskDropdown.querySelectorAll('.quick-filter-pill');
-        const searchTriggerBtn = taskDropdown.querySelector('#quick-search-trigger-btn');
-        const searchBtnText = taskDropdown.querySelector('#quick-search-btn-text');
-        const modeToggleBtn = taskDropdown.querySelector('#quick-mode-toggle-btn');
-        const modeBtnText = taskDropdown.querySelector('#quick-mode-btn-text');
-        const modeIcon = taskDropdown.querySelector('#quick-mode-icon');
+        const modeSegmentButtons = taskDropdown.querySelectorAll('.quick-mode-segment-btn');
         const newTaskBtn = taskDropdown.querySelector('#quick-new-task-btn');
 
         // 渲染班级卡片
@@ -137,43 +119,15 @@
 
         // 渲染模式切换按钮状态
         function updateModeButton(mode = store.getOperationMode()) {
-            if (!modeToggleBtn) return;
-            modeToggleBtn.dataset.mode = mode;
-
-            if (mode === 'grade') {
-                if (modeBtnText) modeBtnText.textContent = '打分模式';
-                if (modeIcon) {
-                    modeIcon.innerHTML = `
-                        <path d="M12 20h9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                    `;
-                }
-            } else {
-                if (modeBtnText) modeBtnText.textContent = '登记模式';
-                if (modeIcon) {
-                    modeIcon.innerHTML = `
-                        <polyline points="9 11 12 14 22 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                    `;
-                }
-            }
+            modeSegmentButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
             taskDropdown.dataset.mode = mode;
             const progressWrapper = document.querySelector('.tab-indicator-wrapper');
             if (progressWrapper) progressWrapper.dataset.mode = mode;
             const navbarEl = document.querySelector('.navbar');
             if (navbarEl) navbarEl.dataset.mode = mode;
         }
-
-        // 渲染搜索按钮文字与状态
-        function updateSearchButtonState() {
-            if (!searchTriggerBtn) return;
-            const hasQuery = Boolean(currentSearchQuery);
-            searchTriggerBtn.classList.toggle('has-query', hasQuery);
-            if (searchBtnText) {
-                searchBtnText.textContent = hasQuery ? `搜: ${currentSearchQuery}` : '搜索学生';
-            }
-        }
-
         // 1. 视图切换点击
         viewButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -198,119 +152,27 @@
             });
         }
 
-        // 3. 状态筛选胶囊点击
-        filterPills.forEach(pill => {
-            pill.addEventListener('click', (e) => {
+        // 3. 操作模式分段切换点击
+        modeSegmentButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const status = pill.dataset.status || 'all';
-                currentStatusFilter = status;
-                filterPills.forEach(p => p.classList.toggle('active', p === pill));
-                if (typeof store.setStudentFilter === 'function') {
-                    store.setStudentFilter({ query: currentSearchQuery, status: currentStatusFilter });
-                }
-            });
-        });
-
-        // 4. 单个模式切换按钮点击 (直接在 check ↔ grade 间切换)
-        if (modeToggleBtn) {
-            modeToggleBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const currentMode = store.getOperationMode();
-                const nextMode = currentMode === 'grade' ? 'check' : 'grade';
-                updateModeButton(nextMode);
+                const targetMode = btn.dataset.mode;
+                if (!targetMode || targetMode === store.getOperationMode()) return;
+                updateModeButton(targetMode);
                 setTimeout(() => {
                     try { window.TWS3.haptics?.('light'); } catch (_) {}
                 }, 30);
                 queueMicrotask(() => {
-                    store.setOperationMode(nextMode);
+                    store.setOperationMode(targetMode);
                 });
             });
-        }
+        });
 
-        // =======================================================
-        // 搜索学生二级弹窗逻辑
-        // =======================================================
-        function openSearchModal() {
-            if (!searchModal) return;
-            if (searchModalInput) {
-                searchModalInput.value = currentSearchQuery;
-            }
-            if (searchModalClearIcon) {
-                searchModalClearIcon.style.display = currentSearchQuery ? 'block' : 'none';
-            }
-            searchModal.classList.add('show');
-            setTimeout(() => {
-                if (searchModalInput) {
-                    searchModalInput.focus();
-                    searchModalInput.select();
-                }
-            }, 100);
-        }
-
-        function closeSearchModal() {
-            if (searchModal) searchModal.classList.remove('show');
-        }
-
-        function applySearchFilter(query) {
-            currentSearchQuery = (query || '').trim();
-            updateSearchButtonState();
-            if (typeof store.setStudentFilter === 'function') {
-                store.setStudentFilter({ query: currentSearchQuery, status: currentStatusFilter });
-            }
-            closeSearchModal();
-        }
-
-        if (searchTriggerBtn) {
-            searchTriggerBtn.addEventListener('click', (e) => {
+        // 4. 新建作业按钮点击
+        if (newTaskBtn) {
+            newTaskBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                openSearchModal();
-            });
-        }
-
-        if (searchModalInput) {
-            searchModalInput.addEventListener('input', (e) => {
-                if (searchModalClearIcon) {
-                    searchModalClearIcon.style.display = e.target.value.trim() ? 'block' : 'none';
-                }
-            });
-
-            searchModalInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    applySearchFilter(searchModalInput.value);
-                }
-            });
-        }
-
-        if (searchModalClearIcon) {
-            searchModalClearIcon.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (searchModalInput) {
-                    searchModalInput.value = '';
-                    searchModalClearIcon.style.display = 'none';
-                    searchModalInput.focus();
-                }
-            });
-        }
-
-        if (searchClearBtn) {
-            searchClearBtn.addEventListener('click', () => {
-                if (searchModalInput) searchModalInput.value = '';
-                applySearchFilter('');
-            });
-        }
-
-        if (searchConfirmBtn) {
-            searchConfirmBtn.addEventListener('click', () => {
-                applySearchFilter(searchModalInput ? searchModalInput.value : '');
-            });
-        }
-
-        if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearchModal);
-
-        if (searchModal) {
-            searchModal.addEventListener('click', (e) => {
-                if (e.target === searchModal) closeSearchModal();
+                openNewTaskModal();
             });
         }
 
@@ -493,7 +355,6 @@
                 renderClassCards();
                 renderViewSwitcher();
                 updateModeButton();
-                updateSearchButtonState();
             }
         }
 
@@ -569,7 +430,6 @@
         renderViewSwitcher();
         updateHeaderTitle();
         updateModeButton();
-        updateSearchButtonState();
         updateProgress();
 
         const navbarService = {
@@ -582,9 +442,7 @@
             toggleDropdown,
             closeDropdown,
             openNewTaskModal,
-            closeNewTaskModal,
-            openSearchModal,
-            closeSearchModal
+            closeNewTaskModal
         };
 
         window.TWS3.navbar = navbarService;

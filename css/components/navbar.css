@@ -1,6 +1,7 @@
 /* 顶部导航栏与精简快捷面板 */
 .navbar {
-    height: calc(var(--navbar-height, 50px) + var(--safe-top, 0px));
+    height: var(--navbar-height);
+    min-height: var(--navbar-height);
     padding-top: var(--safe-top, 0px);
     background-color: #ffffff;
     border-bottom: 1px solid var(--border-light, #eef2f0);
@@ -211,7 +212,7 @@
 
 .task-dropdown {
     position: absolute;
-    top: calc(var(--navbar-height, 50px) + var(--safe-top, 0px));
+    top: var(--navbar-height);
     left: 0;
     width: 100%;
     background: #ffffff;
@@ -221,8 +222,8 @@
     z-index: 18;
     display: flex;
     flex-direction: column;
-    gap: 9px;
-    max-height: calc(100vh - var(--navbar-height, 50px) - 16px);
+    gap: 10px;
+    max-height: calc(100vh - var(--navbar-height) - 16px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     transform: translate3d(0, -100%, 0);
@@ -237,7 +238,7 @@
 
 .task-dropdown.show {
     transform: translate3d(0, 0, 0);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.13);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
     visibility: visible;
     pointer-events: auto;
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s;
@@ -249,74 +250,25 @@
     box-sizing: border-box;
 }
 
-/* 1. 视图切换行 (4等分紧凑按钮) */
-.quick-views {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
-}
-
-.quick-view-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    height: 36px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #f8fafc;
-    color: #64748b;
-    font-size: 12.5px;
-    font-weight: 650;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.14s ease;
-}
-
-.quick-view-btn:hover {
-    background-color: #f1f5f9;
-    border-color: #cbd5e1;
-}
-
-.quick-view-btn:active {
-    transform: scale(0.96);
-}
-
-.quick-view-btn.active {
-    border-color: var(--surface-dark, #1b3831);
-    background: var(--surface-dark, #1b3831);
-    color: #ffffff;
-    box-shadow: 0 2px 5px rgba(27, 56, 49, 0.2);
-}
-
-.quick-view-btn svg {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-/* 2. 班级切换卡片 (2等分直观对照) */
+/* 1. 班级切换卡片 (2等分直观对照) */
 .quick-classes {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 7px;
+    gap: 8px;
 }
 
 .quick-class-card {
     min-width: 0;
-    padding: 8px 11px;
-    border: 1px solid #e2e8f0;
-    border-radius: 9px;
+    padding: 9px 12px;
+    border: 1px solid var(--border-light, #e2e8f0);
+    border-radius: 10px;
     background: #f8fafc;
     color: #334155;
     cursor: pointer;
     text-align: left;
     user-select: none;
     transition: all 0.14s ease;
+    box-sizing: border-box;
 }
 
 .quick-class-card:hover {
@@ -331,7 +283,7 @@
 .quick-class-card.active {
     border-color: var(--surface-dark, #1b3831);
     background: #f0f7f4;
-    box-shadow: 0 0 0 1px rgba(27, 56, 49, 0.1);
+    box-shadow: 0 2px 6px rgba(27, 56, 49, 0.08);
 }
 
 .quick-class-card-head {
@@ -346,7 +298,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 700;
     color: #1e293b;
 }
@@ -358,8 +310,12 @@
 .quick-class-card-head > span {
     flex-shrink: 0;
     color: #64748b;
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 600;
+}
+
+.quick-class-card.active .quick-class-card-head > span {
+    color: #2e6053;
 }
 
 .quick-class-progress {
@@ -373,7 +329,7 @@
 }
 
 .quick-class-card.active .quick-class-progress {
-    background: #dcf0e7;
+    background: #d5ebe1;
 }
 
 .quick-class-progress i {
@@ -384,7 +340,21 @@
     transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* 打分模式下的班级卡片进度条 */
+/* 打分模式下的班级卡片激活态与进度条 */
+.task-dropdown[data-mode="grade"] .quick-class-card.active {
+    border-color: #ea580c;
+    background: #fff7ed;
+    box-shadow: 0 2px 6px rgba(234, 88, 12, 0.1);
+}
+
+.task-dropdown[data-mode="grade"] .quick-class-card.active .quick-class-card-head strong {
+    color: #c2410c;
+}
+
+.task-dropdown[data-mode="grade"] .quick-class-card.active .quick-class-card-head > span {
+    color: #ea580c;
+}
+
 .task-dropdown[data-mode="grade"] .quick-class-progress {
     background: #fed7aa;
 }
@@ -397,61 +367,148 @@
     background: linear-gradient(90deg, #ea580c, #f97316);
 }
 
-/* 3. 状态筛选胶囊组 (4等分简洁药丸) */
-.quick-filters {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
+/* 2. 视图切换分段控制条 */
+.quick-views-section {
+    width: 100%;
 }
 
-.quick-filter-pill {
-    height: 31px;
-    padding: 0 4px;
-    border: 1px solid #e2e8f0;
-    border-radius: 7px;
-    background: #ffffff;
-    color: #64748b;
-    font-size: 12px;
-    font-weight: 650;
-    cursor: pointer;
-    user-select: none;
+.quick-views-segmented {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.quick-view-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.13s ease;
+    gap: 5px;
+    height: 34px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #64748b;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
 }
 
-.quick-filter-pill:hover {
-    border-color: #cbd5e1;
-    background: #f8fafc;
+.quick-view-btn svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-.quick-filter-pill:active {
+.quick-view-btn:hover {
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.quick-view-btn:active {
     transform: scale(0.96);
 }
 
-.quick-filter-pill.active {
-    border-color: var(--surface-dark, #1b3831);
+.quick-view-btn.active {
     background: var(--surface-dark, #1b3831);
     color: #ffffff;
-    box-shadow: 0 1px 4px rgba(27, 56, 49, 0.16);
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(27, 56, 49, 0.2);
 }
 
-/* 4. 核心操作三按钮行 (搜索、模式切换单按钮、新建作业) */
-.quick-actions-grid {
+/* 3. 底部操作行 (模式分段切换器 + 新建作业主按钮) */
+.quick-actions-section {
     display: grid;
-    grid-template-columns: 1fr 1.15fr 1.15fr;
-    gap: 7px;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 8px;
+    align-items: center;
 }
 
-.quick-action-card {
+/* 模式切换双态分段选择器 */
+.quick-mode-segmented {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 10px;
     height: 38px;
-    padding: 0 8px;
-    border-radius: 9px;
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    color: #334155;
+    box-sizing: border-box;
+}
+
+.quick-mode-segment-btn {
+    height: 100%;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #64748b;
     font-size: 12.5px;
+    font-weight: 650;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+}
+
+.quick-mode-segment-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.quick-mode-segment-btn:hover {
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.quick-mode-segment-btn:active {
+    transform: scale(0.96);
+}
+
+.quick-mode-segment-btn[data-mode="check"].active {
+    background: #ffffff;
+    color: #15803d;
+    font-weight: 700;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.quick-mode-segment-btn[data-mode="check"].active svg {
+    stroke: #16a34a;
+}
+
+.quick-mode-segment-btn[data-mode="grade"].active {
+    background: #ffffff;
+    color: #c2410c;
+    font-weight: 700;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.quick-mode-segment-btn[data-mode="grade"].active svg {
+    stroke: #ea580c;
+}
+
+/* 新建作业主操作按钮 */
+.quick-new-task-btn {
+    height: 38px;
+    padding: 0 10px;
+    border-radius: 10px;
+    border: 1px solid var(--surface-dark, #1b3831);
+    background: var(--surface-dark, #1b3831);
+    color: #ffffff;
+    font-size: 13px;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -459,91 +516,30 @@
     gap: 6px;
     cursor: pointer;
     user-select: none;
-    transition: all 0.14s ease;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 6px rgba(27, 56, 49, 0.2);
     box-sizing: border-box;
 }
 
-.quick-action-card:hover {
-    border-color: #cbd5e1;
-    background: #f1f5f9;
-    transform: translateY(-1px);
-}
-
-.quick-action-card:active {
-    transform: scale(0.97);
-}
-
-.quick-action-icon {
+.quick-new-task-btn svg {
     width: 15px;
     height: 15px;
+    stroke: #86efac;
     flex-shrink: 0;
 }
 
-.quick-action-text {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* 搜索学生按钮 */
-.quick-action-card.search-btn {
-    color: #475569;
-}
-
-.quick-action-card.search-btn svg {
-    color: #64748b;
-}
-
-.quick-action-card.search-btn.has-query {
-    background: #e0f2fe;
-    border-color: #7dd3fc;
-    color: #0369a1;
-}
-
-.quick-action-card.search-btn.has-query svg {
-    color: #0284c7;
-}
-
-/* 模式切换单按钮 (登记/打分) */
-.quick-action-card.mode-btn[data-mode="check"] {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-    color: #15803d;
-}
-
-.quick-action-card.mode-btn[data-mode="check"] svg {
-    stroke: #16a34a;
-}
-
-.quick-action-card.mode-btn[data-mode="grade"] {
-    background: #fff7ed;
-    border-color: #fed7aa;
-    color: #c2410c;
-}
-
-.quick-action-card.mode-btn[data-mode="grade"] svg {
-    stroke: #ea580c;
-}
-
-/* 新建作业主操作按钮 */
-.quick-action-card.new-btn {
-    background: var(--surface-dark, #1b3831);
-    border-color: var(--surface-dark, #1b3831);
-    color: #ffffff;
-    box-shadow: 0 2px 6px rgba(27, 56, 49, 0.2);
-}
-
-.quick-action-card.new-btn:hover {
+.quick-new-task-btn:hover {
     background: #254a41;
     border-color: #254a41;
     box-shadow: 0 3px 8px rgba(27, 56, 49, 0.26);
+    transform: translateY(-1px);
 }
 
-.quick-action-card.new-btn svg {
-    stroke: #86efac;
+.quick-new-task-btn:active {
+    transform: scale(0.97);
 }
 
-/* 拖拽把手 */
+/* 4. 拖拽把手 */
 .task-drag-handle {
     width: 100%;
     height: 10px;
