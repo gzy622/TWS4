@@ -403,7 +403,7 @@
                         </div>
 
                         <div class="schedule-actions-group">
-                            <button type="button" class="schedule-btn schedule-btn-secondary" id="schedule-switch-btn">
+                            <button type="button" class="schedule-btn schedule-btn-primary" id="schedule-switch-btn">
                                 <svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
                                 <span>选班级</span>
                             </button>
@@ -411,9 +411,9 @@
                                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                 <span>今日</span>
                             </button>
-                            <button type="button" class="schedule-btn schedule-btn-primary" id="schedule-import-btn">
+                            <button type="button" class="schedule-btn schedule-btn-secondary" id="schedule-import-btn">
                                 <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6m0 0l-3 3m3-3l3 3"/></svg>
-                                <span>导入课表</span>
+                                <span>导入</span>
                             </button>
                         </div>
                     </div>
