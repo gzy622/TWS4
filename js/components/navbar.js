@@ -30,46 +30,12 @@
 
         let selectedSubject = '未设置';
 
-        // 构建精简快捷面板 DOM (班级切换 + 视图切换 + 模式切换 + 新建作业)
+        // 构建快捷面板 DOM
         taskDropdown.innerHTML = `
-            <!-- 1. 班级切换卡片行 (直观对比各班进度并一键切换) -->
-            <div class="quick-panel-section quick-classes" id="quick-class-comparison" aria-label="班级切换"></div>
-
-            <!-- 2. 视图切换分段器 -->
-            <div class="quick-panel-section quick-views-section" aria-label="视图切换">
-                <div class="quick-views-segmented">
-                    <button type="button" class="quick-view-btn" data-view="grid" title="网格视图">
-                        <svg viewBox="0 0 24 24"><path d="M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z"/></svg><span>网格</span>
-                    </button>
-                    <button type="button" class="quick-view-btn" data-view="wide" title="宽栏视图">
-                        <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></svg><span>宽栏</span>
-                    </button>
-                    <button type="button" class="quick-view-btn" data-view="seat" title="座位视图">
-                        <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14m8-14v14M4 12h16"/></svg><span>座位</span>
-                    </button>
-                    <button type="button" class="quick-view-btn" data-view="table" title="表格视图">
-                        <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M9 5v14M15 5v14"/></svg><span>表格</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 3. 操作模式切换 + 新建作业操作行 -->
-            <div class="quick-panel-section quick-actions-section">
-                <div class="quick-mode-segmented" role="group" aria-label="操作模式切换">
-                    <button type="button" class="quick-mode-segment-btn" data-mode="check" title="切换至登记模式">
-                        <svg viewBox="0 0 24 24">
-                            <polyline points="9 11 12 14 22 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <span>登记模式</span>
-                    </button>
-                    <button type="button" class="quick-mode-segment-btn" data-mode="grade" title="切换至打分模式">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 20h9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <span>打分模式</span>
-                    </button>
+            <div class="quick-panel-header">
+                <div class="quick-panel-heading">
+                    <strong>快捷面板</strong>
+                    <span>切换当前课堂状态</span>
                 </div>
                 <button type="button" class="quick-new-task-btn" id="quick-new-task-btn" title="创建新作业">
                     <svg viewBox="0 0 24 24">
@@ -77,6 +43,62 @@
                     </svg>
                     <span>新建作业</span>
                 </button>
+            </div>
+
+            <div class="quick-panel-body">
+                <section class="quick-panel-group quick-class-group" aria-labelledby="quick-class-title">
+                    <div class="quick-panel-group-head">
+                        <div>
+                            <strong id="quick-class-title">授课班级</strong>
+                            <span>查看进度并切换</span>
+                        </div>
+                    </div>
+                    <div class="quick-classes" id="quick-class-comparison"></div>
+                </section>
+
+                <div class="quick-control-grid">
+                    <section class="quick-panel-group quick-views-section" aria-labelledby="quick-view-title">
+                        <div class="quick-panel-group-head compact">
+                            <strong id="quick-view-title">学生卡片</strong>
+                        </div>
+                        <div class="quick-views-segmented">
+                            <button type="button" class="quick-view-btn" data-view="grid" title="网格视图">
+                                <svg viewBox="0 0 24 24"><path d="M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z"/></svg><span>网格</span>
+                            </button>
+                            <button type="button" class="quick-view-btn" data-view="wide" title="宽栏视图">
+                                <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></svg><span>宽栏</span>
+                            </button>
+                            <button type="button" class="quick-view-btn" data-view="seat" title="座位视图">
+                                <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14m8-14v14M4 12h16"/></svg><span>座位</span>
+                            </button>
+                            <button type="button" class="quick-view-btn" data-view="table" title="表格视图">
+                                <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M9 5v14M15 5v14"/></svg><span>表格</span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="quick-panel-group quick-actions-section" aria-labelledby="quick-mode-title">
+                        <div class="quick-panel-group-head compact">
+                            <strong id="quick-mode-title">操作模式</strong>
+                        </div>
+                        <div class="quick-mode-segmented" role="group" aria-label="操作模式切换">
+                            <button type="button" class="quick-mode-segment-btn" data-mode="check" title="切换至登记模式">
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="9 11 12 14 22 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>登记</span>
+                            </button>
+                            <button type="button" class="quick-mode-segment-btn" data-mode="grade" title="切换至打分模式">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 20h9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>打分</span>
+                            </button>
+                        </div>
+                    </section>
+                </div>
             </div>
 
             <div class="task-drag-handle" aria-hidden="true"></div>
@@ -96,12 +118,17 @@
                 const hasTask = !!cls.taskId;
                 const count = mode === 'grade' ? (cls.graded || 0) : (cls.submitted || 0);
                 const actionLabel = mode === 'grade' ? '已评' : '已交';
-                const summary = hasTask ? `${count}/${cls.required} ${actionLabel}` : '未分配';
+                const summary = hasTask ? `${count}/${cls.required}` : '未分配';
+                const stateLabel = cls.isCurrent ? '当前班级' : '点击切换';
                 return `
                     <button type="button" class="quick-class-card ${cls.isCurrent ? 'active' : ''}" data-class-id="${escapeHtml(cls.id)}">
                         <div class="quick-class-card-head">
                             <strong class="quick-class-name">${escapeHtml(cls.name)}</strong>
                             <span class="quick-class-badge">${summary}</span>
+                        </div>
+                        <div class="quick-class-card-foot">
+                            <span>${stateLabel}</span>
+                            <span>${hasTask ? `${actionLabel} ${Math.round(cls.percentage || 0)}%` : '暂无作业'}</span>
                         </div>
                         <span class="quick-class-progress"><i style="width:${hasTask ? cls.percentage : 0}%"></i></span>
                     </button>
