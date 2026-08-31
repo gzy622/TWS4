@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TWS4</title>
-    <link rel="stylesheet" href="css/main.css?v=20260831-174058">
+    <link rel="stylesheet" href="css/main.css?v=20260831-174904">
 </head>
 <body>
     <div class="app-container">
@@ -71,7 +71,7 @@
                     </div>
                     <svg class="drawer-settings-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
-                <span class="drawer-footer-text">v1.0.0 · 2026-08-31 17:40:58</span>
+                <span class="drawer-footer-text">v1.0.0 · 2026-08-31 17:49:04</span>
             </div>
         </aside>
 
@@ -237,6 +237,23 @@
                             </div>
                             <div class="drawer-toggle"><span></span></div>
                         </button>
+                        <div class="drawer-menu-item" id="drawer-font-switch-btn">
+                            <div class="drawer-item-icon icon-font">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                                    <line x1="9" y1="20" x2="15" y2="20"></line>
+                                    <line x1="12" y1="4" x2="12" y2="20"></line>
+                                </svg>
+                            </div>
+                            <div class="drawer-item-text">
+                                <div class="drawer-item-title-row">
+                                    <div class="drawer-item-title">界面字体设置</div>
+                                    <span class="font-active-badge" id="drawer-current-font-badge">检测中...</span>
+                                </div>
+                                <div class="drawer-item-desc" id="drawer-current-font-desc">当前生效：检测中...</div>
+                            </div>
+                            <svg class="drawer-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
                         <button type="button" class="drawer-menu-item drawer-toggle-item" id="drawer-toggle-debugger-btn" aria-pressed="false">
                             <div class="drawer-item-icon icon-debug">
                                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -250,7 +267,7 @@
                     </div>
                 </div>
                 <div class="settings-footer">
-                    <span class="settings-footer-text">v1.0.0 · 2026-08-31 17:40:58</span>
+                    <span class="settings-footer-text">v1.0.0 · 2026-08-31 17:49:04</span>
                 </div>
             </div>
         </div>
@@ -408,6 +425,65 @@
                 <div class="class-list-body" id="class-list-body"></div>
             </div>
         </div>
+        <!-- 字体切换与管理弹窗 -->
+        <div id="font-modal" class="modal-overlay">
+            <div class="font-modal-container">
+                <div class="font-modal-header">
+                    <div class="font-modal-header-info">
+                        <div class="font-modal-title">
+                            <span>界面字体设置</span>
+                        </div>
+                        <div class="font-modal-subtitle">切换内置思源黑体、等宽更纱、系统原生或自定义字体</div>
+                    </div>
+                    <button type="button" class="font-modal-close-btn" id="font-modal-close-btn" aria-label="关闭">✕</button>
+                </div>
+                <div class="font-modal-body">
+                    <!-- 1. 当前实际生效字体状态卡片 -->
+                    <div class="font-current-card">
+                        <div class="font-current-header">
+                            <div class="font-current-label-group">
+                                <span class="font-current-indicator"></span>
+                                <span class="font-current-title">当前实际生效字体</span>
+                            </div>
+                            <span class="font-status-tag" id="font-detected-source-tag">检测中</span>
+                        </div>
+                        <div class="font-detected-name-row">
+                            <div class="font-detected-name" id="font-detected-name">思源黑体 (Noto Sans SC)</div>
+                            <div class="font-detected-raw" id="font-detected-raw">Noto Sans SC</div>
+                        </div>
+                        <!-- 实时排版预览区域 -->
+                        <div class="font-preview-box" id="font-live-preview-box">
+                            <div class="font-preview-line-1">高二 (3) 班 · 张三 01 号 · 作业已提交 100 分</div>
+                            <div class="font-preview-line-2">The quick brown fox jumps over the lazy dog. 1234567890</div>
+                        </div>
+                    </div>
+
+                    <!-- 2. 预设字体选择列表 -->
+                    <div class="font-section-heading">字体预设选择</div>
+                    <div class="font-preset-list" id="font-preset-list"></div>
+
+                    <!-- 3. 自定义字体输入区域 -->
+                    <div class="font-custom-section" id="font-custom-section" style="display: none;">
+                        <div class="font-custom-header">
+                            <span class="font-custom-title">输入自定义字体名称</span>
+                            <span class="font-custom-hint">需设备已安装该字体</span>
+                        </div>
+                        <div class="font-custom-input-row">
+                            <input type="text" id="font-custom-input" class="font-custom-input" placeholder="例如: Consolas, 霞鹜文楷, JetBrains Mono" maxlength="60" />
+                            <button type="button" id="font-custom-apply-btn" class="font-custom-apply-btn">应用</button>
+                        </div>
+                        <div class="font-custom-tags" id="font-custom-suggestions">
+                            <span class="font-suggest-tag" data-font="Consolas">Consolas</span>
+                            <span class="font-suggest-tag" data-font="JetBrains Mono">JetBrains Mono</span>
+                            <span class="font-suggest-tag" data-font="霞鹜文楷">霞鹜文楷</span>
+                            <span class="font-suggest-tag" data-font="Arial">Arial</span>
+                            <span class="font-suggest-tag" data-font="Microsoft YaHei">微软雅黑</span>
+                            <span class="font-suggest-tag" data-font="PingFang SC">苹方</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- 导入差异比对弹窗 -->
         <div id="diff-modal" class="modal-overlay">
             <div class="diff-modal-container">
@@ -505,30 +581,31 @@
     </div>
 
     <!-- 1. 数据与状态层 -->
-    <script src="js/config/version.js?v=20260831-174058"></script>
-    <script src="js/config/initial-data.js?v=20260831-174058"></script>
-    <script src="js/state/store.js?v=20260831-174058"></script>
+    <script src="js/config/version.js?v=20260831-174904"></script>
+    <script src="js/config/initial-data.js?v=20260831-174904"></script>
+    <script src="js/utils/font-manager.js?v=20260831-174904"></script>
+    <script src="js/state/store.js?v=20260831-174904"></script>
 
     <!-- 2. 通用工具与反馈层 -->
-    <script src="js/utils/toast.js?v=20260831-174058"></script>
-    <script src="js/utils/file-saver.js?v=20260831-174058"></script>
-    <script src="js/utils/gestures.js?v=20260831-174058"></script>
-    <script src="js/utils/logger.js?v=20260831-174058"></script>
-    <script src="js/utils/dependencies.js?v=20260831-174058"></script>
-    <script src="js/utils/back-handler.js?v=20260831-174058"></script>
-    <script src="js/modules/workbook.js?v=20260831-174058"></script>
-    <script src="js/modules/seat-workbook.js?v=20260831-174058"></script>
+    <script src="js/utils/toast.js?v=20260831-174904"></script>
+    <script src="js/utils/file-saver.js?v=20260831-174904"></script>
+    <script src="js/utils/gestures.js?v=20260831-174904"></script>
+    <script src="js/utils/logger.js?v=20260831-174904"></script>
+    <script src="js/utils/dependencies.js?v=20260831-174904"></script>
+    <script src="js/utils/back-handler.js?v=20260831-174904"></script>
+    <script src="js/modules/workbook.js?v=20260831-174904"></script>
+    <script src="js/modules/seat-workbook.js?v=20260831-174904"></script>
     <!-- 3. UI 组件层 -->
-    <script src="js/components/modal.js?v=20260831-174058"></script>
-    <script src="js/components/edit-sheet.js?v=20260831-174058"></script>
-    <script src="js/components/navbar.js?v=20260831-174058"></script>
-    <script src="js/components/drawer.js?v=20260831-174058"></script>
-    <script src="js/components/grid.js?v=20260831-174058"></script>
-    <script src="js/components/wide.js?v=20260831-174058"></script>
-    <script src="js/components/seat.js?v=20260831-174058"></script>
-    <script src="js/components/table.js?v=20260831-174058"></script>
+    <script src="js/components/modal.js?v=20260831-174904"></script>
+    <script src="js/components/edit-sheet.js?v=20260831-174904"></script>
+    <script src="js/components/navbar.js?v=20260831-174904"></script>
+    <script src="js/components/drawer.js?v=20260831-174904"></script>
+    <script src="js/components/grid.js?v=20260831-174904"></script>
+    <script src="js/components/wide.js?v=20260831-174904"></script>
+    <script src="js/components/seat.js?v=20260831-174904"></script>
+    <script src="js/components/table.js?v=20260831-174904"></script>
 
     <!-- 4. 入口装配 -->
-    <script src="js/app.js?v=20260831-174058"></script>
+    <script src="js/app.js?v=20260831-174904"></script>
 </body>
 </html>

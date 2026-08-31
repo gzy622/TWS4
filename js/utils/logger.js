@@ -116,6 +116,7 @@
                 viewMode: store.getViewMode(),
                 showStudentNumbers: store.getShowStudentNumbers(),
                 showSubjectTags: store.getShowSubjectTags(),
+                fontSettings: typeof store.getFontSettings === 'function' ? store.getFontSettings() : null,
                 studentsCount: (store.getState().students || []).length,
                 classesCount: typeof store.getClasses === 'function' ? store.getClasses().length : 1
             } : {}
@@ -476,7 +477,9 @@
                     operationMode: state.operationMode,
                     viewMode: state.viewMode,
                     showStudentNumbers: state.showStudentNumbers,
-                    showSubjectTags: state.showSubjectTags
+                    showSubjectTags: state.showSubjectTags,
+                    fontPreset: state.fontPreset,
+                    customFont: state.customFont
                 });
             });
         }

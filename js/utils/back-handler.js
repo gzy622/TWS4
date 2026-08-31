@@ -79,6 +79,15 @@
             else classModal.classList.remove('show');
             return true;
         }
+        // 6.5. 关闭字体设置弹窗
+        const fontModal = document.getElementById('font-modal');
+        if (fontModal && fontModal.classList.contains('show')) {
+            const closeBtn = document.getElementById('font-modal-close-btn');
+            if (closeBtn) closeBtn.click();
+            else fontModal.classList.remove('show');
+            return true;
+        }
+
 
         // 7. 关闭差异比对合并弹窗
         const diffModal = document.getElementById('diff-modal');

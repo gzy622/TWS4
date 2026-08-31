@@ -326,6 +326,7 @@
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'hidden') this._flushStorageSave();
             });
+            this._applyFontSettings(this.state.fontPreset, this.state.customFont);
         }
 
         _getOrCreateDeviceId() {
@@ -498,7 +499,9 @@
                 operationMode: 'check',
                 viewMode: 'grid',
                 showStudentNumbers: true,
-                showSubjectTags: true
+                showSubjectTags: true,
+                fontPreset: 'default',
+                customFont: ''
             };
             this._syncActiveClassPointers(state);
             return state;
@@ -580,6 +583,8 @@
                 if (!parsed.operationMode) parsed.operationMode = 'check';
                 if (typeof parsed.showStudentNumbers !== 'boolean') parsed.showStudentNumbers = true;
                 if (typeof parsed.showSubjectTags !== 'boolean') parsed.showSubjectTags = true;
+                if (!parsed.fontPreset) parsed.fontPreset = 'default';
+                if (typeof parsed.customFont !== 'string') parsed.customFont = '';
                 const validViews = ['grid', 'wide', 'seat', 'table', 'schedule', 'officers', 'duty'];
                 if (!validViews.includes(parsed.viewMode)) parsed.viewMode = 'grid';
 
@@ -704,6 +709,39 @@
         }
 
         // ==========================================
+        _applyFontSettings(preset = 'default', customFont = '') {
+            if (window.TWS3 && window.TWS3.fontManager && typeof window.TWS3.fontManager.computeFontFamily === 'function') {
+                const fontFamily = window.TWS3.fontManager.computeFontFamily(preset, customFont);
+                window.TWS3.fontManager.applyFont(fontFamily);
+            }
+        }
+
+        getFontSettings() {
+            const preset = (this.state && this.state.fontPreset) || 'default';
+            const customFont = (this.state && this.state.customFont) || '';
+            const fontFamily = window.TWS3 && window.TWS3.fontManager && typeof window.TWS3.fontManager.computeFontFamily === 'function'
+                ? window.TWS3.fontManager.computeFontFamily(preset, customFont)
+                : '';
+            return { preset, customFont, fontFamily };
+        }
+
+        setFontSettings({ preset = 'default', customFont = '' } = {}) {
+            const nextPreset = preset || 'default';
+            const nextCustom = (customFont || '').trim();
+            if (this.state.fontPreset === nextPreset && this.state.customFont === nextCustom) {
+                return;
+            }
+            this.state.fontPreset = nextPreset;
+            this.state.customFont = nextCustom;
+            this._applyFontSettings(nextPreset, nextCustom);
+            this._scheduleStorageSave();
+            this._notify('FONT_SETTINGS_CHANGED', {
+                fontPreset: nextPreset,
+                customFont: nextCustom,
+                fontFamily: this.getFontSettings().fontFamily
+            });
+        }
+
         // 课程表 (Schedule) 相关 API
         // ==========================================
         getSchedule() {
@@ -1828,8 +1866,11 @@
                 this.state.viewMode = incomingState.viewMode || 'grid';
                 this.state.showStudentNumbers = incomingState.showStudentNumbers !== false;
                 this.state.showSubjectTags = incomingState.showSubjectTags !== false;
+                if (incomingState.fontPreset) this.state.fontPreset = incomingState.fontPreset;
+                if (typeof incomingState.customFont === 'string') this.state.customFont = incomingState.customFont;
                 this.state.schemaVersion = 4;
                 this._syncActiveClassPointers(this.state);
+                this._applyFontSettings(this.state.fontPreset, this.state.customFont);
                 this._notify('STORE_OVERRIDDEN', { state: this.state });
                 return true;
             }

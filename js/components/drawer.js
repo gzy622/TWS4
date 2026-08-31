@@ -65,6 +65,22 @@
         const studentNumberToggle = document.getElementById('drawer-student-number-toggle');
         const subjectTagToggle = document.getElementById('drawer-subject-tag-toggle');
         const toggleDebuggerBtn = document.getElementById('drawer-toggle-debugger-btn');
+        const fontSwitchBtn = document.getElementById('drawer-font-switch-btn');
+        const drawerCurrentFontBadge = document.getElementById('drawer-current-font-badge');
+        const drawerCurrentFontDesc = document.getElementById('drawer-current-font-desc');
+
+        // 字体设置弹窗
+        const fontModal = document.getElementById('font-modal');
+        const fontModalCloseBtn = document.getElementById('font-modal-close-btn');
+        const fontDetectedName = document.getElementById('font-detected-name');
+        const fontDetectedRaw = document.getElementById('font-detected-raw');
+        const fontDetectedSourceTag = document.getElementById('font-detected-source-tag');
+        const fontPresetList = document.getElementById('font-preset-list');
+        const fontCustomSection = document.getElementById('font-custom-section');
+        const fontCustomInput = document.getElementById('font-custom-input');
+        const fontCustomApplyBtn = document.getElementById('font-custom-apply-btn');
+        const fontCustomSuggestions = document.getElementById('font-custom-suggestions');
+
 
         // 班级弹窗
         const classModal = document.getElementById('class-modal');
@@ -590,6 +606,192 @@
                 store.setShowSubjectTags(!store.getShowSubjectTags());
             });
         }
+        // 0. 字体设置与弹窗
+        function openFontModal() {
+            renderFontModal();
+            if (fontModal) fontModal.classList.add('show');
+            if (window.TWS3.pushGuardState) {
+                window.TWS3.pushGuardState();
+            }
+        }
+
+        function closeFontModal() {
+            if (fontModal) fontModal.classList.remove('show');
+        }
+
+        function isFontModalOpen() {
+            return !!(fontModal && fontModal.classList.contains('show'));
+        }
+
+        function renderFontStatus() {
+            const fm = window.TWS3.fontManager;
+            if (!fm) return;
+
+            const fontSettings = store.getFontSettings();
+            const activeInfo = fm.detectActiveFont();
+
+            // 1. 侧边设置菜单项更新
+            if (drawerCurrentFontBadge) {
+                let badgeText = activeInfo.displayName.split(' ')[0] || '系统字体';
+                if (fontSettings.preset === 'custom' && fontSettings.customFont) {
+                    badgeText = fontSettings.customFont.slice(0, 8);
+                }
+                drawerCurrentFontBadge.textContent = badgeText;
+            }
+            if (drawerCurrentFontDesc) {
+                drawerCurrentFontDesc.textContent = `当前生效：${activeInfo.displayName} · ${activeInfo.sourceText}`;
+            }
+
+            // 2. 弹窗内当前字体卡片更新
+            if (fontDetectedName) {
+                fontDetectedName.textContent = activeInfo.displayName;
+            }
+            if (fontDetectedRaw) {
+                fontDetectedRaw.textContent = `${activeInfo.rawName} · ${activeInfo.sourceText} (${activeInfo.isAvailable ? '✓ 渲染生效中' : '⚠️ 已回退到系统字体'})`;
+            }
+            if (fontDetectedSourceTag) {
+                fontDetectedSourceTag.textContent = activeInfo.sourceText;
+                fontDetectedSourceTag.className = 'font-status-tag';
+                if (activeInfo.source === 'system') {
+                    fontDetectedSourceTag.classList.add('tag-system');
+                } else if (activeInfo.source === 'custom') {
+                    fontDetectedSourceTag.classList.add('tag-custom');
+                } else if (activeInfo.source === 'fallback') {
+                    fontDetectedSourceTag.classList.add('tag-fallback');
+                }
+            }
+        }
+
+        function renderFontModal() {
+            renderFontStatus();
+            if (!fontPresetList) return;
+
+            const fm = window.TWS3.fontManager;
+            if (!fm) return;
+
+            const fontSettings = store.getFontSettings();
+            const currentPreset = fontSettings.preset || 'default';
+            const currentCustomFont = fontSettings.customFont || '';
+
+            fontPresetList.innerHTML = '';
+            const frag = document.createDocumentFragment();
+
+            fm.FONT_PRESETS.forEach(p => {
+                const card = document.createElement('div');
+                const isActive = p.id === currentPreset;
+                card.className = `font-preset-card ${isActive ? 'active' : ''}`;
+                card.dataset.id = p.id;
+
+                let tagClass = 'font-preset-tag';
+                if (p.tag === '推荐') tagClass += ' tag-primary';
+                if (p.tag === '内置离线') tagClass += ' tag-offline';
+
+                const previewStyle = p.stack ? `style="font-family: ${escapeHtml(p.stack)};"` : '';
+
+                card.innerHTML = `
+                    <div class="font-preset-top">
+                        <div class="font-preset-left">
+                            <div class="font-radio-icon">
+                                <div class="font-radio-inner"></div>
+                            </div>
+                            <div class="font-preset-info">
+                                <div class="font-preset-name-row">
+                                    <span class="font-preset-name">${escapeHtml(p.name)}</span>
+                                    <span class="${tagClass}">${escapeHtml(p.tag)}</span>
+                                </div>
+                                <span class="font-preset-desc">${escapeHtml(p.subtitle)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="font-preset-sample" ${previewStyle}>
+                        ${escapeHtml(p.preview)}
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    if (p.id === 'custom') {
+                        if (fontCustomSection) fontCustomSection.style.display = 'flex';
+                        if (fontCustomInput) {
+                            fontCustomInput.value = currentCustomFont;
+                            fontCustomInput.focus();
+                        }
+                        store.setFontSettings({ preset: 'custom', customFont: currentCustomFont });
+                    } else {
+                        if (fontCustomSection) fontCustomSection.style.display = 'none';
+                        store.setFontSettings({ preset: p.id, customFont: '' });
+                        showToast(`已切换界面字体：${p.name}`);
+                    }
+                    renderFontModal();
+                });
+
+                frag.appendChild(card);
+            });
+
+            fontPresetList.appendChild(frag);
+
+            if (fontCustomSection) {
+                fontCustomSection.style.display = currentPreset === 'custom' ? 'flex' : 'none';
+                if (currentPreset === 'custom' && fontCustomInput && !fontCustomInput.value) {
+                    fontCustomInput.value = currentCustomFont;
+                }
+            }
+        }
+
+        if (fontSwitchBtn) {
+            fontSwitchBtn.addEventListener('click', openFontModal);
+        }
+        if (fontModalCloseBtn) {
+            fontModalCloseBtn.addEventListener('click', closeFontModal);
+        }
+        if (fontModal) {
+            fontModal.addEventListener('click', (e) => {
+                if (e.target === fontModal) {
+                    closeFontModal();
+                }
+            });
+        }
+        if (fontCustomApplyBtn) {
+            fontCustomApplyBtn.addEventListener('click', () => {
+                const val = fontCustomInput ? fontCustomInput.value.trim() : '';
+                if (!val) {
+                    showToast('请输入自定义字体名称');
+                    return;
+                }
+                store.setFontSettings({ preset: 'custom', customFont: val });
+                showToast(`已应用自定义字体：${val}`);
+                renderFontModal();
+            });
+        }
+        if (fontCustomInput) {
+            fontCustomInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (fontCustomApplyBtn) fontCustomApplyBtn.click();
+                }
+            });
+        }
+        if (fontCustomSuggestions) {
+            fontCustomSuggestions.addEventListener('click', (e) => {
+                const tag = e.target.closest('.font-suggest-tag');
+                if (tag && tag.dataset.font) {
+                    const fontName = tag.dataset.font;
+                    if (fontCustomInput) fontCustomInput.value = fontName;
+                    store.setFontSettings({ preset: 'custom', customFont: fontName });
+                    showToast(`已应用自定义字体：${fontName}`);
+                    renderFontModal();
+                }
+            });
+        }
+
+        if (window.TWS3.fontManager && typeof window.TWS3.fontManager.subscribe === 'function') {
+            window.TWS3.fontManager.subscribe(() => {
+                renderFontStatus();
+                if (fontModal && fontModal.classList.contains('show')) {
+                    renderFontStatus();
+                }
+            });
+        }
+
 
         // 1. 切换班级
         function openClassModal() {
@@ -1538,6 +1740,11 @@
             } else if (eventType === 'SUBJECT_TAG_VISIBILITY_CHANGED') {
                 renderSubjectTagToggle();
                 renderDrawerTaskList();
+            } else if (eventType === 'FONT_SETTINGS_CHANGED') {
+                renderFontStatus();
+                if (fontModal && fontModal.classList.contains('show')) {
+                    renderFontModal();
+                }
             } else if (
                 eventType === 'TASK_CHANGED' ||
                 eventType === 'TASK_ADDED' ||
@@ -1560,11 +1767,15 @@
                 renderDrawerHeader();
                 renderDrawerTaskList();
                 renderSettingsHeader();
+                renderFontStatus();
                 if (rosterView && rosterView.classList.contains('show')) {
                     renderRosterList();
                 }
                 if (classModal && classModal.classList.contains('show')) {
                     renderClassList();
+                }
+                if (fontModal && fontModal.classList.contains('show')) {
+                    renderFontModal();
                 }
             }
         });
@@ -1576,6 +1787,7 @@
         renderStudentNumberToggle();
         renderSubjectTagToggle();
         renderDebuggerToggle();
+        renderFontStatus();
         updateVersionFooters();
 
         const drawerService = {
@@ -1587,7 +1799,11 @@
             closeRosterView,
             isRosterViewOpen,
             renderDrawerTasks: renderDrawerTaskList,
-            renderDebuggerToggle
+            renderDebuggerToggle,
+            openFontModal,
+            closeFontModal,
+            isFontModalOpen,
+            renderFontStatus
         };
 
         window.TWS3.drawer = drawerService;
