@@ -289,6 +289,12 @@
     box-sizing: border-box;
 }
 
+/* 课表视图下的两个子容器各自占满整行，避免被 auto-fit 并排 */
+.quick-schedule-cards-grid,
+.quick-highlight-section {
+    grid-column: 1 / -1;
+}
+
 .quick-class-card {
     position: relative;
     min-width: 0;
