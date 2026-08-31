@@ -1,0 +1,200 @@
+/* =======================================================
+   通用统一二级全屏界面规范 (Unified Fullscreen Panel Standard)
+   ======================================================= */
+
+/* 1. 基础全屏面板容器 (与 .modal-overlay 体系对齐) */
+.fullscreen-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    background-color: var(--bg-main, #f7f9fa);
+    z-index: 850;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translate3d(100%, 0, 0);
+    will-change: transform;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+}
+
+.fullscreen-panel.show {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 二级嵌套全屏面板 (如从设置页进入花名册页) 提升层级 */
+.fullscreen-panel.fullscreen-panel-l2,
+.fullscreen-panel.roster-fullscreen-panel {
+    z-index: 860;
+}
+
+/* 2. 统一全屏界面顶部导航栏 */
+.fullscreen-header,
+.settings-header {
+    height: var(--navbar-height);
+    min-height: var(--navbar-height);
+    padding-top: var(--safe-top, 0px);
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-light, #eef2f0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: calc(12px + var(--safe-left, 0px));
+    padding-right: calc(12px + var(--safe-right, 0px));
+    flex-shrink: 0;
+    box-sizing: border-box;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    z-index: 2;
+}
+
+/* 3. 统一返回按钮 */
+.fullscreen-back-btn,
+.settings-back-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-dark, #1e293b);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    flex-shrink: 0;
+}
+
+.fullscreen-back-btn:hover,
+.settings-back-btn:hover {
+    background-color: #f1f5f9;
+}
+
+.fullscreen-back-btn:active,
+.settings-back-btn:active {
+    transform: scale(0.92);
+}
+
+.fullscreen-back-btn svg,
+.settings-back-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* 4. 统一标题与徽标 */
+.fullscreen-title,
+.settings-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark, #1e293b);
+    letter-spacing: 0.2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fullscreen-title-badge,
+.roster-count-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(100, 181, 135, 0.18);
+    color: #1e6b48;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+/* 5. 统一右侧占位或操作区 */
+.fullscreen-header-right,
+.settings-header-right {
+    min-width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+/* 统一头部主操作按钮 */
+.fullscreen-header-btn,
+.roster-header-add-btn {
+    height: 32px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 8px;
+    background: var(--surface-dark, #1b3831);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+    flex-shrink: 0;
+}
+
+.fullscreen-header-btn:active,
+.roster-header-add-btn:active {
+    transform: scale(0.94);
+    opacity: 0.85;
+}
+
+.fullscreen-header-btn svg,
+.roster-header-add-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* 6. 统一主内容容器与滚动区域 */
+.fullscreen-body,
+.roster-view-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.fullscreen-scroll-area,
+.settings-scroll-area,
+.roster-list-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    box-sizing: border-box;
+}
+
+.fullscreen-scroll-area::-webkit-scrollbar,
+.settings-scroll-area::-webkit-scrollbar,
+.roster-list-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.fullscreen-scroll-area::-webkit-scrollbar-thumb,
+.settings-scroll-area::-webkit-scrollbar-thumb,
+.roster-list-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}

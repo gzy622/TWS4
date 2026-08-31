@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TWS4</title>
-    <link rel="stylesheet" href="css/main.css?v=20260831-173442">
+    <link rel="stylesheet" href="css/main.css?v=20260831-173829">
 </head>
 <body>
     <div class="app-container">
@@ -71,22 +71,22 @@
                     </div>
                     <svg class="drawer-settings-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
-                <span class="drawer-footer-text">v1.0.0 · 2026-08-31 17:34:42</span>
+                <span class="drawer-footer-text">v1.0.0 · 2026-08-31 17:38:29</span>
             </div>
         </aside>
 
         <!-- 二级全屏界面：原侧边抽屉的数据管理与设置 -->
         <div id="settings-view" class="fullscreen-panel">
-            <div class="settings-header">
-                <button type="button" class="settings-back-btn" id="settings-back-btn" aria-label="返回">
+            <div class="fullscreen-header settings-header">
+                <button type="button" class="fullscreen-back-btn settings-back-btn" id="settings-back-btn" aria-label="返回">
                     <svg viewBox="0 0 24 24">
                         <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <div class="settings-title">数据与设置</div>
-                <div class="settings-header-right"></div>
+                <div class="fullscreen-title settings-title">数据与设置</div>
+                <div class="fullscreen-header-right settings-header-right"></div>
             </div>
-            <div class="settings-scroll-area">
+            <div class="fullscreen-scroll-area settings-scroll-area">
                 <div class="settings-card-header">
                     <div class="settings-card-title" id="settings-class-title">高二 (3) 班</div>
                     <div class="settings-card-subtitle" id="settings-class-subtitle">在籍学生：50 人</div>
@@ -250,31 +250,33 @@
                     </div>
                 </div>
                 <div class="settings-footer">
-                    <span class="settings-footer-text">v1.0.0 · 2026-08-31 17:34:42</span>
+                    <span class="settings-footer-text">v1.0.0 · 2026-08-31 17:38:29</span>
                 </div>
             </div>
         </div>
 
         <!-- 二级全屏界面：学生花名册管理（作为设置页的二级界面） -->
         <div id="roster-view" class="fullscreen-panel roster-fullscreen-panel">
-            <div class="settings-header">
-                <button type="button" class="settings-back-btn" id="roster-back-btn" aria-label="返回">
+            <div class="fullscreen-header settings-header">
+                <button type="button" class="fullscreen-back-btn settings-back-btn" id="roster-back-btn" aria-label="返回">
                     <svg viewBox="0 0 24 24">
                         <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <div class="settings-title">
+                <div class="fullscreen-title settings-title">
                     <span>学生花名册</span>
-                    <span class="roster-count-badge" id="roster-count-badge">50 人</span>
+                    <span class="fullscreen-title-badge roster-count-badge" id="roster-count-badge">50 人</span>
                 </div>
-                <button type="button" class="roster-header-add-btn" id="roster-add-btn" title="添加新学生">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                    <span>添加</span>
-                </button>
+                <div class="fullscreen-header-right">
+                    <button type="button" class="fullscreen-header-btn roster-header-add-btn" id="roster-add-btn" title="添加新学生">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        <span>添加</span>
+                    </button>
+                </div>
             </div>
-            <div class="roster-view-body">
+            <div class="fullscreen-body roster-view-body">
                 <!-- 顶部搜索栏 -->
                 <div class="roster-toolbar">
                     <div class="roster-search-box">
@@ -291,7 +293,7 @@
                     <span>点击「英语生」标签可快速切换为非英语生（英语作业免交）</span>
                 </div>
                 <!-- 学生列表滚动区 -->
-                <div class="roster-list-scroll" id="roster-list-body"></div>
+                <div class="fullscreen-scroll-area roster-list-scroll" id="roster-list-body"></div>
             </div>
         </div>
         <!-- 隐藏的文件上传 Input -->
@@ -503,30 +505,30 @@
     </div>
 
     <!-- 1. 数据与状态层 -->
-    <script src="js/config/version.js?v=20260831-173442"></script>
-    <script src="js/config/initial-data.js?v=20260831-173442"></script>
-    <script src="js/state/store.js?v=20260831-173442"></script>
+    <script src="js/config/version.js?v=20260831-173829"></script>
+    <script src="js/config/initial-data.js?v=20260831-173829"></script>
+    <script src="js/state/store.js?v=20260831-173829"></script>
 
     <!-- 2. 通用工具与反馈层 -->
-    <script src="js/utils/toast.js?v=20260831-173442"></script>
-    <script src="js/utils/file-saver.js?v=20260831-173442"></script>
-    <script src="js/utils/gestures.js?v=20260831-173442"></script>
-    <script src="js/utils/logger.js?v=20260831-173442"></script>
-    <script src="js/utils/dependencies.js?v=20260831-173442"></script>
-    <script src="js/utils/back-handler.js?v=20260831-173442"></script>
-    <script src="js/modules/workbook.js?v=20260831-173442"></script>
-    <script src="js/modules/seat-workbook.js?v=20260831-173442"></script>
+    <script src="js/utils/toast.js?v=20260831-173829"></script>
+    <script src="js/utils/file-saver.js?v=20260831-173829"></script>
+    <script src="js/utils/gestures.js?v=20260831-173829"></script>
+    <script src="js/utils/logger.js?v=20260831-173829"></script>
+    <script src="js/utils/dependencies.js?v=20260831-173829"></script>
+    <script src="js/utils/back-handler.js?v=20260831-173829"></script>
+    <script src="js/modules/workbook.js?v=20260831-173829"></script>
+    <script src="js/modules/seat-workbook.js?v=20260831-173829"></script>
     <!-- 3. UI 组件层 -->
-    <script src="js/components/modal.js?v=20260831-173442"></script>
-    <script src="js/components/edit-sheet.js?v=20260831-173442"></script>
-    <script src="js/components/navbar.js?v=20260831-173442"></script>
-    <script src="js/components/drawer.js?v=20260831-173442"></script>
-    <script src="js/components/grid.js?v=20260831-173442"></script>
-    <script src="js/components/wide.js?v=20260831-173442"></script>
-    <script src="js/components/seat.js?v=20260831-173442"></script>
-    <script src="js/components/table.js?v=20260831-173442"></script>
+    <script src="js/components/modal.js?v=20260831-173829"></script>
+    <script src="js/components/edit-sheet.js?v=20260831-173829"></script>
+    <script src="js/components/navbar.js?v=20260831-173829"></script>
+    <script src="js/components/drawer.js?v=20260831-173829"></script>
+    <script src="js/components/grid.js?v=20260831-173829"></script>
+    <script src="js/components/wide.js?v=20260831-173829"></script>
+    <script src="js/components/seat.js?v=20260831-173829"></script>
+    <script src="js/components/table.js?v=20260831-173829"></script>
 
     <!-- 4. 入口装配 -->
-    <script src="js/app.js?v=20260831-173442"></script>
+    <script src="js/app.js?v=20260831-173829"></script>
 </body>
 </html>
