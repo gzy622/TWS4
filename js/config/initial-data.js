@@ -439,113 +439,248 @@
         { id: "day_5", name: "周五", order: 5 }
     ];
 
+    const DEFAULT_PERIOD_TIMES = {
+        'p_morning': '07:40 - 08:00',
+        'morning': '07:40 - 08:00',
+        '早': '07:40 - 08:00',
+        '早读': '07:40 - 08:00',
+        'p_1': '08:00 - 08:45',
+        '1': '08:00 - 08:45',
+        'p_2': '08:55 - 09:40',
+        '2': '08:55 - 09:40',
+        'p_3': '10:10 - 10:55',
+        '3': '10:10 - 10:55',
+        'p_4': '11:05 - 11:50',
+        '4': '11:05 - 11:50',
+        'p_noon': '14:00 - 14:25',
+        'noon': '14:00 - 14:25',
+        '午': '14:00 - 14:25',
+        '午测': '14:00 - 14:25',
+        'p_5': '14:30 - 15:15',
+        '5': '14:30 - 15:15',
+        'p_6': '15:25 - 16:10',
+        '6': '15:25 - 16:10',
+        'p_7': '16:20 - 17:05',
+        '7': '16:20 - 17:05',
+        'p_afterschool': '17:20 - 18:05',
+        'afterschool': '17:20 - 18:05',
+        '后': '17:20 - 18:05',
+        '课后': '17:20 - 18:05'
+    };
+
     const INITIAL_SCHEDULE_PERIODS = [
-        { id: "p_morning", name: "早", label: "早读", type: "morning", order: 0 },
-        { id: "p_1", name: "1", label: "1", type: "regular", order: 1 },
-        { id: "p_2", name: "2", label: "2", type: "regular", order: 2 },
-        { id: "p_3", name: "3", label: "3", type: "regular", order: 3 },
-        { id: "p_4", name: "4", label: "4", type: "regular", order: 4 },
-        { id: "p_noon", name: "午", label: "午测", type: "noon", order: 4.5 },
-        { id: "p_5", name: "5", label: "5", type: "regular", order: 5 },
-        { id: "p_6", name: "6", label: "6", type: "regular", order: 6 },
-        { id: "p_7", name: "7", label: "7", type: "regular", order: 7 },
-        { id: "p_afterschool", name: "后", label: "课后", type: "afterschool", order: 8 }
+        { id: "p_morning", name: "早", label: "早读", shortLabel: "早", type: "morning", time: "07:40 - 08:00", order: 0 },
+        { id: "p_1", name: "1", label: "第1节", shortLabel: "1", type: "regular", time: "08:00 - 08:45", order: 1 },
+        { id: "p_2", name: "2", label: "第2节", shortLabel: "2", type: "regular", time: "08:55 - 09:40", order: 2 },
+        { id: "p_3", name: "3", label: "第3节", shortLabel: "3", type: "regular", time: "10:10 - 10:55", order: 3 },
+        { id: "p_4", name: "4", label: "第4节", shortLabel: "4", type: "regular", time: "11:05 - 11:50", order: 4 },
+        { id: "p_noon", name: "午", label: "午测", shortLabel: "午", type: "noon", time: "14:00 - 14:25", order: 4.5 },
+        { id: "p_5", name: "5", label: "第5节", shortLabel: "5", type: "regular", time: "14:30 - 15:15", order: 5 },
+        { id: "p_6", name: "6", label: "第6节", shortLabel: "6", type: "regular", time: "15:25 - 16:10", order: 6 },
+        { id: "p_7", name: "7", label: "第7节", shortLabel: "7", type: "regular", time: "16:20 - 17:05", order: 7 },
+        { id: "p_afterschool", name: "后", label: "课后", shortLabel: "后", type: "afterschool", time: "17:20 - 18:05", order: 8 }
     ];
 
     const INITIAL_COURSE_LIBRARY = [
-        { id: "c_yy", name: "英语", color: "english" },
-        { id: "c_yw", name: "语文", color: "default" },
-        { id: "c_sx", name: "数学", color: "default" },
-        { id: "c_ls", name: "历史", color: "default" },
-        { id: "c_ty", name: "通用", color: "default" },
-        { id: "c_zz", name: "政治", color: "default" },
-        { id: "c_ms", name: "美术", color: "default" },
-        { id: "c_sw", name: "生物", color: "default" },
-        { id: "c_bh", name: "班会", color: "default" },
-        { id: "c_wh", name: "物合", color: "default" },
-        { id: "c_xx", name: "信息", color: "default" },
-        { id: "c_pe", name: "体育", color: "default" },
-        { id: "c_mu", name: "音乐", color: "default" },
-        { id: "c_dh", name: "地合", color: "default" },
-        { id: "c_hh", name: "化合", color: "default" },
-        { id: "c_wl", name: "物理", color: "default" },
-        { id: "c_hx", name: "化学", color: "default" },
-        { id: "c_dl", name: "地理", color: "default" }
+        { id: "c_yw", name: "语文", color: "chinese", char: "语" },
+        { id: "c_sx", name: "数学", color: "math", char: "数" },
+        { id: "c_yy", name: "英语", color: "english", char: "英" },
+        { id: "c_wl", name: "物理", color: "physics", char: "物" },
+        { id: "c_hx", name: "化学", color: "chemistry", char: "化" },
+        { id: "c_sw", name: "生物", color: "biology", char: "生" },
+        { id: "c_zz", name: "政治", color: "politics", char: "政" },
+        { id: "c_ls", name: "历史", color: "history", char: "历" },
+        { id: "c_dl", name: "地理", color: "geography", char: "地" },
+        { id: "c_pe", name: "体育", color: "pe", char: "体" },
+        { id: "c_mu", name: "音乐", color: "music", char: "音" },
+        { id: "c_ms", name: "美术", color: "art", char: "美" },
+        { id: "c_xx", name: "信息", color: "tech", char: "信" },
+        { id: "c_ty", name: "通用", color: "tech", char: "通" },
+        { id: "c_bh", name: "班会", color: "class", char: "班" }
     ];
 
-    const INITIAL_SCHEDULE_GRID = {
+    // 3班课程数据（班主任：邹利珊，来源：2026-2027学年第一学期初二课程表）
+    const CLASS_3_GRID = {
         // 周一
-        "day_1_p_morning": { courseId: "c_yw", customName: "" },
-        "day_1_p_1": { courseId: "c_yy", customName: "" },
-        "day_1_p_2": { courseId: "c_sx", customName: "" },
-        "day_1_p_3": { courseId: "c_ty", customName: "" },
-        "day_1_p_4": { courseId: "c_zz", customName: "" },
-        "day_1_p_noon": { courseId: "c_sx", customName: "" },
-        "day_1_p_5": { courseId: "c_ms", customName: "" },
-        "day_1_p_6": { courseId: "c_sw", customName: "" },
-        "day_1_p_7": { courseId: "c_bh", customName: "" },
-        "day_1_p_afterschool": { courseId: "c_yw", customName: "" },
+        "day_1_p_morning": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_1_p_1": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_1_p_2": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_1_p_3": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_1_p_4": { courseId: "c_xx", name: "信", fullName: "信息技术", color: "tech", char: "信" },
+        "day_1_p_noon": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_1_p_5": { courseId: "c_sw", name: "生", fullName: "生物", color: "biology", char: "生" },
+        "day_1_p_6": { courseId: "c_mu", name: "音", fullName: "音乐", color: "music", char: "音" },
+        "day_1_p_7": { courseId: "c_bh", name: "班", fullName: "班会", color: "class", char: "班" },
+        "day_1_p_afterschool": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
 
         // 周二
-        "day_2_p_morning": { courseId: "c_yy", customName: "" },
-        "day_2_p_1": { courseId: "c_yw", customName: "" },
-        "day_2_p_2": { courseId: "c_ls", customName: "" },
-        "day_2_p_3": { courseId: "c_sx", customName: "" },
-        "day_2_p_4": { courseId: "c_yy", customName: "" },
-        "day_2_p_noon": { courseId: "c_yy", customName: "" },
-        "day_2_p_5": { courseId: "c_wh", customName: "" },
-        "day_2_p_6": { courseId: "c_xx", customName: "" },
-        "day_2_p_7": { courseId: "c_pe", customName: "" },
-        "day_2_p_afterschool": { courseId: "c_sx", customName: "" },
+        "day_2_p_morning": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_2_p_1": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_2_p_2": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_2_p_3": { courseId: "c_zz", name: "政", fullName: "道法/政治", color: "politics", char: "政" },
+        "day_2_p_4": { courseId: "c_dl", name: "地", fullName: "地理", color: "geography", char: "地" },
+        "day_2_p_noon": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_2_p_5": { courseId: "c_ls", name: "历", fullName: "历史", color: "history", char: "历" },
+        "day_2_p_6": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_2_p_7": { courseId: "c_pe", name: "体", fullName: "体育", color: "pe", char: "体" },
+        "day_2_p_afterschool": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
 
         // 周三
-        "day_3_p_morning": { courseId: "c_yw", customName: "" },
-        "day_3_p_1": { courseId: "c_yy", customName: "" },
-        "day_3_p_2": { courseId: "c_ls", customName: "" },
-        "day_3_p_3": { courseId: "c_yw", customName: "" },
-        "day_3_p_4": { courseId: "c_sx", customName: "" },
-        "day_3_p_noon": { courseId: "c_wl", customName: "" },
-        "day_3_p_5": { courseId: "c_mu", customName: "" },
-        "day_3_p_6": { courseId: "c_dh", customName: "" },
-        "day_3_p_7": { courseId: "c_zz", customName: "" },
-        "day_3_p_afterschool": { courseId: "c_yy", customName: "" },
+        "day_3_p_morning": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_3_p_1": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_3_p_2": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_3_p_3": { courseId: "c_wl", name: "物", fullName: "物理", color: "physics", char: "物" },
+        "day_3_p_4": { courseId: "c_pe", name: "体", fullName: "体育", color: "pe", char: "体" },
+        "day_3_p_noon": { courseId: "c_wl", name: "物", fullName: "物理", color: "physics", char: "物" },
+        "day_3_p_5": { courseId: "c_dl", name: "地", fullName: "地理", color: "geography", char: "地" },
+        "day_3_p_6": { courseId: "c_ms", name: "美", fullName: "美术/心理", color: "art", char: "美" },
+        "day_3_p_7": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_3_p_afterschool": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
 
         // 周四
-        "day_4_p_morning": { courseId: "c_yy", customName: "" },
-        "day_4_p_1": { courseId: "c_yw", customName: "" },
-        "day_4_p_2": { courseId: "c_yw", customName: "" },
-        "day_4_p_3": { courseId: "c_ls", customName: "" },
-        "day_4_p_4": { courseId: "c_sw", customName: "" },
-        "day_4_p_noon": { courseId: "c_hx", customName: "" },
-        "day_4_p_5": { courseId: "c_yy", customName: "" },
-        "day_4_p_6": { courseId: "c_sx", customName: "" },
-        "day_4_p_7": { courseId: "c_dl", customName: "" },
-        "day_4_p_afterschool": { courseId: "c_wl", customName: "" },
+        "day_4_p_morning": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_4_p_1": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_4_p_2": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_4_p_3": { courseId: "c_zz", name: "政", fullName: "道法/政治", color: "politics", char: "政" },
+        "day_4_p_4": { courseId: "c_sw", name: "生", fullName: "生物", color: "biology", char: "生" },
+        "day_4_p_noon": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_4_p_5": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_4_p_6": { courseId: "c_ls", name: "历", fullName: "历史", color: "history", char: "历" },
+        "day_4_p_7": { courseId: "c_ty", name: "通", fullName: "通用技术", color: "tech", char: "通" },
+        "day_4_p_afterschool": { courseId: "c_wl", name: "物", fullName: "物理", color: "physics", char: "物" },
 
         // 周五
-        "day_5_p_morning": { courseId: "c_yw", customName: "" },
-        "day_5_p_1": { courseId: "c_yy", customName: "" },
-        "day_5_p_2": { courseId: "c_sx", customName: "" },
-        "day_5_p_3": { courseId: "c_sw", customName: "" },
-        "day_5_p_4": { courseId: "c_yw", customName: "" },
-        "day_5_p_noon": { courseId: "c_yw", customName: "" },
-        "day_5_p_5": { courseId: "c_hh", customName: "" },
-        "day_5_p_6": { courseId: "c_zz", customName: "" },
-        "day_5_p_7": { courseId: "c_pe", customName: "" },
-        "day_5_p_afterschool": { courseId: "c_sx", customName: "" }
+        "day_5_p_morning": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_5_p_1": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_5_p_2": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_5_p_3": { courseId: "c_sw", name: "生", fullName: "生物", color: "biology", char: "生" },
+        "day_5_p_4": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_5_p_noon": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_5_p_5": { courseId: "c_wl", name: "物", fullName: "物理", color: "physics", char: "物" },
+        "day_5_p_6": { courseId: "c_dl", name: "地", fullName: "地理", color: "geography", char: "地" },
+        "day_5_p_7": { courseId: "c_pe", name: "体", fullName: "体育", color: "pe", char: "体" },
+        "day_5_p_afterschool": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" }
     };
 
-    const INITIAL_SCHEDULE = {
-        templateVersion: INITIAL_SCHEDULE_TEMPLATE_VERSION,
+    // 4班课程数据（班主任：蓝康鑫，来源：2026-2027学年第一学期初二课程表）
+    const CLASS_4_GRID = {
+        // 周一
+        "day_1_p_morning": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_1_p_1": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_1_p_2": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_1_p_3": { courseId: "c_wl", name: "物", fullName: "物理", color: "physics", char: "物" },
+        "day_1_p_4": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_1_p_noon": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_1_p_5": { courseId: "c_mu", name: "音", fullName: "音乐", color: "music", char: "音" },
+        "day_1_p_6": { courseId: "c_zz", name: "政", fullName: "道法/政治", color: "politics", char: "政" },
+        "day_1_p_7": { courseId: "c_bh", name: "班", fullName: "班会", color: "class", char: "班" },
+        "day_1_p_afterschool": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+
+        // 周二
+        "day_2_p_morning": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_2_p_1": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_2_p_2": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_2_p_3": { courseId: "c_pe", name: "体", fullName: "体育", color: "pe", char: "体" },
+        "day_2_p_4": { courseId: "c_dl", name: "地", fullName: "地理", color: "geography", char: "地" },
+        "day_2_p_noon": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_2_p_5": { courseId: "c_sw", name: "生", fullName: "生物", color: "biology", char: "生" },
+        "day_2_p_6": { courseId: "c_ls", name: "历", fullName: "历史", color: "history", char: "历" },
+        "day_2_p_7": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_2_p_afterschool": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+
+        // 周三
+        "day_3_p_morning": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_3_p_1": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_3_p_2": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_3_p_3": { courseId: "c_xx", name: "信", fullName: "信息技术", color: "tech", char: "信" },
+        "day_3_p_4": { courseId: "c_sw", name: "生", fullName: "生物", color: "biology", char: "生" },
+        "day_3_p_noon": { courseId: "c_wl", name: "物", fullName: "物理", color: "physics", char: "物" },
+        "day_3_p_5": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_3_p_6": { courseId: "c_pe", name: "体", fullName: "体育", color: "pe", char: "体" },
+        "day_3_p_7": { courseId: "c_dl", name: "地", fullName: "地理", color: "geography", char: "地" },
+        "day_3_p_afterschool": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+
+        // 周四
+        "day_4_p_morning": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_4_p_1": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_4_p_2": { courseId: "c_zz", name: "政", fullName: "道法/政治", color: "politics", char: "政" },
+        "day_4_p_3": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_4_p_4": { courseId: "c_wl", name: "物", fullName: "物理", color: "physics", char: "物" },
+        "day_4_p_noon": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_4_p_5": { courseId: "c_ls", name: "历", fullName: "历史", color: "history", char: "历" },
+        "day_4_p_6": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_4_p_7": { courseId: "c_ty", name: "通", fullName: "通用技术", color: "tech", char: "通" },
+        "day_4_p_afterschool": { courseId: "c_wl", name: "物", fullName: "物理", color: "physics", char: "物" },
+
+        // 周五
+        "day_5_p_morning": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_5_p_1": { courseId: "c_yy", name: "英", fullName: "英语", color: "english", char: "英" },
+        "day_5_p_2": { courseId: "c_yw", name: "语", fullName: "语文", color: "chinese", char: "语" },
+        "day_5_p_3": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_5_p_4": { courseId: "c_ms", name: "美", fullName: "美术/心理", color: "art", char: "美" },
+        "day_5_p_noon": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" },
+        "day_5_p_5": { courseId: "c_sw", name: "生", fullName: "生物", color: "biology", char: "生" },
+        "day_5_p_6": { courseId: "c_pe", name: "体", fullName: "体育", color: "pe", char: "体" },
+        "day_5_p_7": { courseId: "c_dl", name: "地", fullName: "地理", color: "geography", char: "地" },
+        "day_5_p_afterschool": { courseId: "c_sx", name: "数", fullName: "数学", color: "math", char: "数" }
+    };
+
+    const INITIAL_SCHEDULE_CLASS_3 = {
+        id: "class_sched_chu2_3",
+        shortName: "初二3",
+        name: "初二 (3) 班",
+        grade: "初二",
+        sheet: "初中",
+        teacher: "邹利珊",
         days: INITIAL_SCHEDULE_DAYS,
         periods: INITIAL_SCHEDULE_PERIODS,
         courseLibrary: INITIAL_COURSE_LIBRARY,
-        grid: INITIAL_SCHEDULE_GRID,
+        grid: CLASS_3_GRID,
+        lunchBreak: { enabled: true, afterPeriod: 4, name: "午间休息" },
+        totalCourses: 50,
+        updatedAt: BASE_TIME
+    };
+
+    const INITIAL_SCHEDULE_CLASS_4 = {
+        id: "class_sched_chu2_4",
+        shortName: "初二4",
+        name: "初二 (4) 班",
+        grade: "初二",
+        sheet: "初中",
+        teacher: "蓝康鑫",
+        days: INITIAL_SCHEDULE_DAYS,
+        periods: INITIAL_SCHEDULE_PERIODS,
+        courseLibrary: INITIAL_COURSE_LIBRARY,
+        grid: CLASS_4_GRID,
+        lunchBreak: { enabled: true, afterPeriod: 4, name: "午间休息" },
+        totalCourses: 50,
+        updatedAt: BASE_TIME
+    };
+
+    const INITIAL_SCHEDULE_LIBRARY = [
+        INITIAL_SCHEDULE_CLASS_3,
+        INITIAL_SCHEDULE_CLASS_4
+    ];
+
+    // 默认活跃课表（采用初二3班）
+    const INITIAL_SCHEDULE = {
+        templateVersion: INITIAL_SCHEDULE_TEMPLATE_VERSION,
+        id: INITIAL_SCHEDULE_CLASS_3.id,
+        shortName: INITIAL_SCHEDULE_CLASS_3.shortName,
+        name: INITIAL_SCHEDULE_CLASS_3.name,
+        grade: INITIAL_SCHEDULE_CLASS_3.grade,
+        sheet: INITIAL_SCHEDULE_CLASS_3.sheet,
+        teacher: INITIAL_SCHEDULE_CLASS_3.teacher,
+        days: INITIAL_SCHEDULE_DAYS,
+        periods: INITIAL_SCHEDULE_PERIODS,
+        courseLibrary: INITIAL_COURSE_LIBRARY,
+        grid: CLASS_3_GRID,
         lunchBreak: {
             enabled: true,
             afterPeriod: 4,
             name: "午间休息"
         },
+        totalCourses: 50,
         updatedAt: BASE_TIME
     };
 
@@ -758,6 +893,12 @@
         INITIAL_TASKS_CLASS_2,
         INITIAL_RECORDS_CLASS_2,
         INITIAL_SCHEDULE,
+        INITIAL_SCHEDULE_DAYS,
+        INITIAL_SCHEDULE_PERIODS,
+        INITIAL_SCHEDULE_LIBRARY,
+        INITIAL_SCHEDULE_CLASS_3,
+        INITIAL_SCHEDULE_CLASS_4,
+        DEFAULT_PERIOD_TIMES,
         INITIAL_SCHEDULE_TEMPLATE_VERSION,
         LEGACY_SCHEDULE_TEMPLATE,
         INITIAL_OFFICERS,

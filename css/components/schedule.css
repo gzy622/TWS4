@@ -1,10 +1,10 @@
-/* 课程表视图样式 (全视口零滚动设计) */
+/* 课程表视图样式 (全视口零滚动设计 · 极简优雅专业版) */
 .schedule-view {
     flex: 1;
     min-height: 0;
     height: 100%;
     overflow: hidden;
-    padding: 4px calc(4px + var(--safe-right, 0px)) calc(6px + var(--safe-bottom, 0px)) calc(4px + var(--safe-left, 0px));
+    padding: 6px calc(6px + var(--safe-right, 0px)) calc(8px + var(--safe-bottom, 0px)) calc(6px + var(--safe-left, 0px));
     animation: fadeInView 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     will-change: opacity, transform;
     display: flex;
@@ -23,9 +23,9 @@
     height: 100%;
     min-height: 0;
     background: var(--surface-white);
-    border-radius: var(--radius-card);
-    box-shadow: var(--shadow-card);
-    border: 1px solid var(--border-light);
+    border-radius: var(--radius-card, 12px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--border-light, #e2e8f0);
     overflow: hidden;
     position: relative;
     display: flex;
@@ -37,112 +37,137 @@
     height: 100%;
     min-width: 0;
     border-collapse: separate;
-    border-spacing: 2.5px;
-    padding: 3px;
+    border-spacing: 3px;
+    padding: 4px;
     table-layout: fixed;
     box-sizing: border-box;
 }
 
 /* 表头单元格 */
 .schedule-th {
-    background: var(--surface-muted);
-    color: var(--text-dark);
-    font-size: 12px;
-    font-weight: 600;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
     text-align: center;
-    padding: 3px 2px;
-    border-radius: 4px;
-    height: 26px;
+    padding: 4px 2px;
+    border-radius: 6px;
+    height: 28px;
     box-sizing: border-box;
-    box-shadow: 0 1px 0 var(--border-light);
-    border: 1px solid transparent;
+    border: 1px solid #e2e8f0;
 }
 
 .schedule-th.today-col {
-    background: #eaf6ef;
-    color: #1b3831;
-    border: 1px solid var(--accent-green);
-    font-weight: 700;
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #6ee7b7;
+    font-weight: 800;
 }
 
 .schedule-th-today-badge {
     display: inline-block;
-    font-size: 9.5px;
-    padding: 0 3px;
+    font-size: 10px;
+    padding: 0 4px;
     border-radius: 3px;
-    background: var(--accent-green);
-    color: var(--text-white);
-    margin-left: 2px;
-    vertical-align: baseline;
-    font-weight: 500;
+    background: #10b981;
+    color: #ffffff;
+    margin-left: 3px;
+    vertical-align: middle;
+    font-weight: 600;
 }
 
 /* 节次列标头 */
 .schedule-period-th {
-    width: 32px;
-    min-width: 30px;
-    max-width: 38px;
-    background: #ebf0f4;
-    color: var(--text-muted);
+    width: 48px;
+    min-width: 44px;
+    max-width: 52px;
+    background: #f1f5f9;
+    color: #64748b;
     font-size: 11px;
+    font-weight: 600;
 }
 
 /* 节次单元格 */
 .schedule-period-cell {
     text-align: center;
     vertical-align: middle;
-    padding: 1px;
-    width: 32px;
-    min-width: 30px;
-    max-width: 38px;
-    border-radius: 4px;
+    padding: 2px 1px;
+    width: 48px;
+    min-width: 44px;
+    max-width: 52px;
+    border-radius: 6px;
     box-sizing: border-box;
+    user-select: none;
 }
 
-.schedule-period-badge {
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1;
-    display: inline-flex;
+.schedule-period-inner {
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 1px;
+    line-height: 1;
+}
+
+.schedule-period-num {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.schedule-period-time {
+    font-size: 8.5px;
+    line-height: 1.05;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: -0.2px;
+    opacity: 0.85;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.schedule-period-time .time-start,
+.schedule-period-time .time-end {
+    display: block;
+    white-space: nowrap;
 }
 
 /* 特殊节次与正课行底色与样式区分 */
 .schedule-period-cell.type-morning {
     background: #fefce8;
-    color: #a16207;
+    color: #854d0e;
     border: 1px solid #fef08a;
 }
 
 .schedule-period-cell.type-noon {
     background: #f0fdf4;
-    color: #15803d;
+    color: #166534;
     border: 1px solid #bbf7d0;
 }
 
 .schedule-period-cell.type-afterschool {
     background: #faf5ff;
-    color: #7e22ce;
+    color: #6b21a8;
     border: 1px solid #e9d5ff;
 }
 
 .schedule-period-cell.type-regular {
-    background: var(--surface-muted);
-    color: var(--text-dark);
-    border: 1px solid var(--border-light);
+    background: #f8fafc;
+    color: #334155;
+    border: 1px solid #e2e8f0;
 }
 
 .period-row--morning {
-    background: rgba(254, 252, 232, 0.25);
+    background: rgba(254, 252, 232, 0.3);
 }
 
 .period-row--noon {
-    background: rgba(240, 253, 244, 0.25);
+    background: rgba(240, 253, 244, 0.3);
 }
 
 .period-row--afterschool {
-    background: rgba(250, 245, 255, 0.25);
+    background: rgba(250, 245, 255, 0.3);
 }
 
 .period-row--regular {
@@ -162,10 +187,10 @@
 
 .schedule-lunch-divider {
     height: 2px;
-    background: #cbd5e1;
+    background: linear-gradient(90deg, transparent, #cbd5e1 15%, #cbd5e1 85%, transparent);
     border-radius: 1px;
     width: 100%;
-    opacity: 0.85;
+    opacity: 0.8;
 }
 
 /* 课程单元格与单汉字卡片 */
@@ -179,14 +204,14 @@
 .schedule-course-card {
     height: 100%;
     width: 100%;
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
     cursor: pointer;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.12s ease;
     border: 1px solid transparent;
     user-select: none;
     position: relative;
@@ -196,7 +221,7 @@
 .schedule-course-card:hover {
     transform: scale(1.04);
     z-index: 2;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
 }
 
 .schedule-course-card:active {
@@ -204,78 +229,78 @@
 }
 
 .schedule-course-char {
-    font-size: 14px;
+    font-size: 15.5px;
     font-weight: 700;
     line-height: 1;
     text-align: center;
     letter-spacing: 0;
 }
 
-/* 和谐优雅学科单字色彩主题 */
+/* 精品莫兰迪/马卡龙课程色彩主题 */
 .course-chinese {
     background: #fee2e2;
     color: #991b1b;
-    border-color: #fecaca;
+    border-color: #fca5a5;
 }
 
 .course-math {
     background: #dbeafe;
     color: #1e40af;
-    border-color: #bfdbfe;
+    border-color: #93c5fd;
 }
 
 .course-english {
     background: #fef3c7;
     color: #92400e;
-    border-color: #fde68a;
+    border-color: #fcd34d;
 }
 
 .course-physics {
     background: #e0e7ff;
     color: #3730a3;
-    border-color: #c7d2fe;
+    border-color: #a5b4fc;
 }
 
 .course-chemistry {
     background: #ccfbf1;
     color: #115e59;
-    border-color: #99f6e4;
+    border-color: #5eead4;
 }
 
 .course-biology {
     background: #dcfce7;
     color: #166534;
-    border-color: #bbf7d0;
+    border-color: #86efac;
 }
 
 .course-politics {
     background: #ffedd5;
     color: #9a3412;
-    border-color: #fed7aa;
+    border-color: #fdba74;
 }
 
 .course-history {
     background: #fae8ff;
     color: #86198f;
-    border-color: #f5d0fe;
+    border-color: #f0abfc;
 }
 
 .course-geography {
     background: #f1f5f9;
     color: #334155;
-    border-color: #e2e8f0;
+    border-color: #cbd5e1;
 }
 
 .course-pe {
     background: #e0f2fe;
     color: #0369a1;
-    border-color: #bae6fd;
+    border-color: #7dd3fc;
 }
 
 .course-music {
     background: #fdf4ff;
     color: #a21caf;
-    border-color: #f0abfc;
+    border-color: #f5d0fe;
 }
 
 .course-art {
@@ -287,13 +312,13 @@
 .course-tech {
     background: #ecfeff;
     color: #155e75;
-    border-color: #a5f3fc;
+    border-color: #67e8f9;
 }
 
 .course-class {
     background: #f3f4f6;
     color: #374151;
-    border-color: #e5e7eb;
+    border-color: #d1d5db;
 }
 
 .course-morning {
@@ -317,7 +342,7 @@
 .course-default {
     background: #f1f5f9;
     color: #475569;
-    border-color: #e2e8f0;
+    border-color: #cbd5e1;
 }
 
 .course-empty {
@@ -335,7 +360,7 @@
     width: 90%;
     max-width: 480px;
     background: var(--surface-white);
-    border-radius: var(--radius-card);
+    border-radius: var(--radius-card, 12px);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
     overflow: hidden;
     display: flex;
@@ -423,7 +448,7 @@
     width: 100%;
     height: 34px;
     padding: 0 10px 0 32px;
-    border-radius: var(--radius-inner);
+    border-radius: var(--radius-inner, 8px);
     border: 1px solid var(--border-light);
     background: var(--surface-muted);
     font-size: 12.5px;
@@ -486,7 +511,7 @@
 
 .schedule-class-card-btn {
     padding: 8px 10px;
-    border-radius: var(--radius-inner);
+    border-radius: var(--radius-inner, 8px);
     border: 1px solid var(--border-light);
     background: var(--surface-white);
     text-align: left;
@@ -546,9 +571,9 @@
     padding: 32px 20px;
     text-align: center;
     background: var(--surface-white);
-    border-radius: var(--radius-card);
+    border-radius: var(--radius-card, 12px);
     border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
     margin: auto;
     max-width: 440px;
 }
@@ -597,7 +622,7 @@
 .schedule-btn {
     height: 34px;
     padding: 0 12px;
-    border-radius: var(--radius-inner);
+    border-radius: var(--radius-inner, 8px);
     font-size: 12.5px;
     font-weight: 500;
     display: inline-flex;
@@ -645,7 +670,7 @@
     width: 86%;
     max-width: 360px;
     background: var(--surface-white);
-    border-radius: var(--radius-card);
+    border-radius: var(--radius-card, 12px);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
     overflow: hidden;
     padding: 16px;
@@ -673,7 +698,7 @@
     flex-direction: column;
     gap: 8px;
     background: var(--surface-muted);
-    border-radius: var(--radius-inner);
+    border-radius: var(--radius-inner, 8px);
     padding: 10px 12px;
     font-size: 12.5px;
 }

@@ -18,16 +18,33 @@
     }
 
     const DEFAULT_PERIOD_TIMES = {
+        'p_morning': '07:40 - 08:00',
+        'morning': '07:40 - 08:00',
+        '早': '07:40 - 08:00',
+        '早读': '07:40 - 08:00',
+        'p_1': '08:00 - 08:45',
         '1': '08:00 - 08:45',
+        'p_2': '08:55 - 09:40',
         '2': '08:55 - 09:40',
+        'p_3': '10:10 - 10:55',
         '3': '10:10 - 10:55',
+        'p_4': '11:05 - 11:50',
         '4': '11:05 - 11:50',
+        'p_noon': '14:00 - 14:25',
+        'noon': '14:00 - 14:25',
+        '午': '14:00 - 14:25',
+        '午测': '14:00 - 14:25',
+        'p_5': '14:30 - 15:15',
         '5': '14:30 - 15:15',
+        'p_6': '15:25 - 16:10',
         '6': '15:25 - 16:10',
+        'p_7': '16:20 - 17:05',
         '7': '16:20 - 17:05',
-        '8': '17:15 - 18:00'
+        'p_afterschool': '17:20 - 18:05',
+        'afterschool': '17:20 - 18:05',
+        '后': '17:20 - 18:05',
+        '课后': '17:20 - 18:05'
     };
-
     function getCurrentDayIndex() {
         const d = new Date().getDay(); // 0 is Sunday, 1 is Monday, ...
         return d === 0 ? 7 : d;
@@ -145,7 +162,7 @@
                 titleEl.textContent = `${course.fullName || course.name} 课程详情`;
             }
             if (listEl) {
-                const timeSlot = DEFAULT_PERIOD_TIMES[periodName] || `第 ${periodName} 节`;
+                const timeSlot = course.timeSlot || DEFAULT_PERIOD_TIMES[periodName] || DEFAULT_PERIOD_TIMES[course.periodId] || `第 ${periodName} 节`;
                 listEl.innerHTML = `
                     <div class="schedule-detail-item">
                         <span class="schedule-detail-label">班级</span>
@@ -157,7 +174,7 @@
                     </div>
                     <div class="schedule-detail-item">
                         <span class="schedule-detail-label">时间</span>
-                        <span class="schedule-detail-val">${escapeHtml(dayName)} 第 ${escapeHtml(periodName)} 节 (${escapeHtml(timeSlot)})</span>
+                        <span class="schedule-detail-val">${escapeHtml(dayName)} · ${escapeHtml(periodName)} (${escapeHtml(timeSlot)})</span>
                     </div>
                     <div class="schedule-detail-item">
                         <span class="schedule-detail-label">课程名称</span>
@@ -441,10 +458,22 @@
 
                                 const rowClass = `schedule-row period-row--${pType}`;
 
+                                const rawTime = p.time || DEFAULT_PERIOD_TIMES[p.id] || DEFAULT_PERIOD_TIMES[pName] || DEFAULT_PERIOD_TIMES[pType] || '';
+                                let timeHtml = '';
+                                if (rawTime && rawTime.includes('-')) {
+                                    const parts = rawTime.split('-').map(s => s.trim());
+                                    timeHtml = `<div class="schedule-period-time"><span class="time-start">${escapeHtml(parts[0])}</span><span class="time-end">${escapeHtml(parts[1])}</span></div>`;
+                                } else if (rawTime) {
+                                    timeHtml = `<div class="schedule-period-time">${escapeHtml(rawTime)}</div>`;
+                                }
+
                                 const rowHtml = `
                                     <tr class="${rowClass}">
-                                        <td class="schedule-period-cell type-${pType}">
-                                            <span class="schedule-period-badge">${escapeHtml(periodChar)}</span>
+                                        <td class="schedule-period-cell type-${pType}" title="${escapeHtml(periodLabel)} ${escapeHtml(rawTime)}">
+                                            <div class="schedule-period-inner">
+                                                <span class="schedule-period-num">${escapeHtml(periodChar)}</span>
+                                                ${timeHtml}
+                                            </div>
                                         </td>
                                         ${days.map(d => {
                                             const cellKey = `${d.id}_${p.id}`;

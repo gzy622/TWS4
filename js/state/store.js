@@ -11,6 +11,8 @@
         INITIAL_TASKS_CLASS_2,
         INITIAL_RECORDS_CLASS_2,
         INITIAL_SCHEDULE,
+        INITIAL_SCHEDULE_LIBRARY,
+        DEFAULT_PERIOD_TIMES,
         INITIAL_SCHEDULE_TEMPLATE_VERSION,
         LEGACY_SCHEDULE_TEMPLATE,
         INITIAL_OFFICERS,
@@ -509,9 +511,9 @@
                 showSubjectTags: true,
                 fontPreset: 'default',
                 customFont: '',
-                scheduleLibrary: [],
-                scheduleLibraryTitle: '',
-                selectedScheduleClassId: ''
+                scheduleLibrary: JSON.parse(JSON.stringify(INITIAL_SCHEDULE_LIBRARY || [])),
+                scheduleLibraryTitle: '畲江中学2026-2027学年第一学期初二课程表',
+                selectedScheduleClassId: 'class_sched_chu2_3'
             };
             this._syncActiveClassPointers(state);
             return state;
@@ -600,9 +602,15 @@
                 if (typeof parsed.showSubjectTags !== 'boolean') parsed.showSubjectTags = true;
                 if (!parsed.fontPreset) parsed.fontPreset = 'default';
                 if (typeof parsed.customFont !== 'string') parsed.customFont = '';
-                if (!Array.isArray(parsed.scheduleLibrary)) parsed.scheduleLibrary = [];
-                if (typeof parsed.scheduleLibraryTitle !== 'string') parsed.scheduleLibraryTitle = '';
-                if (typeof parsed.selectedScheduleClassId !== 'string') parsed.selectedScheduleClassId = '';
+                if (!Array.isArray(parsed.scheduleLibrary) || parsed.scheduleLibrary.length === 0) {
+                    parsed.scheduleLibrary = JSON.parse(JSON.stringify(INITIAL_SCHEDULE_LIBRARY || []));
+                }
+                if (typeof parsed.scheduleLibraryTitle !== 'string' || !parsed.scheduleLibraryTitle) {
+                    parsed.scheduleLibraryTitle = '畲江中学2026-2027学年第一学期初二课程表';
+                }
+                if (typeof parsed.selectedScheduleClassId !== 'string' || !parsed.selectedScheduleClassId) {
+                    parsed.selectedScheduleClassId = 'class_sched_chu2_3';
+                }
                 const validViews = ['grid', 'wide', 'seat', 'table', 'schedule', 'officers', 'duty'];
                 if (!validViews.includes(parsed.viewMode)) parsed.viewMode = 'grid';
 
@@ -1051,8 +1059,12 @@
         // 多班级课程表库 (Schedule Library) 相关 API
         // ==========================================
         getScheduleLibrary() {
-            if (!Array.isArray(this.state.scheduleLibrary)) {
-                this.state.scheduleLibrary = [];
+            if (!Array.isArray(this.state.scheduleLibrary) || this.state.scheduleLibrary.length === 0) {
+                if (INITIAL_SCHEDULE_LIBRARY && INITIAL_SCHEDULE_LIBRARY.length > 0) {
+                    this.state.scheduleLibrary = JSON.parse(JSON.stringify(INITIAL_SCHEDULE_LIBRARY));
+                } else {
+                    this.state.scheduleLibrary = [];
+                }
             }
             return this.state.scheduleLibrary;
         }
