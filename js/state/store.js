@@ -775,9 +775,17 @@
             return allowed.includes(this.state.viewMode) ? this.state.viewMode : 'grid';
         }
 
+        getLastHomeworkViewMode() {
+            const allowed = ['grid', 'wide', 'seat', 'table'];
+            return allowed.includes(this.state.lastHomeworkViewMode) ? this.state.lastHomeworkViewMode : 'grid';
+        }
+
         setViewMode(mode) {
             const allowed = ['grid', 'wide', 'seat', 'table', 'schedule'];
             if (!allowed.includes(mode)) return;
+            if (['grid', 'wide', 'seat', 'table'].includes(mode)) {
+                this.state.lastHomeworkViewMode = mode;
+            }
             if (this.state.viewMode === mode) return;
             this.state.viewMode = mode;
             this._notify('VIEW_MODE_CHANGED', { mode });

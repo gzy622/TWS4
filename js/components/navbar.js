@@ -51,9 +51,6 @@
                         <button type="button" class="quick-view-btn" data-view="table" title="表格视图">
                             <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M9 5v14M15 5v14"/></svg><span>表格</span>
                         </button>
-                        <button type="button" class="quick-view-btn" data-view="schedule" title="课程表视图">
-                            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>课表</span>
-                        </button>
                     </div>
 
                     <div class="quick-mode-segmented" role="group" aria-label="操作模式切换">
@@ -82,6 +79,7 @@
         const classComparisonContainer = taskDropdown.querySelector('#quick-class-comparison');
         const modeSegmentButtons = taskDropdown.querySelectorAll('.quick-mode-segment-btn');
         const navNewTaskBtn = document.getElementById('nav-new-task-btn');
+        const navDrawerBtn = document.getElementById('nav-drawer-btn');
 
         // 渲染班级卡片（在课程表视图下渲染已导入的班级列表与课表快捷操作）
         function renderClassCards() {
@@ -254,9 +252,13 @@
             }).join('');
         }
 
-        // 渲染视图切换高亮
+        // 渲染视图切换高亮与控制行可见性
         function renderViewSwitcher() {
             const currentView = store.getViewMode();
+            const controlsRow = taskDropdown.querySelector('.quick-controls-row');
+            if (controlsRow) {
+                controlsRow.style.display = currentView === 'schedule' ? 'none' : '';
+            }
             viewButtons.forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.view === currentView);
             });
@@ -265,11 +267,14 @@
         // 渲染模式切换按钮状态与可见性
         function updateModeButton(mode = store.getOperationMode()) {
             const currentView = store.getViewMode();
+            const controlsRow = taskDropdown.querySelector('.quick-controls-row');
+            if (controlsRow) {
+                controlsRow.style.display = currentView === 'schedule' ? 'none' : '';
+            }
             const modeSegmentWrap = taskDropdown.querySelector('.quick-mode-segmented');
             if (modeSegmentWrap) {
                 modeSegmentWrap.style.display = currentView === 'schedule' ? 'none' : '';
             }
-
             modeSegmentButtons.forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.mode === mode);
             });
@@ -278,6 +283,31 @@
             if (progressWrapper) progressWrapper.dataset.mode = mode;
             const navbarEl = document.querySelector('.navbar');
             if (navbarEl) navbarEl.dataset.mode = mode;
+        }
+
+        // 更新左侧操作按钮图标与功能提示（菜单 vs 返回作业）
+        function updateLeftNavButton() {
+            if (!navDrawerBtn) return;
+            const isSchedule = store.getViewMode() === 'schedule';
+            if (isSchedule) {
+                navDrawerBtn.setAttribute('title', '返回作业');
+                navDrawerBtn.setAttribute('aria-label', '返回作业');
+                navDrawerBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                `;
+            } else {
+                navDrawerBtn.setAttribute('title', '打开菜单');
+                navDrawerBtn.setAttribute('aria-label', '打开菜单');
+                navDrawerBtn.innerHTML = `
+                    <div class="nav-menu-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                `;
+            }
         }
 
         // 更新右侧操作按钮图标与功能提示（新建 vs 导入）
@@ -643,6 +673,7 @@
         store.subscribe((state, eventType, payload) => {
             if (eventType === 'VIEW_MODE_CHANGED') {
                 updateHeaderTitle();
+                updateLeftNavButton();
                 updateRightNavButton();
                 renderViewSwitcher();
                 updateModeButton();
@@ -693,6 +724,7 @@
         renderClassCards();
         renderViewSwitcher();
         updateHeaderTitle();
+        updateLeftNavButton();
         updateRightNavButton();
         updateModeButton();
         updateProgress();

@@ -363,6 +363,9 @@
 
             // 点击条目主体切换当前作业
             item.addEventListener('click', () => {
+                if (store.getViewMode() === 'schedule') {
+                    store.setViewMode(store.getLastHomeworkViewMode ? store.getLastHomeworkViewMode() : 'grid');
+                }
                 store.setCurrentTask(task.id);
                 toggleDrawer(false);
             });
@@ -505,7 +508,13 @@
         }
 
         if (navDrawerBtn) {
-            navDrawerBtn.addEventListener('click', () => toggleDrawer(true));
+            navDrawerBtn.addEventListener('click', () => {
+                if (store.getViewMode() === 'schedule') {
+                    store.setViewMode(store.getLastHomeworkViewMode ? store.getLastHomeworkViewMode() : 'grid');
+                } else {
+                    toggleDrawer(true);
+                }
+            });
         }
 
         if (drawerOverlay) {
@@ -1486,7 +1495,11 @@
             scheduleViewBtn.addEventListener('click', () => {
                 closeSettingsView();
                 toggleDrawer(false);
-                store.setViewMode('schedule');
+                if (store.getViewMode() === 'schedule') {
+                    store.setViewMode(store.getLastHomeworkViewMode ? store.getLastHomeworkViewMode() : 'grid');
+                } else {
+                    store.setViewMode('schedule');
+                }
             });
         }
         if (importScheduleBtn) {
