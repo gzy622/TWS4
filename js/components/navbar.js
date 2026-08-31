@@ -30,57 +30,30 @@
 
         let selectedSubject = '未设置';
 
-        // 构建快捷面板 DOM
+        // 构建精简快捷面板 DOM
         taskDropdown.innerHTML = `
-            <div class="quick-panel-header">
-                <div class="quick-panel-heading">
-                    <strong>快捷面板</strong>
-                    <span>切换当前课堂状态</span>
-                </div>
-                <button type="button" class="quick-new-task-btn" id="quick-new-task-btn" title="创建新作业">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 5v14m-7-7h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-                    </svg>
-                    <span>新建作业</span>
-                </button>
-            </div>
-
             <div class="quick-panel-body">
-                <section class="quick-panel-group quick-class-group" aria-labelledby="quick-class-title">
-                    <div class="quick-panel-group-head">
-                        <div>
-                            <strong id="quick-class-title">授课班级</strong>
-                            <span>查看进度并切换</span>
-                        </div>
+                <!-- 1. 授课班级卡片网格 -->
+                <div class="quick-classes" id="quick-class-comparison" aria-label="授课班级切换"></div>
+
+                <!-- 2. 视图与模式控制行 -->
+                <div class="quick-controls-row">
+                    <div class="quick-views-segmented" role="group" aria-label="视图切换">
+                        <button type="button" class="quick-view-btn" data-view="grid" title="网格视图">
+                            <svg viewBox="0 0 24 24"><path d="M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z"/></svg><span>网格</span>
+                        </button>
+                        <button type="button" class="quick-view-btn" data-view="wide" title="宽栏视图">
+                            <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></svg><span>宽栏</span>
+                        </button>
+                        <button type="button" class="quick-view-btn" data-view="seat" title="座位视图">
+                            <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14m8-14v14M4 12h16"/></svg><span>座位</span>
+                        </button>
+                        <button type="button" class="quick-view-btn" data-view="table" title="表格视图">
+                            <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M9 5v14M15 5v14"/></svg><span>表格</span>
+                        </button>
                     </div>
-                    <div class="quick-classes" id="quick-class-comparison"></div>
-                </section>
 
-                <div class="quick-control-grid">
-                    <section class="quick-panel-group quick-views-section" aria-labelledby="quick-view-title">
-                        <div class="quick-panel-group-head compact">
-                            <strong id="quick-view-title">学生卡片</strong>
-                        </div>
-                        <div class="quick-views-segmented">
-                            <button type="button" class="quick-view-btn" data-view="grid" title="网格视图">
-                                <svg viewBox="0 0 24 24"><path d="M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z"/></svg><span>网格</span>
-                            </button>
-                            <button type="button" class="quick-view-btn" data-view="wide" title="宽栏视图">
-                                <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></svg><span>宽栏</span>
-                            </button>
-                            <button type="button" class="quick-view-btn" data-view="seat" title="座位视图">
-                                <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14m8-14v14M4 12h16"/></svg><span>座位</span>
-                            </button>
-                            <button type="button" class="quick-view-btn" data-view="table" title="表格视图">
-                                <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M9 5v14M15 5v14"/></svg><span>表格</span>
-                            </button>
-                        </div>
-                    </section>
-
-                    <section class="quick-panel-group quick-actions-section" aria-labelledby="quick-mode-title">
-                        <div class="quick-panel-group-head compact">
-                            <strong id="quick-mode-title">操作模式</strong>
-                        </div>
+                    <div class="quick-actions-block">
                         <div class="quick-mode-segmented" role="group" aria-label="操作模式切换">
                             <button type="button" class="quick-mode-segment-btn" data-mode="check" title="切换至登记模式">
                                 <svg viewBox="0 0 24 24">
@@ -97,7 +70,14 @@
                                 <span>打分</span>
                             </button>
                         </div>
-                    </section>
+
+                        <button type="button" class="quick-new-task-btn" id="quick-new-task-btn" title="创建新作业">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 5v14m-7-7h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+                            </svg>
+                            <span>新建</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -118,17 +98,17 @@
                 const hasTask = !!cls.taskId;
                 const count = mode === 'grade' ? (cls.graded || 0) : (cls.submitted || 0);
                 const actionLabel = mode === 'grade' ? '已评' : '已交';
-                const summary = hasTask ? `${count}/${cls.required}` : '未分配';
-                const stateLabel = cls.isCurrent ? '当前班级' : '点击切换';
+                const badgeText = hasTask ? `${count}/${cls.required}` : '未分配';
+                const percentageText = hasTask ? `${Math.round(cls.percentage || 0)}%` : '—';
                 return `
                     <button type="button" class="quick-class-card ${cls.isCurrent ? 'active' : ''}" data-class-id="${escapeHtml(cls.id)}">
                         <div class="quick-class-card-head">
                             <strong class="quick-class-name">${escapeHtml(cls.name)}</strong>
-                            <span class="quick-class-badge">${summary}</span>
+                            <span class="quick-class-badge">${badgeText}</span>
                         </div>
-                        <div class="quick-class-card-foot">
-                            <span>${stateLabel}</span>
-                            <span>${hasTask ? `${actionLabel} ${Math.round(cls.percentage || 0)}%` : '暂无作业'}</span>
+                        <div class="quick-class-card-metrics">
+                            <span class="quick-class-ratio">${percentageText}</span>
+                            <span class="quick-class-label">${hasTask ? actionLabel : '无作业'}</span>
                         </div>
                         <span class="quick-class-progress"><i style="width:${hasTask ? cls.percentage : 0}%"></i></span>
                     </button>

@@ -251,80 +251,12 @@
     transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s;
 }
 
-.quick-panel-header {
-    min-height: 62px;
-    padding: 10px calc(16px + var(--safe-right, 0px)) 10px calc(16px + var(--safe-left, 0px));
-    background: #ffffff;
-    border-bottom: 1px solid #e8eeeb;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    box-sizing: border-box;
-    flex-shrink: 0;
-}
-
-.quick-panel-heading {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.quick-panel-heading strong {
-    color: var(--text-dark, #1e293b);
-    font-size: 16px;
-    font-weight: 750;
-    line-height: 1.2;
-}
-
-.quick-panel-heading span {
-    color: var(--text-muted, #64748b);
-    font-size: 11.5px;
-    font-weight: 500;
-}
-
-.quick-new-task-btn {
-    height: 36px;
-    padding: 0 13px;
-    border: 0;
-    border-radius: 9px;
-    background: var(--surface-dark, #1b3831);
-    color: #ffffff;
-    font-size: 12.5px;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    cursor: pointer;
-    user-select: none;
-    transition: transform 0.1s ease, background-color 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 2px 6px rgba(27, 56, 49, 0.2);
-    flex-shrink: 0;
-}
-
-.quick-new-task-btn svg {
-    width: 15px;
-    height: 15px;
-    stroke: #b6dfc4;
-}
-
-.quick-new-task-btn:hover {
-    background: #254a41;
-    box-shadow: 0 3px 8px rgba(27, 56, 49, 0.24);
-}
-
-.quick-new-task-btn:active {
-    transform: scale(0.96);
-}
-
 .quick-panel-body {
     width: 100%;
     max-width: 760px;
     min-height: 0;
     margin: 0 auto;
-    padding: 12px calc(14px + var(--safe-right, 0px)) 8px calc(14px + var(--safe-left, 0px));
+    padding: 12px calc(14px + var(--safe-right, 0px)) 10px calc(14px + var(--safe-left, 0px));
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -335,62 +267,20 @@
     box-sizing: border-box;
 }
 
-.quick-panel-group {
-    min-width: 0;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    box-sizing: border-box;
-}
-
-.quick-panel-group-head {
-    min-height: 37px;
-    padding: 8px 12px;
-    background: #fafbfa;
-    border-bottom: 1px solid #edf1ef;
-    display: flex;
-    align-items: center;
-    box-sizing: border-box;
-}
-
-.quick-panel-group-head > div {
-    display: flex;
-    align-items: baseline;
-    gap: 7px;
-}
-
-.quick-panel-group-head strong {
-    color: var(--text-dark, #1e293b);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.1px;
-}
-
-.quick-panel-group-head span {
-    color: #94a3b8;
-    font-size: 10.5px;
-    font-weight: 500;
-}
-
-.quick-panel-group-head.compact {
-    min-height: 34px;
-    padding: 8px 11px 7px;
-}
-
+/* 1. 授课班级卡片网格 */
 .quick-classes {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 8px;
-    padding: 9px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .quick-class-card {
     position: relative;
     min-width: 0;
-    min-height: 74px;
-    padding: 10px 11px 11px;
+    min-height: 72px;
+    padding: 10px 12px 11px;
     border: 1px solid #e2e8f0;
     border-radius: var(--radius-card, 10px);
     background: var(--surface-white, #ffffff);
@@ -421,7 +311,7 @@
 }
 
 .quick-class-card-head,
-.quick-class-card-foot {
+.quick-class-card-metrics {
     position: relative;
     z-index: 1;
     display: flex;
@@ -457,14 +347,25 @@
     color: #e2f7ea;
 }
 
-.quick-class-card-foot {
-    margin-top: 11px;
-    color: #74808c;
-    font-size: 10px;
-    font-weight: 600;
+.quick-class-card-metrics {
+    margin-top: 8px;
+    align-items: baseline;
 }
 
-.quick-class-card.active .quick-class-card-foot {
+.quick-class-ratio {
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.2px;
+}
+
+.quick-class-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #74808c;
+}
+
+.quick-class-card.active .quick-class-label {
     color: #b6dfc4;
 }
 
@@ -493,6 +394,7 @@
     background: #86b99f;
 }
 
+/* 打分模式下的卡片高亮 */
 .task-dropdown[data-mode="grade"] .quick-class-card.active {
     border-color: #c2410c;
     background: #c2410c;
@@ -504,7 +406,7 @@
     color: #fff7ed;
 }
 
-.task-dropdown[data-mode="grade"] .quick-class-card.active .quick-class-card-foot {
+.task-dropdown[data-mode="grade"] .quick-class-card.active .quick-class-label {
     color: #ffedd5;
 }
 
@@ -520,23 +422,36 @@
     background: #fdba74;
 }
 
-.quick-control-grid {
+/* 2. 视图与模式控制行 */
+.quick-controls-row {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.25fr);
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .quick-views-segmented,
 .quick-mode-segmented {
     display: grid;
-    gap: 4px;
-    padding: 6px;
+    gap: 3px;
+    padding: 4px;
     background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
     box-sizing: border-box;
 }
 
 .quick-views-segmented {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.quick-actions-block {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+    gap: 6px;
+    align-items: center;
 }
 
 .quick-mode-segmented {
@@ -545,14 +460,14 @@
 
 .quick-view-btn,
 .quick-mode-segment-btn {
-    height: 38px;
+    height: 36px;
     min-width: 0;
     padding: 0 4px;
     border: 0;
-    border-radius: 8px;
+    border-radius: 7px;
     background: transparent;
     color: #64748b;
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -601,6 +516,42 @@
     box-shadow: inset 0 0 0 1px #fed7aa;
 }
 
+.quick-new-task-btn {
+    height: 44px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--surface-dark, #1b3831);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.1s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 6px rgba(27, 56, 49, 0.2);
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.quick-new-task-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: #b6dfc4;
+}
+
+.quick-new-task-btn:hover {
+    background: #254a41;
+    box-shadow: 0 3px 8px rgba(27, 56, 49, 0.24);
+}
+
+.quick-new-task-btn:active {
+    transform: scale(0.96);
+}
+
 .task-drag-handle {
     width: 100%;
     height: 14px;
@@ -620,46 +571,36 @@
     background-color: rgba(100, 116, 139, 0.32);
 }
 
-@media (max-width: 390px) {
-    .quick-panel-header {
-        padding-right: calc(12px + var(--safe-right, 0px));
-        padding-left: calc(12px + var(--safe-left, 0px));
-    }
-
-    .quick-panel-body {
-        padding-right: calc(10px + var(--safe-right, 0px));
-        padding-left: calc(10px + var(--safe-left, 0px));
-    }
-
-    .quick-control-grid {
-        gap: 7px;
+@media (max-width: 420px) {
+    .quick-controls-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
     }
 
     .quick-view-btn,
     .quick-mode-segment-btn {
-        flex-direction: column;
-        gap: 2px;
-        height: 42px;
-        font-size: 10px;
+        height: 34px;
+        font-size: 11px;
+    }
+
+    .quick-new-task-btn {
+        height: 44px;
     }
 }
 
 @media (max-height: 620px) {
     .task-dropdown {
-        max-height: min(54dvh, 330px);
-    }
-
-    .quick-panel-header {
-        min-height: 56px;
+        max-height: min(54dvh, 320px);
     }
 
     .quick-panel-body {
         padding-top: 8px;
-        gap: 8px;
+        gap: 6px;
     }
 
     .quick-class-card {
-        min-height: 68px;
+        min-height: 64px;
+        padding: 8px 10px;
     }
 }
 
