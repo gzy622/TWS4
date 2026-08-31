@@ -51,6 +51,9 @@
                         <button type="button" class="quick-view-btn" data-view="table" title="表格视图">
                             <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M9 5v14M15 5v14"/></svg><span>表格</span>
                         </button>
+                        <button type="button" class="quick-view-btn" data-view="schedule" title="课程表视图">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>课表</span>
+                        </button>
                     </div>
 
                     <div class="quick-mode-segmented" role="group" aria-label="操作模式切换">

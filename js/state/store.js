@@ -508,7 +508,10 @@
                 showStudentNumbers: true,
                 showSubjectTags: true,
                 fontPreset: 'default',
-                customFont: ''
+                customFont: '',
+                scheduleLibrary: [],
+                scheduleLibraryTitle: '',
+                selectedScheduleClassId: ''
             };
             this._syncActiveClassPointers(state);
             return state;
@@ -597,6 +600,9 @@
                 if (typeof parsed.showSubjectTags !== 'boolean') parsed.showSubjectTags = true;
                 if (!parsed.fontPreset) parsed.fontPreset = 'default';
                 if (typeof parsed.customFont !== 'string') parsed.customFont = '';
+                if (!Array.isArray(parsed.scheduleLibrary)) parsed.scheduleLibrary = [];
+                if (typeof parsed.scheduleLibraryTitle !== 'string') parsed.scheduleLibraryTitle = '';
+                if (typeof parsed.selectedScheduleClassId !== 'string') parsed.selectedScheduleClassId = '';
                 const validViews = ['grid', 'wide', 'seat', 'table', 'schedule', 'officers', 'duty'];
                 if (!validViews.includes(parsed.viewMode)) parsed.viewMode = 'grid';
 
@@ -737,12 +743,12 @@
         }
 
         getViewMode() {
-            const allowed = ['grid', 'wide', 'seat', 'table'];
+            const allowed = ['grid', 'wide', 'seat', 'table', 'schedule'];
             return allowed.includes(this.state.viewMode) ? this.state.viewMode : 'grid';
         }
 
         setViewMode(mode) {
-            const allowed = ['grid', 'wide', 'seat', 'table'];
+            const allowed = ['grid', 'wide', 'seat', 'table', 'schedule'];
             if (!allowed.includes(mode)) return;
             if (this.state.viewMode === mode) return;
             this.state.viewMode = mode;
@@ -1040,6 +1046,108 @@
             schedule.updatedAt = getUtcNowIso();
             this._notify('SCHEDULE_LUNCH_BREAK_CHANGED', { lunchBreak: schedule.lunchBreak });
             return schedule.lunchBreak;
+        }
+
+        // 多班级课程表库 (Schedule Library) 相关 API
+        // ==========================================
+        getScheduleLibrary() {
+            if (!Array.isArray(this.state.scheduleLibrary)) {
+                this.state.scheduleLibrary = [];
+            }
+            return this.state.scheduleLibrary;
+        }
+
+        getScheduleLibraryTitle() {
+            return this.state.scheduleLibraryTitle || '学校课程表';
+        }
+
+        getSelectedScheduleClassId() {
+            const lib = this.getScheduleLibrary();
+            if (this.state.selectedScheduleClassId) {
+                const exists = lib.some(c => c.id === this.state.selectedScheduleClassId);
+                if (exists) return this.state.selectedScheduleClassId;
+            }
+            if (lib.length > 0) {
+                return lib[0].id;
+            }
+            return '';
+        }
+
+        setSelectedScheduleClassId(classId) {
+            if (!classId) return false;
+            this.state.selectedScheduleClassId = String(classId);
+            this._scheduleStorageSave();
+            this._notify('SCHEDULE_CLASS_CHANGED', {
+                selectedClassId: this.state.selectedScheduleClassId,
+                schedule: this.getActiveSchedule()
+            });
+            return true;
+        }
+
+        getActiveSchedule() {
+            const lib = this.getScheduleLibrary();
+            if (lib && lib.length > 0) {
+                const selectedId = this.getSelectedScheduleClassId();
+                const found = lib.find(c => c.id === selectedId || c.shortName === selectedId || c.name === selectedId);
+                if (found) return found;
+                // 若未直接匹配，尝试模糊匹配当前班级名称
+                const currentName = this.state.currentClass || '';
+                const match = lib.find(c => c.name === currentName || (c.shortName && currentName.includes(c.shortName)));
+                if (match) return match;
+                return lib[0];
+            }
+            // 降级为当前班级本身的内置 schedule
+            return this.getSchedule();
+        }
+
+        importScheduleLibrary(payload) {
+            if (!payload || !Array.isArray(payload.classes) || payload.classes.length === 0) {
+                return false;
+            }
+            this.state.scheduleLibrary = payload.classes;
+            this.state.scheduleLibraryTitle = payload.title || '学校课程表';
+
+            // 智能设置默认选中的班级：优先匹配当前班级
+            const currentClassName = this.state.currentClass || '';
+            const matching = payload.classes.find(c => c.name === currentClassName || (c.shortName && currentClassName.includes(c.shortName)));
+            this.state.selectedScheduleClassId = matching ? matching.id : payload.classes[0].id;
+
+            // 若当前班级有匹配课表，同步更新当前班级课表
+            if (matching) {
+                this.setSchedule({
+                    templateVersion: 2,
+                    days: matching.days,
+                    periods: matching.periods,
+                    courseLibrary: matching.courseLibrary,
+                    grid: matching.grid,
+                    lunchBreak: matching.lunchBreak,
+                    teacher: matching.teacher,
+                    updatedAt: getUtcNowIso()
+                });
+            }
+
+            this._scheduleStorageSave();
+            this._notify('SCHEDULE_LIBRARY_UPDATED', {
+                title: this.state.scheduleLibraryTitle,
+                classes: this.state.scheduleLibrary,
+                selectedClassId: this.state.selectedScheduleClassId,
+                schedule: this.getActiveSchedule()
+            });
+            return true;
+        }
+
+        clearScheduleLibrary() {
+            this.state.scheduleLibrary = [];
+            this.state.scheduleLibraryTitle = '';
+            this.state.selectedScheduleClassId = '';
+            this._scheduleStorageSave();
+            this._notify('SCHEDULE_LIBRARY_UPDATED', {
+                title: '',
+                classes: [],
+                selectedClassId: '',
+                schedule: this.getActiveSchedule()
+            });
+            return true;
         }
 
         // 班干部表 (Officer Table) 相关 API

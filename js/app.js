@@ -6,6 +6,7 @@
         initWideView,
         initSeatView,
         initTableView,
+        initScheduleView,
         initEditSheet,
         initModal,
         initBackHandler,
@@ -20,7 +21,8 @@
                 grid: document.getElementById('card-grid'),
                 wide: document.getElementById('wide-view'),
                 seat: document.getElementById('seat-view'),
-                table: document.getElementById('table-view')
+                table: document.getElementById('table-view'),
+                schedule: document.getElementById('schedule-view')
             };
         }
         return viewElementsCache;
@@ -74,7 +76,7 @@
                     else navbar.closeDropdown();
                 },
                 canOpenTaskDropdown: () => {
-                    return ['grid', 'wide', 'seat', 'table'].includes(store.getViewMode());
+                    return ['grid', 'wide', 'seat', 'table', 'schedule'].includes(store.getViewMode());
                 },
                 closeEditSheet: editSheet.close
             });
@@ -87,7 +89,13 @@
             grid: () => initGrid({ onOpenEdit: openEdit }),
             wide: () => initWideView({ onOpenEdit: openEdit }),
             seat: () => initSeatView({ onOpenEdit: openEdit }),
-            table: () => initTableView({ onOpenEdit: openEdit })
+            table: () => initTableView({ onOpenEdit: openEdit }),
+            schedule: () => {
+                const fn = initScheduleView || window.TWS3.initScheduleView || window.TWS3.schedule?.initScheduleView;
+                if (typeof fn === 'function') {
+                    fn({ onOpenEdit: openEdit });
+                }
+            }
         };
         function ensureViewInitialized(mode) {
             if (initializedViews.has(mode)) return;

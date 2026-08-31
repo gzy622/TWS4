@@ -1,0 +1,797 @@
+/* 课程表视图样式 */
+.schedule-view {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 8px calc(8px + var(--safe-right, 0px)) calc(12px + var(--safe-bottom, 0px)) calc(8px + var(--safe-left, 0px));
+    animation: fadeInView 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: opacity, transform;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.schedule-view[hidden] {
+    display: none !important;
+}
+
+/* 顶部控制栏与班级状态卡片 */
+.schedule-header-card {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--surface-white);
+    border-radius: var(--radius-card);
+    padding: 10px 12px;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+}
+
+.schedule-header-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.schedule-class-info-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    cursor: pointer;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 4px 10px 4px 8px;
+    transition: all 0.15s ease;
+}
+
+.schedule-class-info-wrap:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.schedule-class-info-wrap:active {
+    transform: scale(0.98);
+}
+
+.schedule-grade-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--surface-dark);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    flex-shrink: 0;
+}
+
+.schedule-class-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.schedule-teacher-tag {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.schedule-class-dropdown-arrow {
+    width: 14px;
+    height: 14px;
+    stroke: var(--text-muted);
+    stroke-width: 2;
+    fill: none;
+    flex-shrink: 0;
+}
+
+/* 顶部操作按钮组 */
+.schedule-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.schedule-btn {
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.schedule-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.2;
+    stroke: currentColor;
+    fill: none;
+    flex-shrink: 0;
+}
+
+.schedule-btn-secondary {
+    background: #f1f5f9;
+    color: #334155;
+    border-color: #e2e8f0;
+}
+
+.schedule-btn-secondary:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.schedule-btn-primary {
+    background: var(--surface-dark);
+    color: #ffffff;
+    border-color: var(--surface-dark);
+}
+
+.schedule-btn-primary:hover {
+    background: #23483f;
+}
+
+.schedule-btn:active {
+    transform: scale(0.96);
+}
+
+/* 年级切换标签栏 */
+.schedule-grade-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 2px 0;
+}
+
+.schedule-grade-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.schedule-grade-pill {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.schedule-grade-pill:hover {
+    background: #f1f5f9;
+    color: var(--text-dark);
+}
+
+.schedule-grade-pill.active {
+    background: var(--surface-dark);
+    color: #ffffff;
+    border-color: var(--surface-dark);
+    font-weight: 600;
+}
+
+/* 课程表主体表格滚动容器 */
+.schedule-grid-container {
+    flex: 1;
+    min-height: 0;
+    background: var(--surface-white);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
+    overflow: auto;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+}
+
+.schedule-table {
+    width: 100%;
+    min-width: 580px;
+    border-collapse: separate;
+    border-spacing: 4px;
+    padding: 6px;
+    table-layout: fixed;
+}
+
+/* 表头单元格 */
+.schedule-th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: center;
+    padding: 8px 4px;
+    border-radius: 6px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 0 #e2e8f0;
+}
+
+.schedule-th.today-col {
+    background: #e6f4ea;
+    color: #1b3831;
+    border: 1px solid #64b587;
+    font-weight: 700;
+}
+
+.schedule-th-today-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: #64b587;
+    color: #ffffff;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+/* 节次列标头 */
+.schedule-period-th {
+    width: 68px;
+    min-width: 68px;
+    max-width: 68px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 11.5px;
+}
+
+.schedule-period-cell {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    text-align: center;
+    vertical-align: middle;
+    padding: 6px 2px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.schedule-period-num {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 2px;
+}
+
+.schedule-period-time {
+    font-size: 9.5px;
+    color: #94a3b8;
+    line-height: 1.1;
+}
+
+/* 午间休息横幅行 */
+.schedule-lunch-row td {
+    padding: 4px 0;
+}
+
+.schedule-lunch-banner {
+    background: linear-gradient(90deg, #f8fafc 0%, #edf2f7 50%, #f8fafc 100%);
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 12px;
+    text-align: center;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.schedule-lunch-banner svg {
+    width: 14px;
+    height: 14px;
+    stroke: #64748b;
+    stroke-width: 2;
+    fill: none;
+}
+
+/* 课程卡片单元格 */
+.schedule-td {
+    vertical-align: top;
+    height: 62px;
+    padding: 0;
+}
+
+.schedule-course-card {
+    height: 100%;
+    min-height: 58px;
+    border-radius: 8px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.schedule-course-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+}
+
+.schedule-course-card:active {
+    transform: scale(0.97);
+}
+
+.schedule-course-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.25;
+    word-break: break-all;
+}
+
+.schedule-course-sub {
+    font-size: 10px;
+    opacity: 0.82;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.schedule-course-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+}
+
+.schedule-course-tag {
+    font-size: 9.5px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.6);
+    font-weight: 500;
+}
+
+/* 课程色彩主题 */
+.course-chinese {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+
+.course-math {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1e40af;
+}
+
+.course-english {
+    background: #fef3c7;
+    border-color: #fde047;
+    color: #854d0e;
+}
+
+.course-physics {
+    background: #e0e7ff;
+    border-color: #a5b4fc;
+    color: #3730a3;
+}
+
+.course-chemistry {
+    background: #ccfbf1;
+    border-color: #5eead4;
+    color: #115e59;
+}
+
+.course-biology {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.course-politics {
+    background: #ffe4e6;
+    border-color: #fda4af;
+    color: #9f1239;
+}
+
+.course-history {
+    background: #ffedd5;
+    border-color: #fdba74;
+    color: #9a3412;
+}
+
+.course-geography {
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+    color: #075985;
+}
+
+.course-pe {
+    background: #d1fae5;
+    border-color: #6ee7b7;
+    color: #065f46;
+}
+
+.course-music {
+    background: #f3e8ff;
+    border-color: #d8b4fe;
+    color: #6b21a8;
+}
+
+.course-art {
+    background: #fce7f3;
+    border-color: #f472b6;
+    color: #831843;
+}
+
+.course-tech {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+.course-class {
+    background: #fef9c3;
+    border-color: #facc15;
+    color: #713f12;
+}
+
+.course-default {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #475569;
+}
+
+.course-empty {
+    height: 100%;
+    min-height: 58px;
+    border-radius: 8px;
+    border: 1px dashed #e2e8f0;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cbd5e1;
+    font-size: 11px;
+}
+
+/* 班级选择弹窗 (Schedule Class Modal) */
+.schedule-modal-container,
+.schedule-detail-modal-container {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 92%;
+    max-width: 580px;
+    max-height: 84vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: scale(0.94) translateY(8px);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-overlay.show .schedule-modal-container,
+.modal-overlay.show .schedule-detail-modal-container {
+    transform: scale(1) translateY(0);
+}
+.schedule-modal-header {
+    padding: 14px 16px 10px 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.schedule-modal-title-wrap h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.schedule-modal-title-wrap p {
+    margin: 3px 0 0 0;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.schedule-modal-close {
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s ease;
+}
+
+.schedule-modal-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.schedule-modal-body {
+    padding: 12px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
+}
+
+.schedule-search-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.schedule-search-input-wrap svg {
+    position: absolute;
+    left: 10px;
+    width: 14px;
+    height: 14px;
+    stroke: #94a3b8;
+    stroke-width: 2;
+    fill: none;
+    pointer-events: none;
+}
+
+.schedule-search-input {
+    width: 100%;
+    height: 34px;
+    padding: 0 28px 0 32px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: #1e293b;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.schedule-search-input:focus {
+    border-color: #64b587;
+    background: #ffffff;
+}
+
+.schedule-classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.schedule-class-card-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.schedule-class-card-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.schedule-class-card-btn.active {
+    background: #f0fdf4;
+    border-color: #64b587;
+    box-shadow: 0 0 0 1px #64b587;
+}
+
+.schedule-class-card-btn-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.schedule-class-card-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.schedule-class-active-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #64b587;
+}
+
+.schedule-class-card-teacher {
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+.schedule-class-card-badge {
+    font-size: 10.5px;
+    color: #94a3b8;
+}
+
+/* 空状态 (Empty State) */
+.schedule-empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    text-align: center;
+    background: var(--surface-white);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-card);
+    gap: 12px;
+}
+
+.schedule-empty-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--surface-dark);
+}
+
+.schedule-empty-icon svg {
+    width: 32px;
+    height: 32px;
+    stroke-width: 1.8;
+    stroke: currentColor;
+    fill: none;
+}
+
+.schedule-empty-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.schedule-empty-desc {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    max-width: 380px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.schedule-empty-btn-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* 课程详情浮层弹窗 */
+.schedule-detail-modal-container {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 380px;
+    padding: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.schedule-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.schedule-detail-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.schedule-detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.schedule-detail-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12.5px;
+}
+
+.schedule-detail-label {
+    color: #64748b;
+}
+
+.schedule-detail-val {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+/* 响应式调整 */
+@media (max-width: 600px) {
+    .schedule-header-top-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .schedule-actions-group {
+        margin-left: 0;
+        justify-content: flex-end;
+    }
+
+    .schedule-table {
+        min-width: 480px;
+    }
+    
+    .schedule-th {
+        font-size: 11.5px;
+        padding: 6px 2px;
+    }
+    
+    .schedule-period-th {
+        width: 52px;
+        min-width: 52px;
+    }
+    
+    .schedule-td {
+        height: 54px;
+    }
+    
+    .schedule-course-name {
+        font-size: 12px;
+    }
+}

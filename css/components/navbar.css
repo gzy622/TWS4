@@ -437,7 +437,7 @@
 /* 2. 视图与模式控制行 */
 .quick-controls-row {
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
     gap: 8px;
     width: 100%;
     box-sizing: border-box;
@@ -456,7 +456,7 @@
 }
 
 .quick-views-segmented {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 

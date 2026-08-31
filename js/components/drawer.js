@@ -60,6 +60,8 @@
         const exportXlsxBtn = document.getElementById('drawer-export-xlsx-btn');
         const importJsonBtn = document.getElementById('drawer-import-json-btn');
         const exportJsonBtn = document.getElementById('drawer-export-json-btn');
+        const scheduleViewBtn = document.getElementById('drawer-schedule-view-btn');
+        const importScheduleBtn = document.getElementById('drawer-import-schedule-btn');
         const exportDataBtn = document.getElementById('drawer-export-data-btn');
         const resetRosterBtn = document.getElementById('drawer-reset-roster-btn');
         const studentNumberToggle = document.getElementById('drawer-student-number-toggle');
@@ -98,8 +100,8 @@
         // 文件上传 Input
         const xlsxFileInput = document.getElementById('xlsx-file-input');
         const seatXlsxFileInput = document.getElementById('seat-xlsx-file-input');
+        const scheduleXlsxFileInput = document.getElementById('schedule-xlsx-file-input');
         const jsonFileInput = document.getElementById('json-file-input');
-
         // 差异比对弹窗
         const diffModal = document.getElementById('diff-modal');
         const diffSourceTag = document.getElementById('diff-source-tag');
@@ -1476,6 +1478,22 @@
                 saveBlob(blob, `${state.currentClass}_学生作业提交汇总表.csv`);
 
                 showToast('CSV 报表已导出');
+            });
+        }
+
+        // 7.1 班级课程表跳转与导入
+        if (scheduleViewBtn) {
+            scheduleViewBtn.addEventListener('click', () => {
+                closeSettingsView();
+                toggleDrawer(false);
+                store.setViewMode('schedule');
+            });
+        }
+        if (importScheduleBtn) {
+            importScheduleBtn.addEventListener('click', () => {
+                if (scheduleXlsxFileInput) {
+                    scheduleXlsxFileInput.click();
+                }
             });
         }
 
