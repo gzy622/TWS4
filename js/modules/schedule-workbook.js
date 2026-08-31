@@ -2,71 +2,79 @@
     window.TWS3 = window.TWS3 || {};
 
     const SUBJECT_MAP = {
-        '语': { fullName: '语文', color: 'chinese', category: 'humanities' },
-        '语文': { fullName: '语文', color: 'chinese', category: 'humanities' },
-        '数': { fullName: '数学', color: 'math', category: 'stem' },
-        '数学': { fullName: '数学', color: 'math', category: 'stem' },
-        '英': { fullName: '英语', color: 'english', category: 'language' },
-        '英语': { fullName: '英语', color: 'english', category: 'language' },
-        '物': { fullName: '物理', color: 'physics', category: 'stem' },
-        '物理': { fullName: '物理', color: 'physics', category: 'stem' },
-        '化': { fullName: '化学', color: 'chemistry', category: 'stem' },
-        '化学': { fullName: '化学', color: 'chemistry', category: 'stem' },
-        '生': { fullName: '生物', color: 'biology', category: 'stem' },
-        '生物': { fullName: '生物', color: 'biology', category: 'stem' },
-        '政': { fullName: '道法/政治', color: 'politics', category: 'humanities' },
-        '政治': { fullName: '道法/政治', color: 'politics', category: 'humanities' },
-        '道法': { fullName: '道德与法治', color: 'politics', category: 'humanities' },
-        '历': { fullName: '历史', color: 'history', category: 'humanities' },
-        '历史': { fullName: '历史', color: 'history', category: 'humanities' },
-        '地': { fullName: '地理', color: 'geography', category: 'humanities' },
-        '地理': { fullName: '地理', color: 'geography', category: 'humanities' },
-        '体': { fullName: '体育', color: 'pe', category: 'activity' },
-        '体育': { fullName: '体育', color: 'pe', category: 'activity' },
-        '音': { fullName: '音乐', color: 'music', category: 'art' },
-        '音乐': { fullName: '音乐', color: 'music', category: 'art' },
-        '美': { fullName: '美术', color: 'art', category: 'art' },
-        '美术': { fullName: '美术', color: 'art', category: 'art' },
-        '美/心': { fullName: '美术/心理', color: 'art', category: 'art' },
-        '心': { fullName: '心理健康', color: 'art', category: 'art' },
-        '心理': { fullName: '心理健康', color: 'art', category: 'art' },
-        '信': { fullName: '信息技术', color: 'tech', category: 'stem' },
-        '信息': { fullName: '信息技术', color: 'tech', category: 'stem' },
-        '班': { fullName: '班会', color: 'class', category: 'activity' },
-        '班会': { fullName: '班会', color: 'class', category: 'activity' },
-        '通': { fullName: '通用技术', color: 'tech', category: 'stem' },
-        '通用': { fullName: '通用技术', color: 'tech', category: 'stem' },
-        '生选': { fullName: '生物选修', color: 'biology', category: 'stem' },
-        '化选': { fullName: '化学选修', color: 'chemistry', category: 'stem' },
-        '地选': { fullName: '地理选修', color: 'geography', category: 'humanities' },
-        '政选': { fullName: '政治选修', color: 'politics', category: 'humanities' },
-        '物合': { fullName: '物理学考', color: 'physics', category: 'stem' },
-        '化合': { fullName: '化学学考', color: 'chemistry', category: 'stem' },
-        '政合': { fullName: '政治学考', color: 'politics', category: 'humanities' },
-        '地合': { fullName: '地理学考', color: 'geography', category: 'humanities' },
-        '生合': { fullName: '生物学考', color: 'biology', category: 'stem' }
+        '语': { char: '语', fullName: '语文', color: 'chinese', category: 'humanities' },
+        '语文': { char: '语', fullName: '语文', color: 'chinese', category: 'humanities' },
+        '数': { char: '数', fullName: '数学', color: 'math', category: 'stem' },
+        '数学': { char: '数', fullName: '数学', color: 'math', category: 'stem' },
+        '英': { char: '英', fullName: '英语', color: 'english', category: 'language' },
+        '英语': { char: '英', fullName: '英语', color: 'english', category: 'language' },
+        '物': { char: '物', fullName: '物理', color: 'physics', category: 'stem' },
+        '物理': { char: '物', fullName: '物理', color: 'physics', category: 'stem' },
+        '化': { char: '化', fullName: '化学', color: 'chemistry', category: 'stem' },
+        '化学': { char: '化', fullName: '化学', color: 'chemistry', category: 'stem' },
+        '生': { char: '生', fullName: '生物', color: 'biology', category: 'stem' },
+        '生物': { char: '生', fullName: '生物', color: 'biology', category: 'stem' },
+        '政': { char: '政', fullName: '道法/政治', color: 'politics', category: 'humanities' },
+        '政治': { char: '政', fullName: '道法/政治', color: 'politics', category: 'humanities' },
+        '道法': { char: '道', fullName: '道德与法治', color: 'politics', category: 'humanities' },
+        '道': { char: '道', fullName: '道德与法治', color: 'politics', category: 'humanities' },
+        '历': { char: '历', fullName: '历史', color: 'history', category: 'humanities' },
+        '历史': { char: '历', fullName: '历史', color: 'history', category: 'humanities' },
+        '地': { char: '地', fullName: '地理', color: 'geography', category: 'humanities' },
+        '地理': { char: '地', fullName: '地理', color: 'geography', category: 'humanities' },
+        '体': { char: '体', fullName: '体育', color: 'pe', category: 'activity' },
+        '体育': { char: '体', fullName: '体育', color: 'pe', category: 'activity' },
+        '音': { char: '音', fullName: '音乐', color: 'music', category: 'art' },
+        '音乐': { char: '音', fullName: '音乐', color: 'music', category: 'art' },
+        '美': { char: '美', fullName: '美术', color: 'art', category: 'art' },
+        '美术': { char: '美', fullName: '美术', color: 'art', category: 'art' },
+        '美/心': { char: '美', fullName: '美术/心理', color: 'art', category: 'art' },
+        '心': { char: '心', fullName: '心理健康', color: 'art', category: 'art' },
+        '心理': { char: '心', fullName: '心理健康', color: 'art', category: 'art' },
+        '信': { char: '信', fullName: '信息技术', color: 'tech', category: 'stem' },
+        '信息': { char: '信', fullName: '信息技术', color: 'tech', category: 'stem' },
+        '班': { char: '班', fullName: '班会', color: 'class', category: 'activity' },
+        '班会': { char: '班', fullName: '班会', color: 'class', category: 'activity' },
+        '通': { char: '通', fullName: '通用技术', color: 'tech', category: 'stem' },
+        '通用': { char: '通', fullName: '通用技术', color: 'tech', category: 'stem' },
+        '生选': { char: '生', fullName: '生物选修', color: 'biology', category: 'stem' },
+        '化选': { char: '化', fullName: '化学选修', color: 'chemistry', category: 'stem' },
+        '地选': { char: '地', fullName: '地理选修', color: 'geography', category: 'humanities' },
+        '政选': { char: '政', fullName: '政治选修', color: 'politics', category: 'humanities' },
+        '物合': { char: '物', fullName: '物理学考', color: 'physics', category: 'stem' },
+        '化合': { char: '化', fullName: '化学学考', color: 'chemistry', category: 'stem' },
+        '政合': { char: '政', fullName: '政治学考', color: 'politics', category: 'humanities' },
+        '地合': { char: '地', fullName: '地理学考', color: 'geography', category: 'humanities' },
+        '生合': { char: '生', fullName: '生物学考', color: 'biology', category: 'stem' },
+        '早读': { char: '早', fullName: '早读', color: 'morning', category: 'reading' },
+        '晨读': { char: '晨', fullName: '晨读', color: 'morning', category: 'reading' },
+        '午测': { char: '午', fullName: '午测', color: 'noon', category: 'test' },
+        '午读': { char: '午', fullName: '午读', color: 'noon', category: 'reading' },
+        '课后服务': { char: '后', fullName: '课后服务', color: 'afterschool', category: 'service' },
+        '课后': { char: '后', fullName: '课后服务', color: 'afterschool', category: 'service' },
+        '自习': { char: '习', fullName: '自习', color: 'default', category: 'study' }
     };
 
-    const DAY_ORDER_MAP = {
-        '周一': 1, '星期一': 1,
-        '周二': 2, '星期二': 2,
-        '周三': 3, '星期三': 3,
-        '周四': 4, '星期四': 4,
-        '周五': 5, '星期五': 5,
-        '周六': 6, '星期六': 6,
-        '周日': 7, '星期日': 7, '周天': 7, '星期天': 7
+    const PERIOD_ORDER_MAP = {
+        '早': 0, '早读': 0, '晨': 0, '晨读': 0,
+        '1': 1, '2': 2, '3': 3, '4': 4,
+        '午': 4.5, '午测': 4.5, '午读': 4.5, '午考': 4.5,
+        '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+        '晚': 90, '后': 91, '课后': 91, '课后服务': 91, '延时': 92
     };
 
     function normalizeSubject(rawName) {
         const text = String(rawName || '').trim();
         if (!text) return null;
         if (SUBJECT_MAP[text]) {
+            const item = SUBJECT_MAP[text];
             return {
                 raw: text,
-                name: text,
-                fullName: SUBJECT_MAP[text].fullName,
-                color: SUBJECT_MAP[text].color,
-                category: SUBJECT_MAP[text].category
+                char: item.char || text.charAt(0),
+                name: item.char || text.charAt(0),
+                fullName: item.fullName,
+                color: item.color,
+                category: item.category
             };
         }
         // 前缀或包含匹配
@@ -74,20 +82,54 @@
             if (text === key || text.startsWith(key)) {
                 return {
                     raw: text,
-                    name: text,
+                    char: meta.char || text.charAt(0),
+                    name: meta.char || text.charAt(0),
                     fullName: meta.fullName,
                     color: meta.color,
                     category: meta.category
                 };
             }
         }
+        const firstChar = text.charAt(0);
         return {
             raw: text,
-            name: text,
+            char: firstChar,
+            name: firstChar,
             fullName: text,
             color: 'default',
             category: 'other'
         };
+    }
+
+    function getPeriodSortWeight(pName) {
+        const key = String(pName || '').trim();
+        if (PERIOD_ORDER_MAP[key] !== undefined) return PERIOD_ORDER_MAP[key];
+        const num = parseFloat(key);
+        return isNaN(num) ? 99 : num;
+    }
+
+    function getPeriodType(pName) {
+        const key = String(pName || '').trim();
+        if (['早', '早读', '晨', '晨读'].includes(key)) return 'morning';
+        if (['午', '午测', '午读', '午考'].includes(key)) return 'noon';
+        if (['晚', '后', '课后', '课后服务', '延时'].includes(key)) return 'afterschool';
+        return 'regular';
+    }
+
+    function getPeriodLabel(pName) {
+        const key = String(pName || '').trim();
+        if (['早', '早读', '晨', '晨读'].includes(key)) return '早读';
+        if (['午', '午测', '午读', '午考'].includes(key)) return '午测';
+        if (['晚', '后', '课后', '课后服务', '延时'].includes(key)) return '课后';
+        return key;
+    }
+
+    function getPeriodShortChar(pName) {
+        const key = String(pName || '').trim();
+        if (['早', '早读', '晨', '晨读'].includes(key)) return '早';
+        if (['午', '午测', '午读', '午考'].includes(key)) return '午';
+        if (['晚', '后', '课后', '课后服务', '延时'].includes(key)) return '后';
+        return key;
     }
 
     function colLetterToIndex(letters) {
@@ -336,10 +378,13 @@
                 }));
 
             const periods = Array.from(periodSet)
-                .sort((a, b) => (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0))
+                .sort((a, b) => getPeriodSortWeight(a) - getPeriodSortWeight(b))
                 .map((name, idx) => ({
                     id: `p_${name}`,
                     name,
+                    label: getPeriodLabel(name),
+                    shortLabel: getPeriodShortChar(name),
+                    type: getPeriodType(name),
                     order: idx + 1
                 }));
 
@@ -459,6 +504,10 @@
     window.TWS3.scheduleWorkbook = {
         parseScheduleWorkbook,
         normalizeSubject,
+        getPeriodSortWeight,
+        getPeriodType,
+        getPeriodLabel,
+        getPeriodShortChar,
         SUBJECT_MAP
     };
 })();

@@ -1,14 +1,14 @@
-/* 课程表视图样式 */
+/* 课程表视图样式 (全视口零滚动设计) */
 .schedule-view {
     flex: 1;
     min-height: 0;
+    height: 100%;
     overflow: hidden;
-    padding: 8px calc(8px + var(--safe-right, 0px)) calc(10px + var(--safe-bottom, 0px)) calc(8px + var(--safe-left, 0px));
+    padding: 4px calc(4px + var(--safe-right, 0px)) calc(6px + var(--safe-bottom, 0px)) calc(4px + var(--safe-left, 0px));
     animation: fadeInView 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     will-change: opacity, transform;
     display: flex;
     flex-direction: column;
-    gap: 8px;
     width: 100%;
     box-sizing: border-box;
 }
@@ -17,168 +17,28 @@
     display: none !important;
 }
 
-/* 顶部控制栏与班级状态卡片 */
-.schedule-header-card {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    background: var(--surface-white);
-    border-radius: var(--radius-card);
-    padding: 8px 10px;
-    box-shadow: var(--shadow-card);
-    border: 1px solid var(--border-light);
-}
-
-.schedule-header-top-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.schedule-class-info-wrap {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    cursor: pointer;
-    background: var(--surface-muted);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-inner);
-    padding: 4px 8px;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
-    flex: 1;
-}
-
-.schedule-class-info-wrap:hover {
-    background: #eef2f5;
-    border-color: #d8dee6;
-}
-
-.schedule-class-info-wrap:active {
-    transform: scale(0.985);
-}
-
-.schedule-grade-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: var(--surface-dark);
-    color: var(--text-white);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.2px;
-    flex-shrink: 0;
-}
-
-.schedule-class-title {
-    font-size: 13.5px;
-    font-weight: 700;
-    color: var(--text-dark);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.schedule-teacher-tag {
-    font-size: 11.5px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    flex-shrink: 0;
-}
-
-.schedule-class-dropdown-arrow {
-    width: 14px;
-    height: 14px;
-    stroke: var(--text-muted);
-    stroke-width: 2;
-    fill: none;
-    flex-shrink: 0;
-    margin-left: auto;
-}
-
-/* 顶部操作按钮组 */
-.schedule-actions-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.schedule-btn {
-    height: 30px;
-    padding: 0 10px;
-    border-radius: var(--radius-inner);
-    font-size: 12px;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    border: 1px solid transparent;
-    user-select: none;
-    white-space: nowrap;
-}
-
-.schedule-btn svg {
-    width: 13px;
-    height: 13px;
-    stroke-width: 2.2;
-    stroke: currentColor;
-    fill: none;
-    flex-shrink: 0;
-}
-
-.schedule-btn-secondary {
-    background: var(--surface-muted);
-    color: var(--text-dark);
-    border-color: var(--border-light);
-}
-
-.schedule-btn-secondary:hover {
-    background: #e8ecf0;
-    border-color: #d3dae3;
-}
-
-.schedule-btn-primary {
-    background: var(--surface-dark);
-    color: var(--text-white);
-    border-color: var(--surface-dark);
-}
-
-.schedule-btn-primary:hover {
-    background: #23483f;
-}
-
-.schedule-btn:active {
-    transform: scale(0.96);
-}
-
-/* 课程表主体表格滚动容器 */
+/* 课程表主体表格全视口无滚动容器 */
 .schedule-grid-container {
     flex: 1;
+    height: 100%;
     min-height: 0;
     background: var(--surface-white);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-card);
     border: 1px solid var(--border-light);
-    overflow: auto;
+    overflow: hidden;
     position: relative;
-    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
 }
 
 .schedule-table {
     width: 100%;
-    min-width: 520px;
+    height: 100%;
+    min-width: 0;
     border-collapse: separate;
-    border-spacing: 3px;
-    padding: 4px;
+    border-spacing: 2.5px;
+    padding: 3px;
     table-layout: fixed;
     box-sizing: border-box;
 }
@@ -190,11 +50,10 @@
     font-size: 12px;
     font-weight: 600;
     text-align: center;
-    padding: 7px 4px;
-    border-radius: 6px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    padding: 3px 2px;
+    border-radius: 4px;
+    height: 26px;
+    box-sizing: border-box;
     box-shadow: 0 1px 0 var(--border-light);
     border: 1px solid transparent;
 }
@@ -208,98 +67,126 @@
 
 .schedule-th-today-badge {
     display: inline-block;
-    font-size: 10px;
-    padding: 1px 4px;
+    font-size: 9.5px;
+    padding: 0 3px;
     border-radius: 3px;
     background: var(--accent-green);
     color: var(--text-white);
-    margin-left: 3px;
-    vertical-align: middle;
+    margin-left: 2px;
+    vertical-align: baseline;
     font-weight: 500;
 }
 
 /* 节次列标头 */
 .schedule-period-th {
-    width: 54px;
-    min-width: 54px;
-    max-width: 54px;
+    width: 32px;
+    min-width: 30px;
+    max-width: 38px;
     background: #ebf0f4;
     color: var(--text-muted);
     font-size: 11px;
 }
 
+/* 节次单元格 */
 .schedule-period-cell {
-    background: var(--surface-muted);
-    border: 1px solid var(--border-light);
-    border-radius: 6px;
     text-align: center;
     vertical-align: middle;
-    padding: 4px 2px;
-    font-size: 11px;
-    color: var(--text-muted);
+    padding: 1px;
+    width: 32px;
+    min-width: 30px;
+    max-width: 38px;
+    border-radius: 4px;
+    box-sizing: border-box;
 }
 
-.schedule-period-num {
-    font-size: 13px;
+.schedule-period-badge {
+    font-size: 12px;
     font-weight: 700;
-    color: var(--text-dark);
-    line-height: 1.2;
-}
-
-.schedule-period-time {
-    font-size: 9px;
-    color: var(--text-muted);
-    line-height: 1.1;
-    margin-top: 1px;
-    letter-spacing: -0.2px;
-}
-
-/* 午间休息横幅行 */
-.schedule-lunch-row td {
-    padding: 2px 0;
-}
-
-.schedule-lunch-banner {
-    background: rgba(27, 56, 49, 0.03);
-    border: 1px dashed var(--border-light);
-    border-radius: 6px;
-    padding: 5px 10px;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-muted);
-    display: flex;
+    line-height: 1;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
 }
 
-.schedule-lunch-banner svg {
-    width: 13px;
-    height: 13px;
-    stroke: var(--text-muted);
-    stroke-width: 2;
-    fill: none;
+/* 特殊节次与正课行底色与样式区分 */
+.schedule-period-cell.type-morning {
+    background: #fefce8;
+    color: #a16207;
+    border: 1px solid #fef08a;
 }
 
-/* 课程卡片单元格 */
-.schedule-td {
-    vertical-align: top;
-    height: 54px;
+.schedule-period-cell.type-noon {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.schedule-period-cell.type-afterschool {
+    background: #faf5ff;
+    color: #7e22ce;
+    border: 1px solid #e9d5ff;
+}
+
+.schedule-period-cell.type-regular {
+    background: var(--surface-muted);
+    color: var(--text-dark);
+    border: 1px solid var(--border-light);
+}
+
+.period-row--morning {
+    background: rgba(254, 252, 232, 0.25);
+}
+
+.period-row--noon {
+    background: rgba(240, 253, 244, 0.25);
+}
+
+.period-row--afterschool {
+    background: rgba(250, 245, 255, 0.25);
+}
+
+.period-row--regular {
+    background: transparent;
+}
+
+/* 午间休息静默无文本分隔线 */
+.schedule-lunch-row {
+    height: 3px;
+}
+
+.schedule-lunch-td {
     padding: 0;
+    height: 3px;
+    vertical-align: middle;
+}
+
+.schedule-lunch-divider {
+    height: 2px;
+    background: #cbd5e1;
+    border-radius: 1px;
+    width: 100%;
+    opacity: 0.85;
+}
+
+/* 课程单元格与单汉字卡片 */
+.schedule-td {
+    vertical-align: middle;
+    padding: 0;
+    height: auto;
+    box-sizing: border-box;
 }
 
 .schedule-course-card {
     height: 100%;
-    min-height: 50px;
-    border-radius: 6px;
-    padding: 5px 6px;
+    width: 100%;
+    border-radius: 4px;
+    padding: 0;
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: center;
     box-sizing: border-box;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
     border: 1px solid transparent;
     user-select: none;
     position: relative;
@@ -307,155 +194,155 @@
 }
 
 .schedule-course-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    transform: scale(1.04);
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .schedule-course-card:active {
-    transform: scale(0.97);
+    transform: scale(0.95);
 }
 
-.schedule-course-name {
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.25;
-    word-break: break-all;
+.schedule-course-char {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    letter-spacing: 0;
 }
 
-.schedule-course-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 2px;
-}
-
-.schedule-course-tag {
-    font-size: 10px;
-    padding: 1px 4px;
-    border-radius: 3px;
-    background: rgba(255, 255, 255, 0.65);
-    font-weight: 500;
-    line-height: 1.15;
-}
-
-/* 优雅和谐课程色彩主题 */
+/* 和谐优雅学科单字色彩主题 */
 .course-chinese {
-    background: #fdf2f0;
-    border-color: #f8cfca;
-    color: #99221d;
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fecaca;
 }
 
 .course-math {
-    background: #eff6ff;
+    background: #dbeafe;
+    color: #1e40af;
     border-color: #bfdbfe;
-    color: #1d4ed8;
 }
 
 .course-english {
-    background: #fffbeb;
-    border-color: #fde68a;
+    background: #fef3c7;
     color: #92400e;
+    border-color: #fde68a;
 }
 
 .course-physics {
-    background: #eef2ff;
-    border-color: #c7d2fe;
+    background: #e0e7ff;
     color: #3730a3;
+    border-color: #c7d2fe;
 }
 
 .course-chemistry {
-    background: #f0fdfa;
+    background: #ccfbf1;
+    color: #115e59;
     border-color: #99f6e4;
-    color: #0f766e;
 }
 
 .course-biology {
-    background: #f0fdf4;
+    background: #dcfce7;
+    color: #166534;
     border-color: #bbf7d0;
-    color: #15803d;
 }
 
 .course-politics {
-    background: #fff1f2;
-    border-color: #fecdd3;
-    color: #be123c;
+    background: #ffedd5;
+    color: #9a3412;
+    border-color: #fed7aa;
 }
 
 .course-history {
-    background: #fff7ed;
-    border-color: #fed7aa;
-    color: #c2410c;
+    background: #fae8ff;
+    color: #86198f;
+    border-color: #f5d0fe;
 }
 
 .course-geography {
-    background: #f0f9ff;
-    border-color: #bae6fd;
-    color: #0369a1;
+    background: #f1f5f9;
+    color: #334155;
+    border-color: #e2e8f0;
 }
 
 .course-pe {
-    background: #ecfdf5;
-    border-color: #a7f3d0;
-    color: #047857;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-color: #bae6fd;
 }
 
 .course-music {
-    background: #faf5ff;
-    border-color: #e9d5ff;
-    color: #7e22ce;
+    background: #fdf4ff;
+    color: #a21caf;
+    border-color: #f0abfc;
 }
 
 .course-art {
-    background: #fdf2f8;
-    border-color: #fbcfe8;
-    color: #9d174d;
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
 }
 
 .course-tech {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-    color: #334155;
+    background: #ecfeff;
+    color: #155e75;
+    border-color: #a5f3fc;
 }
 
 .course-class {
-    background: #fefce8;
-    border-color: #fef08a;
+    background: #f3f4f6;
+    color: #374151;
+    border-color: #e5e7eb;
+}
+
+.course-morning {
+    background: #fef08a;
     color: #854d0e;
+    border-color: #fde047;
+}
+
+.course-noon {
+    background: #bbf7d0;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.course-afterschool {
+    background: #e9d5ff;
+    color: #6b21a8;
+    border-color: #d8b4fe;
 }
 
 .course-default {
-    background: var(--surface-muted);
-    border-color: var(--border-light);
-    color: var(--text-dark);
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #e2e8f0;
 }
 
 .course-empty {
-    height: 100%;
-    min-height: 50px;
-    border-radius: 6px;
-    border: 1px dashed var(--border-light);
-    background: transparent;
+    color: #cbd5e1;
+    font-size: 11px;
+    text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
-    font-size: 11px;
-    opacity: 0.6;
+    height: 100%;
 }
 
 /* 班级选择弹窗 (Schedule Class Modal) */
 .schedule-modal-container {
+    width: 90%;
+    max-width: 480px;
     background: var(--surface-white);
     border-radius: var(--radius-card);
-    width: 92%;
-    max-width: 520px;
-    max-height: 82vh;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
-    transform: scale(0.95) translateY(6px);
+    max-height: 80vh;
     transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: scale(0.96) translateY(8px);
 }
 
 .modal-overlay.show .schedule-modal-container,
@@ -464,11 +351,12 @@
 }
 
 .schedule-modal-header {
-    padding: 12px 14px 10px 14px;
+    padding: 14px 16px;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid var(--border-light);
+    background: var(--surface-muted);
 }
 
 .schedule-modal-title-wrap h3 {
@@ -479,37 +367,37 @@
 }
 
 .schedule-modal-title-wrap p {
-    margin: 2px 0 0 0;
+    margin: 3px 0 0 0;
     font-size: 11.5px;
     color: var(--text-muted);
 }
 
 .schedule-modal-close {
+    width: 28px;
+    height: 28px;
     border: none;
-    background: var(--surface-muted);
+    background: transparent;
+    border-radius: 6px;
     color: var(--text-muted);
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    font-size: 13px;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease;
 }
 
 .schedule-modal-close:hover {
-    background: #e2e8f0;
+    background: rgba(0, 0, 0, 0.06);
     color: var(--text-dark);
 }
 
 .schedule-modal-body {
-    padding: 10px 14px;
+    padding: 12px 16px 16px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     flex: 1;
     min-height: 0;
 }
@@ -523,8 +411,8 @@
 .schedule-search-input-wrap svg {
     position: absolute;
     left: 10px;
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
     stroke: var(--text-muted);
     stroke-width: 2;
     fill: none;
@@ -533,31 +421,31 @@
 
 .schedule-search-input {
     width: 100%;
-    height: 32px;
-    padding: 0 26px 0 30px;
-    background: var(--surface-muted);
-    border: 1px solid var(--border-light);
+    height: 34px;
+    padding: 0 10px 0 32px;
     border-radius: var(--radius-inner);
-    font-size: 12px;
+    border: 1px solid var(--border-light);
+    background: var(--surface-muted);
+    font-size: 12.5px;
     color: var(--text-dark);
-    outline: none;
     box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .schedule-search-input:focus {
-    border-color: var(--accent-green);
-    background: var(--surface-white);
+    background: #fff;
+    border-color: var(--surface-dark);
 }
 
 /* 年级切换标签栏 */
 .schedule-grade-bar {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    padding: 2px 0;
+    padding-bottom: 2px;
+    flex-shrink: 0;
 }
 
 .schedule-grade-bar::-webkit-scrollbar {
@@ -565,20 +453,20 @@
 }
 
 .schedule-grade-pill {
-    padding: 3px 8px;
-    border-radius: 5px;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-muted);
-    background: var(--surface-muted);
+    padding: 4px 10px;
+    border-radius: 20px;
     border: 1px solid var(--border-light);
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 500;
     cursor: pointer;
     white-space: nowrap;
     transition: all 0.15s ease;
 }
 
 .schedule-grade-pill:hover {
-    background: #e8ecf0;
+    background: #eef2f5;
     color: var(--text-dark);
 }
 
@@ -591,34 +479,33 @@
 
 .schedule-classes-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 6px;
-    margin-top: 2px;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+    margin-top: 4px;
 }
 
 .schedule-class-card-btn {
+    padding: 8px 10px;
+    border-radius: var(--radius-inner);
+    border: 1px solid var(--border-light);
+    background: var(--surface-white);
+    text-align: left;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
     gap: 3px;
-    padding: 8px;
-    background: var(--surface-muted);
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    cursor: pointer;
-    text-align: left;
     transition: all 0.15s ease;
-    position: relative;
 }
 
 .schedule-class-card-btn:hover {
-    background: #ebf0f4;
-    border-color: #ccd5df;
+    border-color: #cbd5e1;
+    background: #f8fafc;
 }
 
 .schedule-class-card-btn.active {
-    background: #f0fdf4;
-    border-color: var(--accent-green);
-    box-shadow: 0 0 0 1px var(--accent-green);
+    border-color: var(--surface-dark);
+    background: #f0f7f4;
+    box-shadow: 0 0 0 1px var(--surface-dark);
 }
 
 .schedule-class-card-btn-head {
@@ -634,8 +521,8 @@
 }
 
 .schedule-class-active-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--accent-green);
 }
@@ -647,81 +534,126 @@
 
 .schedule-class-card-badge {
     font-size: 10px;
-    color: var(--text-muted);
+    color: #64748b;
 }
 
 /* 空状态 (Empty State) */
 .schedule-empty-state {
-    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 28px 14px;
+    padding: 32px 20px;
     text-align: center;
     background: var(--surface-white);
     border-radius: var(--radius-card);
     border: 1px solid var(--border-light);
     box-shadow: var(--shadow-card);
-    gap: 10px;
+    margin: auto;
+    max-width: 440px;
 }
 
 .schedule-empty-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: var(--surface-muted);
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(27, 56, 49, 0.08);
+    color: var(--surface-dark);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--surface-dark);
+    margin-bottom: 14px;
 }
 
 .schedule-empty-icon svg {
     width: 26px;
     height: 26px;
-    stroke-width: 1.8;
     stroke: currentColor;
+    stroke-width: 2;
     fill: none;
 }
 
 .schedule-empty-title {
-    font-size: 15px;
+    margin: 0 0 6px 0;
+    font-size: 16px;
     font-weight: 700;
     color: var(--text-dark);
-    margin: 0;
 }
 
 .schedule-empty-desc {
-    font-size: 12px;
+    margin: 0 0 18px 0;
+    font-size: 12.5px;
     color: var(--text-muted);
-    max-width: 340px;
     line-height: 1.5;
-    margin: 0;
 }
 
 .schedule-empty-btn-group {
     display: flex;
+    flex-direction: column;
     gap: 8px;
-    margin-top: 4px;
-    flex-wrap: wrap;
+    width: 100%;
+}
+
+.schedule-btn {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: var(--radius-inner);
+    font-size: 12.5px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.schedule-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.2;
+    stroke: currentColor;
+    fill: none;
+    flex-shrink: 0;
+}
+
+.schedule-btn-secondary {
+    background: var(--surface-muted);
+    color: var(--text-dark);
+    border-color: var(--border-light);
+}
+
+.schedule-btn-secondary:hover {
+    background: #e8ecf0;
+}
+
+.schedule-btn-primary {
+    background: var(--surface-dark);
+    color: var(--text-white);
+    border-color: var(--surface-dark);
+}
+
+.schedule-btn-primary:hover {
+    background: #23483f;
 }
 
 /* 课程详情浮层弹窗 */
 .schedule-detail-modal-container {
+    width: 86%;
+    max-width: 360px;
     background: var(--surface-white);
     border-radius: var(--radius-card);
-    width: 90%;
-    max-width: 360px;
-    padding: 14px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    overflow: hidden;
-    transform: scale(0.95) translateY(6px);
+    gap: 12px;
     transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: scale(0.96) translateY(8px);
 }
 
 .schedule-detail-header {
@@ -734,25 +666,22 @@
     font-size: 15px;
     font-weight: 700;
     color: var(--text-dark);
-    display: flex;
-    align-items: center;
-    gap: 6px;
 }
 
 .schedule-detail-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     background: var(--surface-muted);
-    border-radius: 8px;
-    padding: 8px 10px;
-    border: 1px solid var(--border-light);
+    border-radius: var(--radius-inner);
+    padding: 10px 12px;
+    font-size: 12.5px;
 }
 
 .schedule-detail-item {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    font-size: 12px;
 }
 
 .schedule-detail-label {
@@ -760,40 +689,6 @@
 }
 
 .schedule-detail-val {
-    color: var(--text-dark);
     font-weight: 600;
-}
-
-/* 响应式调整 */
-@media (max-width: 480px) {
-    .schedule-header-top-row {
-        gap: 6px;
-    }
-
-    .schedule-btn {
-        padding: 0 8px;
-        font-size: 11.5px;
-    }
-
-    .schedule-table {
-        min-width: 460px;
-    }
-
-    .schedule-th {
-        font-size: 11.5px;
-        padding: 6px 2px;
-    }
-
-    .schedule-period-th {
-        width: 48px;
-        min-width: 48px;
-    }
-
-    .schedule-td {
-        height: 50px;
-    }
-
-    .schedule-course-name {
-        font-size: 12.5px;
-    }
+    color: var(--text-dark);
 }

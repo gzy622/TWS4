@@ -83,9 +83,65 @@
         const modeSegmentButtons = taskDropdown.querySelectorAll('.quick-mode-segment-btn');
         const navNewTaskBtn = document.getElementById('nav-new-task-btn');
 
-        // 渲染班级卡片
+        // 渲染班级卡片（在课程表视图下渲染已导入的班级列表与课表快捷操作）
         function renderClassCards() {
             if (!classComparisonContainer) return;
+            const currentView = store.getViewMode();
+
+            if (currentView === 'schedule') {
+                const library = store.getScheduleLibrary();
+                const selectedId = store.getSelectedScheduleClassId();
+                const activeSchedule = store.getActiveSchedule();
+
+                if (library && library.length > 0) {
+                    classComparisonContainer.innerHTML = library.map(cls => {
+                        const isSelected = cls.id === selectedId || cls.shortName === selectedId || cls.name === selectedId;
+                        const courseCount = cls.totalCourses || Object.keys(cls.grid || {}).length;
+                        const teacherText = cls.teacher ? `班主任: ${escapeHtml(cls.teacher)}` : (cls.grade || '班级课表');
+                        return `
+                            <button type="button" class="quick-class-card ${isSelected ? 'active' : ''}" data-schedule-class-id="${escapeHtml(cls.id)}">
+                                <div class="quick-class-card-head">
+                                    <strong class="quick-class-name">${escapeHtml(cls.name || cls.shortName)}</strong>
+                                    <span class="quick-class-badge">${courseCount} 节</span>
+                                </div>
+                                <div class="quick-class-card-metrics">
+                                    <span class="quick-class-label" style="text-align:left; font-size:11px;">${teacherText}</span>
+                                </div>
+                                <span class="quick-class-progress"><i style="width:${isSelected ? 100 : 0}%"></i></span>
+                            </button>
+                        `;
+                    }).join('');
+                } else {
+                    // 单班内置或尚未导入
+                    const name = activeSchedule.name || activeSchedule.shortName || store.getState().currentClass || '默认课表';
+                    const courseCount = Object.keys(activeSchedule.grid || {}).length;
+                    classComparisonContainer.innerHTML = `
+                        <button type="button" class="quick-class-card active" data-schedule-class-id="${escapeHtml(activeSchedule.id || 'default')}">
+                            <div class="quick-class-card-head">
+                                <strong class="quick-class-name">${escapeHtml(name)}</strong>
+                                <span class="quick-class-badge">${courseCount} 节</span>
+                            </div>
+                            <div class="quick-class-card-metrics">
+                                <span class="quick-class-label" style="text-align:left; font-size:11px;">当前活跃课表</span>
+                            </div>
+                            <span class="quick-class-progress"><i style="width:100%"></i></span>
+                        </button>
+                        <button type="button" class="quick-class-card" id="quick-schedule-import-trigger" style="border-style:dashed; background:rgba(27,56,49,0.03);">
+                            <div class="quick-class-card-head">
+                                <strong class="quick-class-name" style="display:flex;align-items:center;gap:4px;">
+                                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6m0 0l-3 3m3-3l3 3"/></svg>
+                                    导入全校课表
+                                </strong>
+                            </div>
+                            <div class="quick-class-card-metrics">
+                                <span class="quick-class-label" style="text-align:left; font-size:11px;">支持 .xlsx 工作簿</span>
+                            </div>
+                        </button>
+                    `;
+                }
+                return;
+            }
+
             const mode = store.getOperationMode();
             const comparison = store.getTaskComparison(undefined, mode);
             classComparisonContainer.innerHTML = comparison.classes.map(cls => {
@@ -118,8 +174,14 @@
             });
         }
 
-        // 渲染模式切换按钮状态
+        // 渲染模式切换按钮状态与可见性
         function updateModeButton(mode = store.getOperationMode()) {
+            const currentView = store.getViewMode();
+            const modeSegmentWrap = taskDropdown.querySelector('.quick-mode-segmented');
+            if (modeSegmentWrap) {
+                modeSegmentWrap.style.display = currentView === 'schedule' ? 'none' : '';
+            }
+
             modeSegmentButtons.forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.mode === mode);
             });
@@ -128,6 +190,31 @@
             if (progressWrapper) progressWrapper.dataset.mode = mode;
             const navbarEl = document.querySelector('.navbar');
             if (navbarEl) navbarEl.dataset.mode = mode;
+        }
+
+        // 更新右侧操作按钮图标与功能提示（新建 vs 导入）
+        function updateRightNavButton() {
+            if (!navNewTaskBtn) return;
+            const isSchedule = store.getViewMode() === 'schedule';
+            if (isSchedule) {
+                navNewTaskBtn.setAttribute('title', '导入课表 (.xlsx)');
+                navNewTaskBtn.setAttribute('aria-label', '导入课表');
+                navNewTaskBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" style="width:19px;height:19px;" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                        <path d="M14 2v6h6"/>
+                        <path d="M12 18v-6m0 0l-3 3m3-3l3 3"/>
+                    </svg>
+                `;
+            } else {
+                navNewTaskBtn.setAttribute('title', '新建作业');
+                navNewTaskBtn.setAttribute('aria-label', '新建作业');
+                navNewTaskBtn.innerHTML = `
+                    <svg class="nav-add-svg" viewBox="0 0 24 24">
+                        <path d="M12 4v16m-8-8h16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                `;
+            }
         }
         // 1. 视图切换点击
         viewButtons.forEach(btn => {
@@ -141,10 +228,29 @@
             });
         });
 
-        // 2. 班级切换点击
+        // 2. 班级切换点击（支持作业班级与课表班级切换）
         if (classComparisonContainer) {
             classComparisonContainer.addEventListener('click', (e) => {
-                const card = e.target.closest('.quick-class-card');
+                const schedImportBtn = e.target.closest('#quick-schedule-import-trigger');
+                if (schedImportBtn) {
+                    closeDropdown();
+                    const schedInput = document.getElementById('schedule-xlsx-file-input');
+                    if (schedInput) schedInput.click();
+                    return;
+                }
+
+                const schedCard = e.target.closest('[data-schedule-class-id]');
+                if (schedCard) {
+                    const schedClassId = schedCard.dataset.scheduleClassId;
+                    if (schedClassId) {
+                        store.setSelectedScheduleClassId(schedClassId);
+                        closeDropdown();
+                        updateHeaderTitle();
+                    }
+                    return;
+                }
+
+                const card = e.target.closest('.quick-class-card[data-class-id]');
                 if (!card || card.classList.contains('active')) return;
                 const classId = card.dataset.classId;
                 if (classId) {
@@ -169,12 +275,17 @@
             });
         });
 
-        // 4. 顶栏新建作业按钮点击
+        // 4. 顶栏右侧按钮点击（课程表视图触发导入，其他视图触发新建作业）
         if (navNewTaskBtn) {
             navNewTaskBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 closeDropdown();
-                openNewTaskModal();
+                if (store.getViewMode() === 'schedule') {
+                    const schedInput = document.getElementById('schedule-xlsx-file-input');
+                    if (schedInput) schedInput.click();
+                } else {
+                    openNewTaskModal();
+                }
             });
         }
 
@@ -306,13 +417,31 @@
         // =======================================================
         function updateHeaderTitle() {
             if (!currentTaskNameEl) return;
-            const currentTask = store.getCurrentTask();
-            const currentClass = store.getState().currentClass || '班级';
+            const isScheduleView = store.getViewMode() === 'schedule';
             const chevronSvg = navTitleTrigger.querySelector('svg');
             const progressWrapper = document.querySelector('.tab-indicator-wrapper');
             if (chevronSvg) chevronSvg.style.display = '';
-            if (progressWrapper) progressWrapper.style.display = '';
             navTitleTrigger.style.pointerEvents = '';
+
+            if (isScheduleView) {
+                if (progressWrapper) progressWrapper.style.display = 'none';
+                const activeSchedule = store.getActiveSchedule();
+                const currentClass = store.getState().currentClass || '班级';
+                const className = activeSchedule.name || activeSchedule.shortName || currentClass;
+                const gradeName = activeSchedule.grade || '课表';
+
+                currentTaskNameEl.innerHTML = `
+                    <span class="nav-task-title-text">${escapeHtml(className)}</span>
+                    <span class="nav-badges-wrap">
+                        <span class="nav-class-badge">${escapeHtml(gradeName)}</span>
+                    </span>
+                `;
+                return;
+            }
+
+            if (progressWrapper) progressWrapper.style.display = '';
+            const currentTask = store.getCurrentTask();
+            const currentClass = store.getState().currentClass || '班级';
 
             if (!currentTask) {
                 currentTaskNameEl.innerHTML = `<span class="nav-task-title-text">作业</span>`;
@@ -383,7 +512,19 @@
 
         // 订阅状态更新
         store.subscribe((state, eventType, payload) => {
-            if (eventType === 'OPERATION_MODE_CHANGED') {
+            if (eventType === 'VIEW_MODE_CHANGED') {
+                updateHeaderTitle();
+                updateRightNavButton();
+                renderViewSwitcher();
+                updateModeButton();
+                updateProgress();
+                if (taskDropdown.classList.contains('show')) renderClassCards();
+            } else if (eventType === 'SCHEDULE_CLASS_CHANGED' || eventType === 'SCHEDULE_LIBRARY_UPDATED' || eventType === 'SCHEDULE_CHANGED') {
+                if (store.getViewMode() === 'schedule') {
+                    updateHeaderTitle();
+                    if (taskDropdown.classList.contains('show')) renderClassCards();
+                }
+            } else if (eventType === 'OPERATION_MODE_CHANGED') {
                 updateModeButton(payload.mode);
                 updateProgress();
                 if (taskDropdown.classList.contains('show')) renderClassCards();
@@ -425,9 +566,9 @@
         renderClassCards();
         renderViewSwitcher();
         updateHeaderTitle();
+        updateRightNavButton();
         updateModeButton();
         updateProgress();
-
         const navbarService = {
             updateProgress,
             renderTasks: () => {

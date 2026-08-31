@@ -363,63 +363,38 @@
                     { id: 'day_5', name: '周五', order: 5 }
                 ];
 
-            const periods = (activeSchedule.periods && activeSchedule.periods.length > 0)
+            let periods = (activeSchedule.periods && activeSchedule.periods.length > 0)
                 ? activeSchedule.periods
                 : [
-                    { id: 'p_1', name: '1', order: 1 },
-                    { id: 'p_2', name: '2', order: 2 },
-                    { id: 'p_3', name: '3', order: 3 },
-                    { id: 'p_4', name: '4', order: 4 },
-                    { id: 'p_5', name: '5', order: 5 },
-                    { id: 'p_6', name: '6', order: 6 },
-                    { id: 'p_7', name: '7', order: 7 }
+                    { id: 'p_morning', name: '早', label: '早读', shortLabel: '早', type: 'morning', order: 0 },
+                    { id: 'p_1', name: '1', label: '1', shortLabel: '1', type: 'regular', order: 1 },
+                    { id: 'p_2', name: '2', label: '2', shortLabel: '2', type: 'regular', order: 2 },
+                    { id: 'p_3', name: '3', label: '3', shortLabel: '3', type: 'regular', order: 3 },
+                    { id: 'p_4', name: '4', label: '4', shortLabel: '4', type: 'regular', order: 4 },
+                    { id: 'p_noon', name: '午', label: '午测', shortLabel: '午', type: 'noon', order: 4.5 },
+                    { id: 'p_5', name: '5', label: '5', shortLabel: '5', type: 'regular', order: 5 },
+                    { id: 'p_6', name: '6', label: '6', shortLabel: '6', type: 'regular', order: 6 },
+                    { id: 'p_7', name: '7', label: '7', shortLabel: '7', type: 'regular', order: 7 },
+                    { id: 'p_afterschool', name: '后', label: '课后', shortLabel: '后', type: 'afterschool', order: 8 }
                 ];
 
-            const lunchAfter = (activeSchedule.lunchBreak && activeSchedule.lunchBreak.afterPeriod) || 4;
-            const lunchName = (activeSchedule.lunchBreak && activeSchedule.lunchBreak.name) || '午间休息';
-            const grid = activeSchedule.grid || {};
+            // 确保节次按权重正确排序
+            const getSortWeight = window.TWS3.scheduleWorkbook?.getPeriodSortWeight || function(pName) {
+                const key = String(pName || '').trim();
+                if (['早', '早读', '晨', '晨读'].includes(key)) return 0;
+                if (['午', '午测', '午读', '午考'].includes(key)) return 4.5;
+                if (['晚', '后', '课后', '课后服务', '延时'].includes(key)) return 90;
+                const n = parseFloat(key);
+                return isNaN(n) ? 99 : n;
+            };
 
-            const gradeName = activeSchedule.grade || (activeSchedule.name ? activeSchedule.name.split(' ')[0] : '初中');
-            const totalCourseCount = Object.keys(grid).length;
+            periods = [...periods].sort((a, b) => getSortWeight(a.name || a.id) - getSortWeight(b.name || b.id));
+
+            const grid = activeSchedule.grid || {};
+            let lunchInserted = false;
 
             container.innerHTML = `
-                <!-- 顶部控制栏与班级状态 -->
-                <div class="schedule-header-card">
-                    <div class="schedule-header-top-row">
-                        <div class="schedule-class-info-wrap" id="schedule-header-class-picker" title="点击切换班级">
-                            <span class="schedule-grade-badge">${escapeHtml(gradeName)}</span>
-                            <span class="schedule-class-title">${escapeHtml(activeSchedule.name || activeSchedule.shortName || '当前班级')}</span>
-                            <span class="schedule-teacher-tag">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                    <circle cx="12" cy="7" r="4"/>
-                                </svg>
-                                ${escapeHtml(activeSchedule.teacher || '未设班主任')}
-                            </span>
-                            <span class="schedule-teacher-tag">· ${totalCourseCount} 节课</span>
-                            <svg class="schedule-class-dropdown-arrow" viewBox="0 0 24 24">
-                                <polyline points="6 9 12 15 18 9"/>
-                            </svg>
-                        </div>
-
-                        <div class="schedule-actions-group">
-                            <button type="button" class="schedule-btn schedule-btn-primary" id="schedule-switch-btn">
-                                <svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                                <span>选班级</span>
-                            </button>
-                            <button type="button" class="schedule-btn schedule-btn-secondary" id="schedule-today-btn">
-                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                <span>今日</span>
-                            </button>
-                            <button type="button" class="schedule-btn schedule-btn-secondary" id="schedule-import-btn">
-                                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6m0 0l-3 3m3-3l3 3"/></svg>
-                                <span>导入</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 课程表主体表格滚动容器 -->
+                <!-- 课程表主体表格全视口无滚动容器 -->
                 <div class="schedule-grid-container" id="schedule-table-wrap">
                     <table class="schedule-table">
                         <thead>
@@ -438,44 +413,48 @@
                         </thead>
                         <tbody>
                             ${periods.map((p, pIdx) => {
-                                const periodNum = p.name || (pIdx + 1);
-                                const isAfterLunch = (pIdx + 1) === lunchAfter + 1;
-                                const timeStr = DEFAULT_PERIOD_TIMES[periodNum] || '';
-                                
-                                let lunchRowHtml = '';
-                                if (isAfterLunch) {
-                                    lunchRowHtml = `
-                                        <tr class="schedule-lunch-row">
-                                            <td colspan="${days.length + 1}">
-                                                <div class="schedule-lunch-banner">
-                                                    <svg viewBox="0 0 24 24">
-                                                        <circle cx="12" cy="12" r="5"/>
-                                                        <line x1="12" y1="1" x2="12" y2="3"/>
-                                                        <line x1="12" y1="21" x2="12" y2="23"/>
-                                                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                                                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                                                        <line x1="1" y1="12" x2="3" y2="12"/>
-                                                        <line x1="21" y1="12" x2="23" y2="12"/>
-                                                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                                                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                                                    </svg>
-                                                    <span>${escapeHtml(lunchName)} · 大课间与自主活动</span>
-                                                </div>
+                                const pName = String(p.name || p.id || (pIdx + 1)).replace(/^p_/, '');
+                                const pType = p.type || (window.TWS3.scheduleWorkbook?.getPeriodType ? window.TWS3.scheduleWorkbook.getPeriodType(pName) : (
+                                    ['早', '早读', '晨', '晨读', 'morning'].includes(pName) ? 'morning' :
+                                    ['午', '午测', '午读', '午考', 'noon'].includes(pName) ? 'noon' :
+                                    ['晚', '后', '课后', '课后服务', '延时', 'afterschool'].includes(pName) ? 'afterschool' : 'regular'
+                                ));
+
+                                const periodLabel = p.label || (window.TWS3.scheduleWorkbook?.getPeriodLabel ? window.TWS3.scheduleWorkbook.getPeriodLabel(pName) : pName);
+                                const periodChar = p.shortLabel || (window.TWS3.scheduleWorkbook?.getPeriodShortChar ? window.TWS3.scheduleWorkbook.getPeriodShortChar(pName) : (
+                                    pType === 'morning' ? '早' : (pType === 'noon' ? '午' : (pType === 'afterschool' ? '后' : pName))
+                                ));
+
+                                // 判断午休静默分隔线插入时机（在午测前，或上午正课 4 节后插入一次）
+                                let lunchDividerHtml = '';
+                                const weight = getSortWeight(pName);
+                                if (!lunchInserted && weight >= 4.5) {
+                                    lunchDividerHtml = `
+                                        <tr class="schedule-lunch-row" aria-hidden="true">
+                                            <td colspan="${days.length + 1}" class="schedule-lunch-td">
+                                                <div class="schedule-lunch-divider"></div>
                                             </td>
                                         </tr>
                                     `;
+                                    lunchInserted = true;
                                 }
 
+                                const rowClass = `schedule-row period-row--${pType}`;
+
                                 const rowHtml = `
-                                    <tr>
-                                        <td class="schedule-period-cell">
-                                            <div class="schedule-period-num">${escapeHtml(periodNum)}</div>
-                                            ${timeStr ? `<div class="schedule-period-time">${escapeHtml(timeStr)}</div>` : ''}
+                                    <tr class="${rowClass}">
+                                        <td class="schedule-period-cell type-${pType}">
+                                            <span class="schedule-period-badge">${escapeHtml(periodChar)}</span>
                                         </td>
                                         ${days.map(d => {
                                             const cellKey = `${d.id}_${p.id}`;
-                                            const cellData = grid[cellKey];
-                                            if (!cellData || (!cellData.name && !cellData.courseId)) {
+                                            let cellData = grid[cellKey];
+                                            if (!cellData) {
+                                                // 容错匹配 p.name
+                                                cellData = grid[`${d.id}_p_${pName}`] || grid[`${d.id}_${pName}`];
+                                            }
+
+                                            if (!cellData || (!cellData.name && !cellData.courseId && !cellData.customName)) {
                                                 return `
                                                     <td class="schedule-td">
                                                         <div class="course-empty">—</div>
@@ -483,17 +462,14 @@
                                                 `;
                                             }
 
-                                            const courseName = cellData.name || cellData.customName || '课程';
+                                            const rawCourseName = cellData.name || cellData.customName || '课';
+                                            const singleChar = (cellData.char || rawCourseName.charAt(0) || '—').trim();
                                             const colorClass = `course-${cellData.color || 'default'}`;
-                                            const fullName = cellData.fullName || courseName;
 
                                             return `
                                                 <td class="schedule-td">
-                                                    <div class="schedule-course-card ${colorClass}" data-cell-key="${escapeHtml(cellKey)}" data-day="${escapeHtml(d.name)}" data-period="${escapeHtml(periodNum)}">
-                                                        <div class="schedule-course-name">${escapeHtml(courseName)}</div>
-                                                        <div class="schedule-course-footer">
-                                                            <span class="schedule-course-tag">${escapeHtml(fullName !== courseName ? fullName : (cellData.category || '学科'))}</span>
-                                                        </div>
+                                                    <div class="schedule-course-card ${colorClass}" data-cell-key="${escapeHtml(cellKey)}" data-day="${escapeHtml(d.name)}" data-period="${escapeHtml(periodLabel)}">
+                                                        <span class="schedule-course-char">${escapeHtml(singleChar)}</span>
                                                     </div>
                                                 </td>
                                             `;
@@ -501,34 +477,12 @@
                                     </tr>
                                 `;
 
-                                return lunchRowHtml + rowHtml;
+                                return lunchDividerHtml + rowHtml;
                             }).join('')}
                         </tbody>
                     </table>
                 </div>
             `;
-
-            // 绑定操作事件
-            const classPickerBtn = container.querySelector('#schedule-header-class-picker');
-            const switchBtn = container.querySelector('#schedule-switch-btn');
-            const importBtn = container.querySelector('#schedule-import-btn');
-            const todayBtn = container.querySelector('#schedule-today-btn');
-
-            if (classPickerBtn) classPickerBtn.addEventListener('click', () => openClassModal());
-            if (switchBtn) switchBtn.addEventListener('click', () => openClassModal());
-            if (importBtn) importBtn.addEventListener('click', () => fileInput && fileInput.click());
-
-            if (todayBtn) {
-                todayBtn.addEventListener('click', () => {
-                    const todayTh = container.querySelector('.schedule-th.today-col');
-                    if (todayTh) {
-                        todayTh.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                        showToast(`已定位到今日 (${days[currentDayIdx - 1]?.name || '周' + currentDayIdx}) 课表`, 1500);
-                    } else {
-                        showToast('今日为周末非排课时间', 1500);
-                    }
-                });
-            }
 
             // 绑定课程卡片点击弹出详情
             container.querySelectorAll('.schedule-course-card').forEach(card => {
@@ -536,7 +490,11 @@
                     const cellKey = card.dataset.cellKey;
                     const dayName = card.dataset.day;
                     const periodNum = card.dataset.period;
-                    const cellData = grid[cellKey];
+                    let cellData = grid[cellKey];
+                    if (!cellData) {
+                        const parts = cellKey.split('_');
+                        cellData = grid[`${parts[0]}_${parts[1]}_${parts[2]}`] || grid[`${parts[0]}_${parts[1]}`];
+                    }
                     if (cellData) {
                         openDetailModal(cellData, dayName, periodNum, activeSchedule);
                     }

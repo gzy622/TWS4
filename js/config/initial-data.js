@@ -440,13 +440,16 @@
     ];
 
     const INITIAL_SCHEDULE_PERIODS = [
-        { id: "p_1", name: "1", order: 1 },
-        { id: "p_2", name: "2", order: 2 },
-        { id: "p_3", name: "3", order: 3 },
-        { id: "p_4", name: "4", order: 4 },
-        { id: "p_5", name: "5", order: 5 },
-        { id: "p_6", name: "6", order: 6 },
-        { id: "p_7", name: "7", order: 7 }
+        { id: "p_morning", name: "早", label: "早读", type: "morning", order: 0 },
+        { id: "p_1", name: "1", label: "1", type: "regular", order: 1 },
+        { id: "p_2", name: "2", label: "2", type: "regular", order: 2 },
+        { id: "p_3", name: "3", label: "3", type: "regular", order: 3 },
+        { id: "p_4", name: "4", label: "4", type: "regular", order: 4 },
+        { id: "p_noon", name: "午", label: "午测", type: "noon", order: 4.5 },
+        { id: "p_5", name: "5", label: "5", type: "regular", order: 5 },
+        { id: "p_6", name: "6", label: "6", type: "regular", order: 6 },
+        { id: "p_7", name: "7", label: "7", type: "regular", order: 7 },
+        { id: "p_afterschool", name: "后", label: "课后", type: "afterschool", order: 8 }
     ];
 
     const INITIAL_COURSE_LIBRARY = [
@@ -472,48 +475,64 @@
 
     const INITIAL_SCHEDULE_GRID = {
         // 周一
+        "day_1_p_morning": { courseId: "c_yw", customName: "" },
         "day_1_p_1": { courseId: "c_yy", customName: "" },
         "day_1_p_2": { courseId: "c_sx", customName: "" },
         "day_1_p_3": { courseId: "c_ty", customName: "" },
         "day_1_p_4": { courseId: "c_zz", customName: "" },
+        "day_1_p_noon": { courseId: "c_sx", customName: "" },
         "day_1_p_5": { courseId: "c_ms", customName: "" },
         "day_1_p_6": { courseId: "c_sw", customName: "" },
         "day_1_p_7": { courseId: "c_bh", customName: "" },
+        "day_1_p_afterschool": { courseId: "c_yw", customName: "" },
 
         // 周二
+        "day_2_p_morning": { courseId: "c_yy", customName: "" },
         "day_2_p_1": { courseId: "c_yw", customName: "" },
         "day_2_p_2": { courseId: "c_ls", customName: "" },
         "day_2_p_3": { courseId: "c_sx", customName: "" },
         "day_2_p_4": { courseId: "c_yy", customName: "" },
+        "day_2_p_noon": { courseId: "c_yy", customName: "" },
         "day_2_p_5": { courseId: "c_wh", customName: "" },
         "day_2_p_6": { courseId: "c_xx", customName: "" },
         "day_2_p_7": { courseId: "c_pe", customName: "" },
+        "day_2_p_afterschool": { courseId: "c_sx", customName: "" },
 
         // 周三
+        "day_3_p_morning": { courseId: "c_yw", customName: "" },
         "day_3_p_1": { courseId: "c_yy", customName: "" },
         "day_3_p_2": { courseId: "c_ls", customName: "" },
         "day_3_p_3": { courseId: "c_yw", customName: "" },
         "day_3_p_4": { courseId: "c_sx", customName: "" },
+        "day_3_p_noon": { courseId: "c_wl", customName: "" },
         "day_3_p_5": { courseId: "c_mu", customName: "" },
         "day_3_p_6": { courseId: "c_dh", customName: "" },
         "day_3_p_7": { courseId: "c_zz", customName: "" },
+        "day_3_p_afterschool": { courseId: "c_yy", customName: "" },
 
         // 周四
+        "day_4_p_morning": { courseId: "c_yy", customName: "" },
         "day_4_p_1": { courseId: "c_yw", customName: "" },
         "day_4_p_2": { courseId: "c_yw", customName: "" },
         "day_4_p_3": { courseId: "c_ls", customName: "" },
         "day_4_p_4": { courseId: "c_sw", customName: "" },
+        "day_4_p_noon": { courseId: "c_hx", customName: "" },
         "day_4_p_5": { courseId: "c_yy", customName: "" },
         "day_4_p_6": { courseId: "c_sx", customName: "" },
+        "day_4_p_7": { courseId: "c_dl", customName: "" },
+        "day_4_p_afterschool": { courseId: "c_wl", customName: "" },
 
         // 周五
+        "day_5_p_morning": { courseId: "c_yw", customName: "" },
         "day_5_p_1": { courseId: "c_yy", customName: "" },
         "day_5_p_2": { courseId: "c_sx", customName: "" },
         "day_5_p_3": { courseId: "c_sw", customName: "" },
         "day_5_p_4": { courseId: "c_yw", customName: "" },
+        "day_5_p_noon": { courseId: "c_yw", customName: "" },
         "day_5_p_5": { courseId: "c_hh", customName: "" },
         "day_5_p_6": { courseId: "c_zz", customName: "" },
-        "day_5_p_7": { courseId: "c_pe", customName: "" }
+        "day_5_p_7": { courseId: "c_pe", customName: "" },
+        "day_5_p_afterschool": { courseId: "c_sx", customName: "" }
     };
 
     const INITIAL_SCHEDULE = {
