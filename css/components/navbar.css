@@ -407,33 +407,6 @@
     background: #86b99f;
 }
 
-/* 打分模式下的卡片高亮 */
-.task-dropdown[data-mode="grade"] .quick-class-card.active {
-    border-color: #c2410c;
-    background: #c2410c;
-    box-shadow: 0 4px 10px rgba(194, 65, 12, 0.2);
-}
-
-.task-dropdown[data-mode="grade"] .quick-class-card.active .quick-class-badge {
-    background: rgba(255, 255, 255, 0.18);
-    color: #fff7ed;
-}
-
-.task-dropdown[data-mode="grade"] .quick-class-card.active .quick-class-label {
-    color: #ffedd5;
-}
-
-.task-dropdown[data-mode="grade"] .quick-class-progress i {
-    background: #f97316;
-}
-
-.task-dropdown[data-mode="grade"] .quick-class-card.active .quick-class-progress {
-    background: #9a3412;
-}
-
-.task-dropdown[data-mode="grade"] .quick-class-card.active .quick-class-progress i {
-    background: #fdba74;
-}
 
 /* 2. 视图与模式控制行 */
 .quick-controls-row {
