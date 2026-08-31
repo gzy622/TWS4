@@ -517,7 +517,7 @@
                 return;
             }
             const target = event.target instanceof Element ? event.target : app;
-            if (target.closest('input, textarea, select, [contenteditable="true"], .debugger-floating-btn, .fullscreen-panel, .drawer-scroll-area')) {
+            if (target.closest('input, textarea, select, [contenteditable="true"], .debugger-floating-btn, .fullscreen-panel')) {
                 gesture = null;
                 return;
             }

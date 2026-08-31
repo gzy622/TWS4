@@ -71,15 +71,14 @@
         const classModalCloseBtn = document.getElementById('class-modal-close-btn');
         const classListBody = document.getElementById('class-list-body');
 
-        // 花名册弹窗
-        const rosterModal = document.getElementById('roster-modal');
-        const rosterModalContainer = rosterModal ? rosterModal.querySelector('.roster-modal-container') : null;
-        const rosterCloseBtn = document.getElementById('roster-close-btn');
+        // 花名册全屏界面
+        const rosterView = document.getElementById('roster-view');
+        const rosterBackBtn = document.getElementById('roster-back-btn');
         const rosterSearchInput = document.getElementById('roster-search-input');
+        const rosterSearchClear = document.getElementById('roster-search-clear');
         const rosterAddBtn = document.getElementById('roster-add-btn');
         const rosterListBody = document.getElementById('roster-list-body');
         const rosterCountBadge = document.getElementById('roster-count-badge');
-
         // 文件上传 Input
         const xlsxFileInput = document.getElementById('xlsx-file-input');
         const seatXlsxFileInput = document.getElementById('seat-xlsx-file-input');
@@ -518,6 +517,7 @@
             renderSettingsHeader();
             renderStudentNumberToggle();
             renderSubjectTagToggle();
+            renderDebuggerToggle();
             if (settingsView) {
                 settingsView.classList.add('show');
                 const scrollArea = settingsView.querySelector('.settings-scroll-area');
@@ -562,6 +562,14 @@
             const isVisible = store.getShowSubjectTags();
             subjectTagToggle.classList.toggle('active', isVisible);
             subjectTagToggle.setAttribute('aria-pressed', String(isVisible));
+        }
+        function renderDebuggerToggle() {
+            if (!toggleDebuggerBtn) return;
+            const isVisible = window.TWS3.logger && typeof window.TWS3.logger.isFloatingBtnVisible === 'function'
+                ? window.TWS3.logger.isFloatingBtnVisible()
+                : (localStorage.getItem('tws3_debug_btn_visible') === 'true');
+            toggleDebuggerBtn.classList.toggle('active', isVisible);
+            toggleDebuggerBtn.setAttribute('aria-pressed', String(isVisible));
         }
 
         if (studentNumberToggle) {
@@ -1279,29 +1287,39 @@
             });
         }
 
-        // 9. 花名册管理
-        function lockRosterHeight() {
-            if (!rosterModalContainer) return;
-            rosterModalContainer.style.height = `${rosterModalContainer.offsetHeight}px`;
-        }
-
-        function openRosterModal() {
+        // 9. 花名册全屏界面管理
+        function openRosterView() {
             if (rosterSearchInput) rosterSearchInput.value = '';
+            if (rosterSearchClear) rosterSearchClear.style.display = 'none';
             renderRosterList();
-            lockRosterHeight();
-            if (rosterModal) rosterModal.classList.add('show');
+            if (rosterView) {
+                rosterView.classList.add('show');
+                if (window.TWS3.pushGuardState) {
+                    window.TWS3.pushGuardState();
+                }
+            }
         }
 
-        function closeRosterModal() {
-            if (rosterModal) rosterModal.classList.remove('show');
-            if (rosterModalContainer) rosterModalContainer.style.height = '';
+        function closeRosterView() {
+            if (rosterView) {
+                rosterView.classList.remove('show');
+            }
+        }
+
+        function isRosterViewOpen() {
+            return !!(rosterView && rosterView.classList.contains('show'));
         }
 
         function renderRosterList() {
             if (!rosterListBody) return;
             const state = store.getState();
             const students = state.students || [];
-            const query = rosterSearchInput ? rosterSearchInput.value.trim().toLowerCase() : '';
+            const rawQuery = rosterSearchInput ? rosterSearchInput.value.trim() : '';
+            const query = rawQuery.toLowerCase();
+
+            if (rosterSearchClear) {
+                rosterSearchClear.style.display = rawQuery ? 'flex' : 'none';
+            }
 
             const filtered = students.filter(s => {
                 if (!query) return true;
@@ -1335,7 +1353,7 @@
                     </div>
                     <div class="roster-student-actions">
                         <span class="${langTagClass}" data-id="${s.id}" title="点击切换是否为英语生">${langTagText}</span>
-                        <button type="button" class="roster-icon-btn edit-name" data-id="${s.id}" title="修改姓名与学号">
+                        <button type="button" class="roster-icon-btn edit-name" data-id="${s.id}" title="修改姓名">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -1356,19 +1374,21 @@
 
         if (manageRosterBtn) {
             manageRosterBtn.addEventListener('click', () => {
-                openRosterModal();
+                openRosterView();
             });
         }
 
-        if (rosterCloseBtn) {
-            rosterCloseBtn.addEventListener('click', closeRosterModal);
+        if (rosterBackBtn) {
+            rosterBackBtn.addEventListener('click', closeRosterView);
         }
 
-        if (rosterModal) {
-            rosterModal.addEventListener('click', (e) => {
-                if (e.target === rosterModal) {
-                    closeRosterModal();
+        if (rosterSearchClear) {
+            rosterSearchClear.addEventListener('click', () => {
+                if (rosterSearchInput) {
+                    rosterSearchInput.value = '';
+                    rosterSearchInput.focus();
                 }
+                renderRosterList();
             });
         }
 
@@ -1473,6 +1493,7 @@
                         window.TWS3.logger.showFloatingBtn();
                     }
                 }
+                renderDebuggerToggle();
             });
         }
 
@@ -1530,7 +1551,7 @@
                 renderDrawerHeader();
                 renderDrawerTaskList();
                 renderSettingsHeader();
-                if (rosterModal && rosterModal.classList.contains('show')) {
+                if (rosterView && rosterView.classList.contains('show')) {
                     renderRosterList();
                 }
                 if (classModal && classModal.classList.contains('show')) {
@@ -1545,6 +1566,7 @@
         renderSettingsHeader();
         renderStudentNumberToggle();
         renderSubjectTagToggle();
+        renderDebuggerToggle();
         updateVersionFooters();
 
         const drawerService = {
@@ -1552,7 +1574,11 @@
             openSettingsView,
             closeSettingsView,
             isSettingsViewOpen,
-            renderDrawerTasks: renderDrawerTaskList
+            openRosterView,
+            closeRosterView,
+            isRosterViewOpen,
+            renderDrawerTasks: renderDrawerTaskList,
+            renderDebuggerToggle
         };
 
         window.TWS3.drawer = drawerService;

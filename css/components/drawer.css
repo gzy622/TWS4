@@ -59,10 +59,9 @@
 
 /* 抽屉头部 */
 .drawer-card-header {
-    padding: calc(18px + var(--safe-top, 0px)) 16px 14px;
-    border-bottom: 1px solid var(--border-light, #eef2f0);
-    flex-shrink: 0;
+    padding: calc(16px + var(--safe-top, 0px)) 16px 8px;
     background: #ffffff;
+    flex-shrink: 0;
 }
 
 .drawer-card-header .bg-tag { display: none; }
@@ -82,10 +81,10 @@
     line-height: 1.3;
 }
 
-/* 抽屉内作业搜索栏 */
+/* 抽屉内作业搜索栏（与头部融为一体） */
 .drawer-search-bar {
-    padding: 10px 14px;
-    background: #fafbfa;
+    padding: 2px 16px 12px;
+    background: #ffffff;
     border-bottom: 1px solid var(--border-light, #eef2f0);
     flex-shrink: 0;
 }
@@ -94,31 +93,38 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 0 10px;
-    height: 34px;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    background: #f1f5f9;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 0 10px 0 12px;
+    height: 36px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
 }
 
 .drawer-search-wrapper:focus-within {
+    background: #ffffff;
     border-color: var(--surface-dark, #1b3831);
-    box-shadow: 0 0 0 2px rgba(27, 56, 49, 0.08);
+    box-shadow: 0 0 0 2.5px rgba(27, 56, 49, 0.08);
 }
 
 .drawer-search-icon {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
     color: #94a3b8;
     flex-shrink: 0;
+    transition: color 0.15s ease;
+}
+
+.drawer-search-wrapper:focus-within .drawer-search-icon {
+    color: var(--surface-dark, #1b3831);
 }
 
 .drawer-search-input {
     flex: 1;
     border: none;
     background: transparent;
-    font-size: 13px;
+    font-size: 13.5px;
     color: var(--text-dark, #1e293b);
     padding: 0;
     outline: none;
@@ -127,26 +133,30 @@
 
 .drawer-search-input::placeholder {
     color: #94a3b8;
+    font-size: 13px;
 }
 
 .drawer-search-clear {
-    background: transparent;
+    background: rgba(148, 163, 184, 0.25);
     border: none;
-    color: #94a3b8;
+    color: #475569;
     cursor: pointer;
-    padding: 2px;
-    font-size: 12px;
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
     line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+    transition: background 0.15s ease, color 0.15s ease;
+    padding: 0;
 }
 
 .drawer-search-clear:hover {
+    background: rgba(148, 163, 184, 0.45);
     color: var(--text-dark, #1e293b);
 }
-
 /* 抽屉纵向滚动内容区 (作业列表) */
 .drawer-scroll-area {
     flex: 1;
@@ -156,6 +166,8 @@
     flex-direction: column;
     gap: 0;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
     padding: 6px 0;
 }
 
@@ -658,7 +670,8 @@
 
 /* 全屏界面顶部导航 */
 .settings-header {
-    height: calc(52px + var(--safe-top, 0px));
+    height: var(--navbar-height);
+    min-height: var(--navbar-height);
     padding-top: var(--safe-top, 0px);
     background: #ffffff;
     border-bottom: 1px solid var(--border-light, #eef2f0);

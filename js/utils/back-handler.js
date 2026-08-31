@@ -60,12 +60,14 @@
             return true;
         }
 
-        // 5. 关闭花名册管理弹窗
-        const rosterModal = document.getElementById('roster-modal');
-        if (rosterModal && rosterModal.classList.contains('show')) {
-            const closeBtn = document.getElementById('roster-close-btn');
-            if (closeBtn) closeBtn.click();
-            else rosterModal.classList.remove('show');
+        // 5. 关闭二级全屏花名册管理界面（返回设置页）
+        const rosterView = document.getElementById('roster-view');
+        if (rosterView && rosterView.classList.contains('show')) {
+            if (window.TWS3.drawer && typeof window.TWS3.drawer.closeRosterView === 'function') {
+                window.TWS3.drawer.closeRosterView();
+            } else {
+                rosterView.classList.remove('show');
+            }
             return true;
         }
 
