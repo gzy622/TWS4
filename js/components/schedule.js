@@ -658,7 +658,7 @@
                 const combinedCardHtml = `
                     <button type="button" class="schedule-class-card-btn schedule-combined-modal-card ${isCombined ? 'active' : ''}" data-class-id="combined" style="grid-column: 1 / -1; margin-bottom: 4px;">
                         <div class="schedule-class-card-btn-head">
-                            <span class="schedule-class-card-name">📋 双班任课总览 (${escapeHtml(classNames)})</span>
+                            <span class="schedule-class-card-name">双班任课总览 (${escapeHtml(classNames)})</span>
                             ${isCombined ? '<span class="schedule-class-active-dot" title="当前选中"></span>' : ''}
                         </div>
                         <span class="schedule-class-card-teacher">合并显示任教班级排课（当前科目：${escapeHtml(teacherSubject)}）</span>

@@ -117,7 +117,7 @@
                     const combinedCardHtml = `
                         <button type="button" class="quick-class-card quick-combined-card ${isCombined ? 'active' : ''}" data-schedule-class-id="combined" style="grid-column: 1 / -1; margin-bottom: 2px;">
                             <div class="quick-class-card-head">
-                                <strong class="quick-class-name">📋 双班任课总览</strong>
+                                <strong class="quick-class-name">双班任课总览</strong>
                                 <span class="quick-class-badge">${totalCombinedCount} 节 · ${escapeHtml(teacherSubject)}</span>
                             </div>
                             <div class="quick-class-card-metrics">
