@@ -92,9 +92,23 @@
                 const library = store.getScheduleLibrary();
                 const selectedId = store.getSelectedScheduleClassId();
                 const activeSchedule = store.getActiveSchedule();
+                const highlighted = store.getScheduleHighlightedSubject() || '';
 
+                // 提取当前课表中出现的所有科目单字
+                const subjectSet = new Set();
+                const grid = activeSchedule.grid || {};
+                Object.values(grid).forEach(cell => {
+                    const name = cell.char || cell.name || (cell.customName ? cell.customName.charAt(0) : '');
+                    if (name && name !== '—') subjectSet.add(name);
+                });
+                if (subjectSet.size === 0) {
+                    ['语', '数', '英', '物', '化', '生', '政', '历', '地', '体', '音', '美', '信', '班'].forEach(s => subjectSet.add(s));
+                }
+                const subjectsList = Array.from(subjectSet);
+
+                let classCardsHtml = '';
                 if (library && library.length > 0) {
-                    classComparisonContainer.innerHTML = library.map(cls => {
+                    classCardsHtml = library.map(cls => {
                         const isSelected = cls.id === selectedId || cls.shortName === selectedId || cls.name === selectedId;
                         const courseCount = cls.totalCourses || Object.keys(cls.grid || {}).length;
                         const teacherText = cls.teacher ? `班主任: ${escapeHtml(cls.teacher)}` : (cls.grade || '班级课表');
@@ -112,10 +126,9 @@
                         `;
                     }).join('');
                 } else {
-                    // 单班内置或尚未导入
                     const name = activeSchedule.name || activeSchedule.shortName || store.getState().currentClass || '默认课表';
                     const courseCount = Object.keys(activeSchedule.grid || {}).length;
-                    classComparisonContainer.innerHTML = `
+                    classCardsHtml = `
                         <button type="button" class="quick-class-card active" data-schedule-class-id="${escapeHtml(activeSchedule.id || 'default')}">
                             <div class="quick-class-card-head">
                                 <strong class="quick-class-name">${escapeHtml(name)}</strong>
@@ -126,19 +139,34 @@
                             </div>
                             <span class="quick-class-progress"><i style="width:100%"></i></span>
                         </button>
-                        <button type="button" class="quick-class-card" id="quick-schedule-import-trigger" style="border-style:dashed; background:rgba(27,56,49,0.03);">
-                            <div class="quick-class-card-head">
-                                <strong class="quick-class-name" style="display:flex;align-items:center;gap:4px;">
-                                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6m0 0l-3 3m3-3l3 3"/></svg>
-                                    导入全校课表
-                                </strong>
-                            </div>
-                            <div class="quick-class-card-metrics">
-                                <span class="quick-class-label" style="text-align:left; font-size:11px;">支持 .xlsx 工作簿</span>
-                            </div>
-                        </button>
                     `;
                 }
+
+                const chipsHtml = `
+                    <button type="button" class="quick-highlight-chip ${!highlighted ? 'active' : ''}" data-highlight-subject="">
+                        全部
+                    </button>
+                    ${subjectsList.map(sub => `
+                        <button type="button" class="quick-highlight-chip ${highlighted === sub ? 'active' : ''}" data-highlight-subject="${escapeHtml(sub)}">
+                            ${escapeHtml(sub)}
+                        </button>
+                    `).join('')}
+                `;
+
+                classComparisonContainer.innerHTML = `
+                    <div class="quick-schedule-cards-grid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px; width:100%;">
+                        ${classCardsHtml}
+                    </div>
+                    <div class="quick-highlight-section">
+                        <div class="quick-highlight-header">
+                            <span class="quick-highlight-title">突出显示科目</span>
+                            ${highlighted ? `<span class="quick-highlight-hint">当前高亮: ${escapeHtml(highlighted)}</span>` : ''}
+                        </div>
+                        <div class="quick-highlight-chips">
+                            ${chipsHtml}
+                        </div>
+                    </div>
+                `;
                 return;
             }
 
@@ -227,10 +255,17 @@
                 closeDropdown();
             });
         });
-
-        // 2. 班级切换点击（支持作业班级与课表班级切换）
+        // 2. 班级切换与科目高亮点击（支持作业班级、课表班级与科目突出显示）
         if (classComparisonContainer) {
             classComparisonContainer.addEventListener('click', (e) => {
+                const chip = e.target.closest('[data-highlight-subject]');
+                if (chip) {
+                    const targetSubject = chip.dataset.highlightSubject || '';
+                    store.setScheduleHighlightedSubject(targetSubject);
+                    renderClassCards();
+                    return;
+                }
+
                 const schedImportBtn = e.target.closest('#quick-schedule-import-trigger');
                 if (schedImportBtn) {
                     closeDropdown();
@@ -517,9 +552,7 @@
                 updateRightNavButton();
                 renderViewSwitcher();
                 updateModeButton();
-                updateProgress();
-                if (taskDropdown.classList.contains('show')) renderClassCards();
-            } else if (eventType === 'SCHEDULE_CLASS_CHANGED' || eventType === 'SCHEDULE_LIBRARY_UPDATED' || eventType === 'SCHEDULE_CHANGED') {
+            } else if (eventType === 'SCHEDULE_CLASS_CHANGED' || eventType === 'SCHEDULE_LIBRARY_UPDATED' || eventType === 'SCHEDULE_CHANGED' || eventType === 'SCHEDULE_HIGHLIGHT_CHANGED') {
                 if (store.getViewMode() === 'schedule') {
                     updateHeaderTitle();
                     if (taskDropdown.classList.contains('show')) renderClassCards();

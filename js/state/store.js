@@ -513,7 +513,8 @@
                 customFont: '',
                 scheduleLibrary: JSON.parse(JSON.stringify(INITIAL_SCHEDULE_LIBRARY || [])),
                 scheduleLibraryTitle: '畲江中学2026-2027学年第一学期初二课程表',
-                selectedScheduleClassId: 'class_sched_chu2_3'
+                selectedScheduleClassId: 'class_sched_chu2_3',
+                scheduleHighlightedSubject: ''
             };
             this._syncActiveClassPointers(state);
             return state;
@@ -610,6 +611,9 @@
                 }
                 if (typeof parsed.selectedScheduleClassId !== 'string' || !parsed.selectedScheduleClassId) {
                     parsed.selectedScheduleClassId = 'class_sched_chu2_3';
+                }
+                if (typeof parsed.scheduleHighlightedSubject !== 'string') {
+                    parsed.scheduleHighlightedSubject = '';
                 }
                 const validViews = ['grid', 'wide', 'seat', 'table', 'schedule', 'officers', 'duty'];
                 if (!validViews.includes(parsed.viewMode)) parsed.viewMode = 'grid';
@@ -1056,8 +1060,27 @@
             return schedule.lunchBreak;
         }
 
-        // 多班级课程表库 (Schedule Library) 相关 API
+        // 多班级课程表库 (Schedule Library) 与高亮科目相关 API
         // ==========================================
+        getScheduleHighlightedSubject() {
+            return this.state.scheduleHighlightedSubject || '';
+        }
+
+        setScheduleHighlightedSubject(subject) {
+            const trimmed = String(subject || '').trim();
+            if (this.state.scheduleHighlightedSubject === trimmed) {
+                // 再次点击相同科目则取消高亮
+                this.state.scheduleHighlightedSubject = '';
+            } else {
+                this.state.scheduleHighlightedSubject = trimmed;
+            }
+            this._scheduleStorageSave();
+            this._notify('SCHEDULE_HIGHLIGHT_CHANGED', {
+                highlightedSubject: this.state.scheduleHighlightedSubject
+            });
+            return true;
+        }
+
         getScheduleLibrary() {
             if (!Array.isArray(this.state.scheduleLibrary) || this.state.scheduleLibrary.length === 0) {
                 if (INITIAL_SCHEDULE_LIBRARY && INITIAL_SCHEDULE_LIBRARY.length > 0) {

@@ -362,7 +362,7 @@
         function render() {
             const library = store.getScheduleLibrary();
             const activeSchedule = store.getActiveSchedule();
-
+            const highlightedSubject = store.getScheduleHighlightedSubject() || '';
             // 若没有任何课表数据且无内置课表格子
             if ((!library || library.length === 0) && (!activeSchedule || !activeSchedule.grid || Object.keys(activeSchedule.grid).length === 0)) {
                 renderEmptyState();
@@ -490,14 +490,15 @@
                                                     </td>
                                                 `;
                                             }
-
                                             const rawCourseName = cellData.name || cellData.customName || '课';
                                             const singleChar = (cellData.char || rawCourseName.charAt(0) || '—').trim();
-                                            const colorClass = `course-${cellData.color || 'default'}`;
+                                            const isHighlighted = !!highlightedSubject && (singleChar === highlightedSubject || rawCourseName === highlightedSubject || (cellData.fullName && cellData.fullName.includes(highlightedSubject)));
+                                            const isDimmed = !!highlightedSubject && !isHighlighted;
+                                            const highlightClass = isHighlighted ? 'is-highlighted' : (isDimmed ? 'is-dimmed' : '');
 
                                             return `
                                                 <td class="schedule-td">
-                                                    <div class="schedule-course-card ${colorClass}" data-cell-key="${escapeHtml(cellKey)}" data-day="${escapeHtml(d.name)}" data-period="${escapeHtml(periodLabel)}">
+                                                    <div class="schedule-course-card ${highlightClass}" data-cell-key="${escapeHtml(cellKey)}" data-day="${escapeHtml(d.name)}" data-period="${escapeHtml(periodLabel)}" data-char="${escapeHtml(singleChar)}">
                                                         <span class="schedule-course-char">${escapeHtml(singleChar)}</span>
                                                     </div>
                                                 </td>
@@ -535,7 +536,7 @@
         store.subscribe((state, eventType) => {
             if (eventType === 'VIEW_MODE_CHANGED' && state.viewMode === 'schedule') {
                 render();
-            } else if (eventType === 'SCHEDULE_CLASS_CHANGED' || eventType === 'SCHEDULE_LIBRARY_UPDATED' || eventType === 'SCHEDULE_CHANGED') {
+            } else if (eventType === 'SCHEDULE_CLASS_CHANGED' || eventType === 'SCHEDULE_LIBRARY_UPDATED' || eventType === 'SCHEDULE_CHANGED' || eventType === 'SCHEDULE_HIGHLIGHT_CHANGED') {
                 if (store.getViewMode() === 'schedule') {
                     render();
                 }

@@ -1,10 +1,10 @@
-/* 课程表视图样式 (全视口零滚动设计 · 极简优雅专业版) */
+/* 课程表视图样式 (全视口零滚动设计 · 极简雅致无外框版) */
 .schedule-view {
     flex: 1;
     min-height: 0;
     height: 100%;
     overflow: hidden;
-    padding: 6px calc(6px + var(--safe-right, 0px)) calc(8px + var(--safe-bottom, 0px)) calc(6px + var(--safe-left, 0px));
+    padding: 2px calc(2px + var(--safe-right, 0px)) calc(4px + var(--safe-bottom, 0px)) calc(2px + var(--safe-left, 0px));
     animation: fadeInView 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     will-change: opacity, transform;
     display: flex;
@@ -17,15 +17,15 @@
     display: none !important;
 }
 
-/* 课程表主体表格全视口无滚动容器 */
+/* 课程表主体表格无外框全视口容器 */
 .schedule-grid-container {
     flex: 1;
     height: 100%;
     min-height: 0;
-    background: var(--surface-white);
-    border-radius: var(--radius-card, 12px);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--border-light, #e2e8f0);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
     overflow: hidden;
     position: relative;
     display: flex;
@@ -38,7 +38,7 @@
     min-width: 0;
     border-collapse: separate;
     border-spacing: 3px;
-    padding: 4px;
+    padding: 2px 4px;
     table-layout: fixed;
     box-sizing: border-box;
 }
@@ -46,7 +46,7 @@
 /* 表头单元格 */
 .schedule-th {
     background: #f8fafc;
-    color: #334155;
+    color: #475569;
     font-size: 13px;
     font-weight: 700;
     text-align: center;
@@ -133,7 +133,7 @@
     white-space: nowrap;
 }
 
-/* 特殊节次与正课行底色与样式区分 */
+/* 节次列与特殊节次区分 */
 .schedule-period-cell.type-morning {
     background: #fefce8;
     color: #854d0e;
@@ -158,18 +158,9 @@
     border: 1px solid #e2e8f0;
 }
 
-.period-row--morning {
-    background: rgba(254, 252, 232, 0.3);
-}
-
-.period-row--noon {
-    background: rgba(240, 253, 244, 0.3);
-}
-
-.period-row--afterschool {
-    background: rgba(250, 245, 255, 0.3);
-}
-
+.period-row--morning,
+.period-row--noon,
+.period-row--afterschool,
 .period-row--regular {
     background: transparent;
 }
@@ -193,7 +184,7 @@
     opacity: 0.8;
 }
 
-/* 课程单元格与单汉字卡片 */
+/* 课程单元格与极简素雅卡片 */
 .schedule-td {
     vertical-align: middle;
     padding: 0;
@@ -211,21 +202,24 @@
     justify-content: center;
     box-sizing: border-box;
     cursor: pointer;
-    transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.12s ease;
-    border: 1px solid transparent;
+    transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+    background: #ffffff;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
     user-select: none;
     position: relative;
     overflow: hidden;
 }
 
 .schedule-course-card:hover {
-    transform: scale(1.04);
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: scale(1.03);
     z-index: 2;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
 }
 
 .schedule-course-card:active {
-    transform: scale(0.95);
+    transform: scale(0.96);
 }
 
 .schedule-course-char {
@@ -236,113 +230,22 @@
     letter-spacing: 0;
 }
 
-/* 精品莫兰迪/马卡龙课程色彩主题 */
-.course-chinese {
-    background: #fee2e2;
-    color: #991b1b;
-    border-color: #fca5a5;
+/* 突出显示特定科目状态 */
+.schedule-course-card.is-highlighted {
+    background: var(--surface-dark, #1b3831) !important;
+    color: #ffffff !important;
+    border-color: var(--surface-dark, #1b3831) !important;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(27, 56, 49, 0.35);
+    transform: scale(1.04);
+    z-index: 5;
 }
 
-.course-math {
-    background: #dbeafe;
-    color: #1e40af;
-    border-color: #93c5fd;
-}
-
-.course-english {
-    background: #fef3c7;
-    color: #92400e;
-    border-color: #fcd34d;
-}
-
-.course-physics {
-    background: #e0e7ff;
-    color: #3730a3;
-    border-color: #a5b4fc;
-}
-
-.course-chemistry {
-    background: #ccfbf1;
-    color: #115e59;
-    border-color: #5eead4;
-}
-
-.course-biology {
-    background: #dcfce7;
-    color: #166534;
-    border-color: #86efac;
-}
-
-.course-politics {
-    background: #ffedd5;
-    color: #9a3412;
-    border-color: #fdba74;
-}
-
-.course-history {
-    background: #fae8ff;
-    color: #86198f;
-    border-color: #f0abfc;
-}
-
-.course-geography {
-    background: #f1f5f9;
-    color: #334155;
-    border-color: #cbd5e1;
-}
-
-.course-pe {
-    background: #e0f2fe;
-    color: #0369a1;
-    border-color: #7dd3fc;
-}
-
-.course-music {
-    background: #fdf4ff;
-    color: #a21caf;
-    border-color: #f5d0fe;
-}
-
-.course-art {
-    background: #fef2f2;
-    color: #b91c1c;
-    border-color: #fecaca;
-}
-
-.course-tech {
-    background: #ecfeff;
-    color: #155e75;
-    border-color: #67e8f9;
-}
-
-.course-class {
-    background: #f3f4f6;
-    color: #374151;
-    border-color: #d1d5db;
-}
-
-.course-morning {
-    background: #fef08a;
-    color: #854d0e;
-    border-color: #fde047;
-}
-
-.course-noon {
-    background: #bbf7d0;
-    color: #166534;
-    border-color: #86efac;
-}
-
-.course-afterschool {
-    background: #e9d5ff;
-    color: #6b21a8;
-    border-color: #d8b4fe;
-}
-
-.course-default {
-    background: #f1f5f9;
-    color: #475569;
-    border-color: #cbd5e1;
+.schedule-course-card.is-dimmed {
+    background: #f8fafc;
+    color: #94a3b8;
+    border-color: #f1f5f9;
+    opacity: 0.32;
 }
 
 .course-empty {
