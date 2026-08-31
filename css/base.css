@@ -25,7 +25,7 @@ html, body {
 
 body {
     background-color: var(--bg-page);
-    font-family: "Noto Sans SC", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "MiSans", "HarmonyOS Sans", Roboto, sans-serif;
+    font-family: var(--font-family, "Sarasa UI SC", "Sarasa Gothic SC", "更纱黑体", "Sarasa Term SC", "Sarasa Fixed SC", "Noto Sans SC", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "MiSans", "HarmonyOS Sans", Roboto, sans-serif);
     color: var(--text-dark);
     display: flex;
     flex-direction: column;
