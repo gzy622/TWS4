@@ -248,6 +248,162 @@
     opacity: 0.32;
 }
 
+/* 双班任课 / 教师总课表卡片样式 */
+.schedule-combined-card {
+    padding: 1px 2px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.schedule-combined-card-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    gap: 0;
+    line-height: 1;
+}
+
+.schedule-combined-class-badge {
+    display: inline-block;
+    font-size: 13.5px;
+    font-weight: 800;
+    line-height: 1.15;
+    text-align: center;
+    letter-spacing: -0.2px;
+}
+
+.schedule-combined-sub-badge {
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-muted, #64748b);
+    white-space: nowrap;
+    margin-top: 1px;
+}
+
+/* 班级主题调色板 (Class Themes) */
+.schedule-combined-card.class-theme-1 {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #14532d;
+}
+.schedule-combined-card.class-theme-1 .schedule-combined-class-badge {
+    color: #15803d;
+}
+.schedule-combined-card.class-theme-1 .schedule-combined-sub-badge {
+    color: #166534;
+}
+
+.schedule-combined-card.class-theme-2 {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1e3a8a;
+}
+.schedule-combined-card.class-theme-2 .schedule-combined-class-badge {
+    color: #1d4ed8;
+}
+.schedule-combined-card.class-theme-2 .schedule-combined-sub-badge {
+    color: #1e40af;
+}
+
+.schedule-combined-card.class-theme-3 {
+    background: #fefce8;
+    border-color: #fde047;
+    color: #713f12;
+}
+.schedule-combined-card.class-theme-3 .schedule-combined-class-badge {
+    color: #a16207;
+}
+.schedule-combined-card.class-theme-3 .schedule-combined-sub-badge {
+    color: #854d0e;
+}
+
+.schedule-combined-card.class-theme-4 {
+    background: #faf5ff;
+    border-color: #d8b4fe;
+    color: #581c87;
+}
+.schedule-combined-card.class-theme-4 .schedule-combined-class-badge {
+    color: #7e22ce;
+}
+.schedule-combined-card.class-theme-4 .schedule-combined-sub-badge {
+    color: #6b21a8;
+}
+
+/* 多班同时安排 (Multi-class simultaneous) */
+.schedule-combined-card.is-multi {
+    background: #fffbeb;
+    border-color: #fcd34d;
+    box-shadow: 0 1px 4px rgba(217, 119, 6, 0.12);
+}
+
+.schedule-combined-multi-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+}
+
+.schedule-combined-multi-row .schedule-combined-class-badge {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 1px 2px;
+    border-radius: 3px;
+    line-height: 1;
+}
+
+.schedule-combined-multi-row .schedule-combined-class-badge.class-theme-1 {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.schedule-combined-multi-row .schedule-combined-class-badge.class-theme-2 {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+/* 班级弹窗中的双班总览高亮卡片 */
+.schedule-combined-modal-card {
+    border: 1.5px dashed var(--surface-dark, #1b3831);
+    background: #f0fdf4;
+}
+
+.schedule-combined-modal-card .schedule-class-card-name {
+    color: #15803d;
+    font-weight: 800;
+}
+
+.schedule-combined-modal-card .schedule-class-card-teacher {
+    color: #166534;
+}
+
+.schedule-combined-modal-card .schedule-class-card-badge {
+    background: #dcfce7;
+    color: #14532d;
+    font-weight: 700;
+}
+
+.schedule-combined-modal-card.active {
+    background: var(--surface-dark, #1b3831);
+}
+
+.schedule-combined-modal-card.active .schedule-class-card-name {
+    color: #ffffff;
+}
+
+.schedule-combined-modal-card.active .schedule-class-card-teacher {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.schedule-combined-modal-card.active .schedule-class-card-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
 .course-empty {
     color: #cbd5e1;
     font-size: 11px;

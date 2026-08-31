@@ -514,7 +514,9 @@
                 scheduleLibrary: JSON.parse(JSON.stringify(INITIAL_SCHEDULE_LIBRARY || [])),
                 scheduleLibraryTitle: '畲江中学2026-2027学年第一学期初二课程表',
                 selectedScheduleClassId: 'class_sched_chu2_3',
-                scheduleHighlightedSubject: ''
+                scheduleHighlightedSubject: '',
+                scheduleTeacherSubject: '英语',
+                scheduleTeacherClassIds: []
             };
             this._syncActiveClassPointers(state);
             return state;
@@ -614,6 +616,12 @@
                 }
                 if (typeof parsed.scheduleHighlightedSubject !== 'string') {
                     parsed.scheduleHighlightedSubject = '';
+                }
+                if (typeof parsed.scheduleTeacherSubject !== 'string' || !parsed.scheduleTeacherSubject) {
+                    parsed.scheduleTeacherSubject = '英语';
+                }
+                if (!Array.isArray(parsed.scheduleTeacherClassIds)) {
+                    parsed.scheduleTeacherClassIds = [];
                 }
                 const validViews = ['grid', 'wide', 'seat', 'table', 'schedule', 'officers', 'duty'];
                 if (!validViews.includes(parsed.viewMode)) parsed.viewMode = 'grid';
@@ -1097,6 +1105,9 @@
         }
 
         getSelectedScheduleClassId() {
+            if (this.state.selectedScheduleClassId === 'combined') {
+                return 'combined';
+            }
             const lib = this.getScheduleLibrary();
             if (this.state.selectedScheduleClassId) {
                 const exists = lib.some(c => c.id === this.state.selectedScheduleClassId);
@@ -1106,6 +1117,25 @@
                 return lib[0].id;
             }
             return '';
+        }
+
+        isCombinedScheduleMode() {
+            return this.getSelectedScheduleClassId() === 'combined';
+        }
+
+        getScheduleTeacherSubject() {
+            return this.state.scheduleTeacherSubject || '英语';
+        }
+
+        setScheduleTeacherSubject(subject) {
+            const trimmed = String(subject || '').trim() || '英语';
+            this.state.scheduleTeacherSubject = trimmed;
+            this._scheduleStorageSave();
+            this._notify('SCHEDULE_TEACHER_SUBJECT_CHANGED', {
+                teacherSubject: this.state.scheduleTeacherSubject,
+                schedule: this.getActiveSchedule()
+            });
+            return true;
         }
 
         setSelectedScheduleClassId(classId) {
@@ -1119,7 +1149,200 @@
             return true;
         }
 
+        getScheduleTeacherClasses() {
+            const lib = this.getScheduleLibrary();
+            if (!lib || lib.length === 0) return [];
+            if (lib.length <= 2) return lib;
+
+            // 如果用户自定义了任教班级 ID 列表
+            if (Array.isArray(this.state.scheduleTeacherClassIds) && this.state.scheduleTeacherClassIds.length > 0) {
+                const selected = lib.filter(c => this.state.scheduleTeacherClassIds.includes(c.id));
+                if (selected.length > 0) return selected;
+            }
+
+            // 智能匹配 state.classes 中配置的班级名称
+            const appClasses = (this.state.classes || []).map(c => String(c.name || '').trim()).filter(Boolean);
+            if (appClasses.length > 0) {
+                const matched = lib.filter(c => {
+                    return appClasses.some(appClsName => {
+                        if (c.name === appClsName || c.shortName === appClsName) return true;
+                        const num1 = c.name.replace(/[^0-9一二三四五六七八九十]/g, '');
+                        const num2 = appClsName.replace(/[^0-9一二三四五六七八九十]/g, '');
+                        if (num1 && num2 && num1 === num2) {
+                            const grade1 = c.grade || (c.name.includes('初') ? '初' : (c.name.includes('高') ? '高' : ''));
+                            const grade2 = appClsName.includes('初') ? '初' : (appClsName.includes('高') ? '高' : '');
+                            if (!grade1 || !grade2 || grade1 === grade2) return true;
+                        }
+                        return false;
+                    });
+                });
+                if (matched.length > 0) return matched;
+            }
+
+            // 默认返回前 2 个班级（双班）
+            return lib.slice(0, 2);
+        }
+
+        setScheduleTeacherClassIds(classIds) {
+            this.state.scheduleTeacherClassIds = Array.isArray(classIds) ? classIds : [];
+            this._scheduleStorageSave();
+            this._notify('SCHEDULE_TEACHER_CLASSES_CHANGED', {
+                teacherClassIds: this.state.scheduleTeacherClassIds,
+                schedule: this.getActiveSchedule()
+            });
+            return true;
+        }
+
+        toggleScheduleTeacherClass(classId) {
+            const current = this.getScheduleTeacherClasses().map(c => c.id);
+            const idx = current.indexOf(classId);
+            let next;
+            if (idx >= 0) {
+                if (current.length <= 1) {
+                    return false; // 至少保留一个班级
+                }
+                next = current.filter(id => id !== classId);
+            } else {
+                next = [...current, classId];
+            }
+            return this.setScheduleTeacherClassIds(next);
+        }
+
+        getCombinedSchedule(targetSubject) {
+            const subject = String(targetSubject || this.getScheduleTeacherSubject() || '英语').trim();
+            const classes = this.getScheduleTeacherClasses();
+            const lib = this.getScheduleLibrary();
+            const effectiveClasses = classes.length > 0 ? classes : (lib.length > 0 ? lib : [this.getSchedule()]);
+
+            // 获取基准天数和节次
+            const baseClass = effectiveClasses[0] || {};
+            const days = (baseClass.days && baseClass.days.length > 0) ? baseClass.days : (INITIAL_SCHEDULE_DAYS || []);
+            const periods = (baseClass.periods && baseClass.periods.length > 0) ? baseClass.periods : (INITIAL_SCHEDULE_PERIODS || []);
+
+            const combinedGrid = {};
+            const classStats = {};
+            let totalLessons = 0;
+
+            effectiveClasses.forEach((c, idx) => {
+                classStats[c.id] = {
+                    id: c.id,
+                    name: c.name || c.shortName || `班级${idx + 1}`,
+                    shortName: c.shortName || (c.name ? c.name.replace(/[^0-9一二三四五六七八九十]/g, '') : '') || `${idx + 1}班`,
+                    teacher: c.teacher || '',
+                    grade: c.grade || '',
+                    count: 0
+                };
+            });
+            // 规范化目标科目单字与全称
+            const targetNorm = (window.TWS3?.scheduleWorkbook?.normalizeSubject)
+                ? window.TWS3.scheduleWorkbook.normalizeSubject(subject)
+                : null;
+            const targetChar = targetNorm ? targetNorm.char : subject.charAt(0);
+            const targetFull = targetNorm ? targetNorm.fullName : subject;
+
+            function isMatchSubject(cell) {
+                if (!cell) return false;
+                const cellChar = cell.char || cell.name || '';
+                const cellFull = cell.fullName || '';
+                if (cellChar === targetChar || cellChar === subject || cellChar === targetFull) return true;
+                if (cellFull === targetFull || cellFull === subject || (cellFull && cellFull.includes(subject))) return true;
+                if (cell.name === targetChar || cell.name === targetFull || cell.name === subject) return true;
+                if (cell.customName && cell.customName.includes(subject)) return true;
+                if (cell.courseId && subject === '英语' && (cell.courseId === 'c_yy' || cell.courseId.includes('yy'))) return true;
+                return false;
+            }
+
+            // 遍历所有星期和节次，聚合所有班级在该时段的排课
+            days.forEach(day => {
+                periods.forEach(p => {
+                    const pName = String(p.name || p.id || '').replace(/^p_/, '');
+                    const matchedClasses = [];
+
+                    classes.forEach((cls, classIdx) => {
+                        const grid = cls.grid || {};
+                        let cell = grid[`${day.id}_${p.id}`] || grid[`${day.id}_p_${pName}`] || grid[`${day.id}_${pName}`];
+                        if (isMatchSubject(cell)) {
+                            matchedClasses.push({
+                                classId: cls.id,
+                                 className: cls.name || cls.shortName,
+                                classShortName: cls.shortName || (cls.name ? cls.name.replace(/[^0-9一二三四五六七八九十]/g, '') : `${classIdx + 1}班`),
+                                classIndex: classIdx,
+                                teacher: cls.teacher || '',
+                                grade: cls.grade || '',
+                                cell
+                            });
+                            if (classStats[cls.id]) {
+                                classStats[cls.id].count++;
+                            }
+                            totalLessons++;
+                        }
+                    });
+
+                    const key = `${day.id}_${p.id}`;
+                    if (matchedClasses.length === 1) {
+                        const m = matchedClasses[0];
+                        combinedGrid[key] = {
+                            type: 'single',
+                            classId: m.classId,
+                            className: m.className,
+                            classShortName: m.classShortName,
+                            classIndex: m.classIndex,
+                            teacher: m.teacher,
+                            grade: m.grade,
+                            courseId: m.cell.courseId,
+                            name: m.cell.name || targetChar,
+                            char: m.cell.char || targetChar,
+                            fullName: m.cell.fullName || targetFull,
+                            color: m.cell.color || 'english',
+                            customName: m.cell.customName || '',
+                            timeSlot: p.time || ''
+                        };
+                    } else if (matchedClasses.length > 1) {
+                        combinedGrid[key] = {
+                            type: 'multi',
+                            isConflict: false,
+                            classes: matchedClasses,
+                            classNames: matchedClasses.map(c => c.className).join('、'),
+                            shortClassNames: matchedClasses.map(c => c.classShortName).join(' · '),
+                            teachers: matchedClasses.map(c => c.teacher).filter(Boolean).join('、'),
+                            name: targetChar,
+                            char: targetChar,
+                            fullName: targetFull,
+                            color: 'english',
+                            timeSlot: p.time || ''
+                        };
+                    }
+                });
+            });
+
+            const classList = Object.values(classStats);
+            const classNamesStr = classList.map(c => c.shortName || c.name).join(' + ');
+
+            return {
+                id: 'combined',
+                isCombined: true,
+                subject,
+                subjectChar: targetChar,
+                subjectFullName: targetFull,
+                name: '双班任课课表',
+                shortName: `任课总览 (${classNamesStr})`,
+                grade: `${classNamesStr} · ${targetFull}`,
+                sheet: '总览',
+                teacher: classList.map(c => c.teacher).filter(Boolean).join(' / ') || '任课教师',
+                days,
+                periods,
+                lunchBreak: baseClass.lunchBreak || { enabled: true, afterPeriod: 4, name: '午间休息' },
+                grid: combinedGrid,
+                totalCourses: totalLessons,
+                classStats: classList,
+                updatedAt: getUtcNowIso()
+            };
+        }
+
         getActiveSchedule() {
+            if (this.isCombinedScheduleMode()) {
+                return this.getCombinedSchedule();
+            }
             const lib = this.getScheduleLibrary();
             if (lib && lib.length > 0) {
                 const selectedId = this.getSelectedScheduleClassId();

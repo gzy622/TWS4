@@ -93,23 +93,42 @@
                 const selectedId = store.getSelectedScheduleClassId();
                 const activeSchedule = store.getActiveSchedule();
                 const highlighted = store.getScheduleHighlightedSubject() || '';
+                const teacherSubject = store.getScheduleTeacherSubject ? store.getScheduleTeacherSubject() : '英语';
+                const isCombined = store.isCombinedScheduleMode ? store.isCombinedScheduleMode() : (selectedId === 'combined');
 
-                // 提取当前课表中出现的所有科目单字
-                const subjectSet = new Set();
-                const grid = activeSchedule.grid || {};
-                Object.values(grid).forEach(cell => {
-                    const name = cell.char || cell.name || (cell.customName ? cell.customName.charAt(0) : '');
-                    if (name && name !== '—') subjectSet.add(name);
-                });
-                if (subjectSet.size === 0) {
-                    ['语', '数', '英', '物', '化', '生', '政', '历', '地', '体', '音', '美', '信', '班'].forEach(s => subjectSet.add(s));
+                // 提取课表中出现的所有科目
+                const subjectSet = new Set(['英语', '语文', '数学', '物理', '生物', '政治', '历史', '地理', '体育', '音乐', '美术', '信息', '通用', '班会']);
+                if (library && library.length > 0) {
+                    library.forEach(cls => {
+                        Object.values(cls.grid || {}).forEach(cell => {
+                            const name = cell.fullName || cell.name;
+                            if (name && name !== '—') subjectSet.add(name);
+                        });
+                    });
                 }
                 const subjectsList = Array.from(subjectSet);
 
                 let classCardsHtml = '';
                 if (library && library.length > 0) {
-                    classCardsHtml = library.map(cls => {
-                        const isSelected = cls.id === selectedId || cls.shortName === selectedId || cls.name === selectedId;
+                    const teacherClasses = store.getScheduleTeacherClasses ? store.getScheduleTeacherClasses() : library;
+                    const combinedSchedule = store.getCombinedSchedule ? store.getCombinedSchedule(teacherSubject) : null;
+                    const totalCombinedCount = combinedSchedule ? (combinedSchedule.totalCourses || 0) : 0;
+                    const classNamesStr = (teacherClasses.length > 0 ? teacherClasses : library).map(c => c.shortName || c.name).join(' · ');
+                    const combinedCardHtml = `
+                        <button type="button" class="quick-class-card quick-combined-card ${isCombined ? 'active' : ''}" data-schedule-class-id="combined" style="grid-column: 1 / -1; margin-bottom: 2px;">
+                            <div class="quick-class-card-head">
+                                <strong class="quick-class-name">📋 双班任课总览</strong>
+                                <span class="quick-class-badge">${totalCombinedCount} 节 · ${escapeHtml(teacherSubject)}</span>
+                            </div>
+                            <div class="quick-class-card-metrics">
+                                <span class="quick-class-label" style="text-align:left; font-size:11px;">合并 ${escapeHtml(classNamesStr)} (${escapeHtml(teacherSubject)}周课表)</span>
+                            </div>
+                            <span class="quick-class-progress"><i style="width:${isCombined ? 100 : 0}%"></i></span>
+                        </button>
+                    `;
+
+                    const singleClassCardsHtml = library.map(cls => {
+                        const isSelected = !isCombined && (cls.id === selectedId || cls.shortName === selectedId || cls.name === selectedId);
                         const courseCount = cls.totalCourses || Object.keys(cls.grid || {}).length;
                         const teacherText = cls.teacher ? `班主任: ${escapeHtml(cls.teacher)}` : (cls.grade || '班级课表');
                         return `
@@ -125,6 +144,8 @@
                             </button>
                         `;
                     }).join('');
+
+                    classCardsHtml = combinedCardHtml + singleClassCardsHtml;
                 } else {
                     const name = activeSchedule.name || activeSchedule.shortName || store.getState().currentClass || '默认课表';
                     const courseCount = Object.keys(activeSchedule.grid || {}).length;
@@ -142,25 +163,64 @@
                     `;
                 }
 
-                const chipsHtml = `
-                    <button type="button" class="quick-highlight-chip ${!highlighted ? 'active' : ''}" data-highlight-subject="">
-                        全部
-                    </button>
-                    ${subjectsList.map(sub => `
-                        <button type="button" class="quick-highlight-chip ${highlighted === sub ? 'active' : ''}" data-highlight-subject="${escapeHtml(sub)}">
-                            ${escapeHtml(sub)}
+                let chipsHtml = '';
+                let sectionTitle = '';
+                if (isCombined) {
+                    sectionTitle = `任课科目切换 (当前显示: ${escapeHtml(teacherSubject)})`;
+                    chipsHtml = subjectsList.map(sub => {
+                        const normSub = sub.replace(/（.*）|\(.*\)/g, '');
+                        const isActive = teacherSubject === sub || teacherSubject === normSub || sub.startsWith(teacherSubject) || teacherSubject.startsWith(sub);
+                        return `
+                            <button type="button" class="quick-highlight-chip ${isActive ? 'active' : ''}" data-teacher-subject="${escapeHtml(sub)}">
+                                ${escapeHtml(sub)}
+                            </button>
+                        `;
+                    }).join('');
+                } else {
+                    sectionTitle = '突出显示科目';
+                    chipsHtml = `
+                        <button type="button" class="quick-highlight-chip ${!highlighted ? 'active' : ''}" data-highlight-subject="">
+                            全部
                         </button>
-                    `).join('')}
-                `;
+                        ${subjectsList.map(sub => `
+                            <button type="button" class="quick-highlight-chip ${highlighted === sub || (sub.length > 1 && highlighted === sub.charAt(0)) ? 'active' : ''}" data-highlight-subject="${escapeHtml(sub)}">
+                                ${escapeHtml(sub)}
+                            </button>
+                        `).join('')}
+                    `;
+                }
+                let classTogglesSection = '';
+                if (isCombined && library.length > 2) {
+                    const teacherClasses = store.getScheduleTeacherClasses ? store.getScheduleTeacherClasses() : library;
+                    const teacherClassIds = new Set(teacherClasses.map(c => c.id));
+                    classTogglesSection = `
+                        <div class="quick-highlight-section" style="margin-top: 6px;">
+                            <div class="quick-highlight-header">
+                                <span class="quick-highlight-title">任教班级选择 (${teacherClasses.length}/${library.length})</span>
+                            </div>
+                            <div class="quick-highlight-chips">
+                                ${library.map(cls => {
+                                    const isChecked = teacherClassIds.has(cls.id);
+                                    return `
+                                        <button type="button" class="quick-highlight-chip ${isChecked ? 'active' : ''}" data-toggle-teacher-class="${escapeHtml(cls.id)}">
+                                            ${isChecked ? '✓ ' : ''}${escapeHtml(cls.shortName || cls.name)}
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
 
                 classComparisonContainer.innerHTML = `
                     <div class="quick-schedule-cards-grid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px; width:100%;">
                         ${classCardsHtml}
                     </div>
+                    ${classTogglesSection}
                     <div class="quick-highlight-section">
                         <div class="quick-highlight-header">
-                            <span class="quick-highlight-title">突出显示科目</span>
-                            ${highlighted ? `<span class="quick-highlight-hint">当前高亮: ${escapeHtml(highlighted)}</span>` : ''}
+                            <span class="quick-highlight-title">${escapeHtml(sectionTitle)}</span>
+                            ${!isCombined && highlighted ? `<span class="quick-highlight-hint">当前高亮: ${escapeHtml(highlighted)}</span>` : ''}
                         </div>
                         <div class="quick-highlight-chips">
                             ${chipsHtml}
@@ -258,6 +318,25 @@
         // 2. 班级切换与科目高亮点击（支持作业班级、课表班级与科目突出显示）
         if (classComparisonContainer) {
             classComparisonContainer.addEventListener('click', (e) => {
+                const toggleClassBtn = e.target.closest('[data-toggle-teacher-class]');
+                if (toggleClassBtn) {
+                    const classId = toggleClassBtn.dataset.toggleTeacherClass;
+                    if (classId) {
+                        store.toggleScheduleTeacherClass(classId);
+                        renderClassCards();
+                        updateHeaderTitle();
+                    }
+                    return;
+                }
+
+                const teacherChip = e.target.closest('[data-teacher-subject]');
+                if (teacherChip) {
+                    const targetSubject = teacherChip.dataset.teacherSubject || '英语';
+                    store.setScheduleTeacherSubject(targetSubject);
+                    renderClassCards();
+                    updateHeaderTitle();
+                    return;
+                }
                 const chip = e.target.closest('[data-highlight-subject]');
                 if (chip) {
                     const targetSubject = chip.dataset.highlightSubject || '';
@@ -461,6 +540,21 @@
             if (isScheduleView) {
                 if (progressWrapper) progressWrapper.style.display = 'none';
                 const activeSchedule = store.getActiveSchedule();
+                const isCombined = store.isCombinedScheduleMode ? store.isCombinedScheduleMode() : (store.getSelectedScheduleClassId() === 'combined');
+
+                if (isCombined) {
+                    const teacherSub = store.getScheduleTeacherSubject ? store.getScheduleTeacherSubject() : '英语';
+                    const totalLessons = activeSchedule.totalCourses || 0;
+                    currentTaskNameEl.innerHTML = `
+                        <span class="nav-task-title-text">双班任课课表</span>
+                        <span class="nav-badges-wrap">
+                            <span class="nav-class-badge">${escapeHtml(teacherSub)}</span>
+                            <span class="nav-subject-badge">共${totalLessons}节</span>
+                        </span>
+                    `;
+                    return;
+                }
+
                 const currentClass = store.getState().currentClass || '班级';
                 const className = activeSchedule.name || activeSchedule.shortName || currentClass;
                 const gradeName = activeSchedule.grade || '课表';
@@ -552,7 +646,7 @@
                 updateRightNavButton();
                 renderViewSwitcher();
                 updateModeButton();
-            } else if (eventType === 'SCHEDULE_CLASS_CHANGED' || eventType === 'SCHEDULE_LIBRARY_UPDATED' || eventType === 'SCHEDULE_CHANGED' || eventType === 'SCHEDULE_HIGHLIGHT_CHANGED') {
+            } else if (eventType === 'SCHEDULE_CLASS_CHANGED' || eventType === 'SCHEDULE_LIBRARY_UPDATED' || eventType === 'SCHEDULE_CHANGED' || eventType === 'SCHEDULE_HIGHLIGHT_CHANGED' || eventType === 'SCHEDULE_TEACHER_SUBJECT_CHANGED' || eventType === 'SCHEDULE_TEACHER_CLASSES_CHANGED') {
                 if (store.getViewMode() === 'schedule') {
                     updateHeaderTitle();
                     if (taskDropdown.classList.contains('show')) renderClassCards();

@@ -158,6 +158,63 @@
         function openDetailModal(course, dayName, periodName, schedule) {
             const titleEl = detailModal.querySelector('#schedule-detail-course-title');
             const listEl = detailModal.querySelector('#schedule-detail-info-list');
+            const isCombined = schedule.isCombined || course.type === 'single' || course.type === 'multi';
+
+            if (isCombined) {
+                if (titleEl) {
+                    titleEl.textContent = `${course.fullName || course.name || '任课'} 安排详情`;
+                }
+                if (listEl) {
+                    const timeSlot = course.timeSlot || DEFAULT_PERIOD_TIMES[periodName] || DEFAULT_PERIOD_TIMES[course.periodId] || `第 ${periodName} 节`;
+                    let classDisplay = '';
+                    let teacherDisplay = '';
+                    if (course.type === 'single') {
+                        classDisplay = course.className || course.classShortName || '任教班级';
+                        teacherDisplay = course.teacher || '未设置';
+                    } else if (course.type === 'multi') {
+                        classDisplay = `${course.classNames || '多班级'} (同时安排)`;
+                        teacherDisplay = course.teachers || '未设置';
+                    } else {
+                        classDisplay = schedule.name || schedule.shortName;
+                        teacherDisplay = schedule.teacher || '未设置';
+                    }
+
+                    const statsHtml = Array.isArray(schedule.classStats) && schedule.classStats.length > 0
+                        ? `
+                        <div class="schedule-detail-item" style="align-items: flex-start;">
+                            <span class="schedule-detail-label">周课时统计</span>
+                            <div class="schedule-detail-val" style="display:flex; flex-direction:column; gap:2px;">
+                                ${schedule.classStats.map(c => `<span>${escapeHtml(c.name)}: <strong>${c.count}</strong> 节</span>`).join('')}
+                                <span style="margin-top:2px; color:var(--surface-dark, #1b3831); font-weight:700;">共计: ${schedule.totalCourses} 节课</span>
+                            </div>
+                        </div>`
+                        : '';
+
+                    listEl.innerHTML = `
+                        <div class="schedule-detail-item">
+                            <span class="schedule-detail-label">任教班级</span>
+                            <span class="schedule-detail-val"><strong>${escapeHtml(classDisplay)}</strong></span>
+                        </div>
+                        <div class="schedule-detail-item">
+                            <span class="schedule-detail-label">任课科目</span>
+                            <span class="schedule-detail-val">${escapeHtml(course.fullName || course.name || schedule.subject || '英语')}</span>
+                        </div>
+                        <div class="schedule-detail-item">
+                            <span class="schedule-detail-label">上课时间</span>
+                            <span class="schedule-detail-val">${escapeHtml(dayName)} · ${escapeHtml(periodName)} (${escapeHtml(timeSlot)})</span>
+                        </div>
+                        <div class="schedule-detail-item">
+                            <span class="schedule-detail-label">班主任</span>
+                            <span class="schedule-detail-val">${escapeHtml(teacherDisplay)}</span>
+                        </div>
+                        ${statsHtml}
+                    `;
+                }
+                detailModal.classList.add('show');
+                return;
+            }
+
+            // 单班常规弹窗
             if (titleEl) {
                 titleEl.textContent = `${course.fullName || course.name} 课程详情`;
             }
@@ -283,6 +340,24 @@
             }
 
             if (gridEl) {
+                const isCombined = currentSelectedId === 'combined';
+                const teacherSubject = store.getScheduleTeacherSubject ? store.getScheduleTeacherSubject() : '英语';
+                const teacherClasses = store.getScheduleTeacherClasses ? store.getScheduleTeacherClasses() : library;
+                const combinedSchedule = store.getCombinedSchedule ? store.getCombinedSchedule(teacherSubject) : null;
+                const combinedCount = combinedSchedule ? (combinedSchedule.totalCourses || 0) : 0;
+                const classNames = (teacherClasses.length > 0 ? teacherClasses : library).map(c => c.shortName || c.name).join(' + ');
+
+                const combinedCardHtml = `
+                    <button type="button" class="schedule-class-card-btn schedule-combined-modal-card ${isCombined ? 'active' : ''}" data-class-id="combined" style="grid-column: 1 / -1; margin-bottom: 4px;">
+                        <div class="schedule-class-card-btn-head">
+                            <span class="schedule-class-card-name">📋 双班任课总览 (${escapeHtml(classNames)})</span>
+                            ${isCombined ? '<span class="schedule-class-active-dot" title="当前选中"></span>' : ''}
+                        </div>
+                        <span class="schedule-class-card-teacher">合并显示任教班级排课（当前科目：${escapeHtml(teacherSubject)}）</span>
+                        <span class="schedule-class-card-badge">${combinedCount} 节课 · 任课总课表</span>
+                    </button>
+                `;
+
                 const filtered = library.filter(c => {
                     if (activeGradeFilter !== '全部' && c.grade !== activeGradeFilter) {
                         return false;
@@ -294,13 +369,8 @@
                     return true;
                 });
 
-                if (filtered.length === 0) {
-                    gridEl.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 24px; color: var(--text-muted); font-size:12.5px;">无匹配班级</div>`;
-                    return;
-                }
-
-                gridEl.innerHTML = filtered.map(c => {
-                    const isSelected = c.id === currentSelectedId;
+                const classCardsHtml = filtered.map(c => {
+                    const isSelected = !isCombined && (c.id === currentSelectedId);
                     return `
                         <button type="button" class="schedule-class-card-btn ${isSelected ? 'active' : ''}" data-class-id="${escapeHtml(c.id)}">
                             <div class="schedule-class-card-btn-head">
@@ -312,6 +382,8 @@
                         </button>
                     `;
                 }).join('');
+
+                gridEl.innerHTML = (activeGradeFilter === '全部' && !classSearchKeyword ? combinedCardHtml : '') + (filtered.length === 0 ? `<div style="grid-column: 1/-1; text-align:center; padding: 24px; color: var(--text-muted); font-size:12.5px;">无匹配班级</div>` : classCardsHtml);
 
                 gridEl.querySelectorAll('.schedule-class-card-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
@@ -483,13 +555,44 @@
                                                 cellData = grid[`${d.id}_p_${pName}`] || grid[`${d.id}_${pName}`];
                                             }
 
-                                            if (!cellData || (!cellData.name && !cellData.courseId && !cellData.customName)) {
+                                            if (!cellData || (!cellData.name && !cellData.courseId && !cellData.customName && !cellData.type)) {
                                                 return `
                                                     <td class="schedule-td">
                                                         <div class="course-empty">—</div>
                                                     </td>
                                                 `;
                                             }
+
+                                            if (activeSchedule.isCombined) {
+                                                if (cellData.type === 'single') {
+                                                    const themeIdx = ((cellData.classIndex || 0) % 4) + 1;
+                                                    return `
+                                                        <td class="schedule-td">
+                                                            <div class="schedule-course-card schedule-combined-card class-theme-${themeIdx}" data-cell-key="${escapeHtml(cellKey)}" data-day="${escapeHtml(d.name)}" data-period="${escapeHtml(periodLabel)}">
+                                                                <div class="schedule-combined-card-inner">
+                                                                    <span class="schedule-combined-class-badge">${escapeHtml(cellData.classShortName || cellData.className)}</span>
+                                                                    <span class="schedule-combined-sub-badge">${escapeHtml(cellData.fullName || cellData.name || '英语')}</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    `;
+                                                }
+                                                if (cellData.type === 'multi') {
+                                                    return `
+                                                        <td class="schedule-td">
+                                                            <div class="schedule-course-card schedule-combined-card is-multi" data-cell-key="${escapeHtml(cellKey)}" data-day="${escapeHtml(d.name)}" data-period="${escapeHtml(periodLabel)}">
+                                                                <div class="schedule-combined-card-inner">
+                                                                    <div class="schedule-combined-multi-row">
+                                                                        ${(cellData.classes || []).map(c => `<span class="schedule-combined-class-badge class-theme-${((c.classIndex || 0) % 4) + 1}">${escapeHtml(c.classShortName)}</span>`).join('')}
+                                                                    </div>
+                                                                    <span class="schedule-combined-sub-badge">${escapeHtml(periodChar === '早' ? '早读' : (cellData.fullName || '同时'))}</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    `;
+                                                }
+                                            }
+
                                             const rawCourseName = cellData.name || cellData.customName || '课';
                                             const singleChar = (cellData.char || rawCourseName.charAt(0) || '—').trim();
                                             const isHighlighted = !!highlightedSubject && (singleChar === highlightedSubject || rawCourseName === highlightedSubject || (cellData.fullName && cellData.fullName.includes(highlightedSubject)));
@@ -536,7 +639,7 @@
         store.subscribe((state, eventType) => {
             if (eventType === 'VIEW_MODE_CHANGED' && state.viewMode === 'schedule') {
                 render();
-            } else if (eventType === 'SCHEDULE_CLASS_CHANGED' || eventType === 'SCHEDULE_LIBRARY_UPDATED' || eventType === 'SCHEDULE_CHANGED' || eventType === 'SCHEDULE_HIGHLIGHT_CHANGED') {
+            } else if (eventType === 'SCHEDULE_CLASS_CHANGED' || eventType === 'SCHEDULE_LIBRARY_UPDATED' || eventType === 'SCHEDULE_CHANGED' || eventType === 'SCHEDULE_HIGHLIGHT_CHANGED' || eventType === 'SCHEDULE_TEACHER_SUBJECT_CHANGED' || eventType === 'SCHEDULE_TEACHER_CLASSES_CHANGED') {
                 if (store.getViewMode() === 'schedule') {
                     render();
                 }

@@ -414,6 +414,43 @@
     background: #86b99f;
 }
 
+.quick-class-card.quick-combined-card {
+    background: #f0fdf4;
+    border: 1.5px dashed #86efac;
+}
+
+.quick-class-card.quick-combined-card .quick-class-name {
+    color: #15803d;
+}
+
+.quick-class-card.quick-combined-card .quick-class-badge {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.quick-class-card.quick-combined-card .quick-class-label {
+    color: #15803d;
+}
+
+.quick-class-card.quick-combined-card.active {
+    background: var(--surface-dark, #1b3831);
+    border-style: solid;
+    border-color: var(--surface-dark, #1b3831);
+}
+
+.quick-class-card.quick-combined-card.active .quick-class-name {
+    color: #ffffff;
+}
+
+.quick-class-card.quick-combined-card.active .quick-class-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: #e2f7ea;
+}
+
+.quick-class-card.quick-combined-card.active .quick-class-label {
+    color: #b6dfc4;
+}
+
 
 /* 2. 视图与模式控制行 */
 .quick-controls-row {
