@@ -107,7 +107,7 @@
         const settingsView = document.getElementById('settings-view');
         if (settingsView && settingsView.classList.contains('show')) {
             if (window.TWS3.drawer && typeof window.TWS3.drawer.closeSettingsView === 'function') {
-                window.TWS3.drawer.closeSettingsView();
+                window.TWS3.drawer.closeSettingsView(true);
             } else {
                 settingsView.classList.remove('show');
             }
@@ -206,4 +206,5 @@
     window.TWS3.initBackHandler = initBackHandler;
     window.TWS3.handleBackStep = handleBackStep;
     window.TWS3.onSystemBackPressed = onSystemBackPressed;
+    window.TWS3.pushGuardState = pushGuardState;
 })();

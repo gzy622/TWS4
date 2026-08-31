@@ -522,10 +522,17 @@
                 settingsView.classList.add('show');
                 const scrollArea = settingsView.querySelector('.settings-scroll-area');
                 if (scrollArea) scrollArea.scrollTop = 0;
+                if (window.TWS3.pushGuardState) {
+                    window.TWS3.pushGuardState();
+                }
             }
         }
-        function closeSettingsView() {
+
+        function closeSettingsView(reopenDrawer = true) {
             if (settingsView) settingsView.classList.remove('show');
+            if (reopenDrawer) {
+                toggleDrawer(true);
+            }
         }
 
         function isSettingsViewOpen() {
@@ -540,7 +547,7 @@
 
         if (settingsBackBtn) {
             settingsBackBtn.addEventListener('click', () => {
-                closeSettingsView();
+                closeSettingsView(true);
             });
         }
 
