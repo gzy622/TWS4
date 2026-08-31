@@ -53,29 +53,20 @@
                         </button>
                     </div>
 
-                    <div class="quick-actions-block">
-                        <div class="quick-mode-segmented" role="group" aria-label="操作模式切换">
-                            <button type="button" class="quick-mode-segment-btn" data-mode="check" title="切换至登记模式">
-                                <svg viewBox="0 0 24 24">
-                                    <polyline points="9 11 12 14 22 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                <span>登记</span>
-                            </button>
-                            <button type="button" class="quick-mode-segment-btn" data-mode="grade" title="切换至打分模式">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M12 20h9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                <span>打分</span>
-                            </button>
-                        </div>
-
-                        <button type="button" class="quick-new-task-btn" id="quick-new-task-btn" title="创建新作业">
+                    <div class="quick-mode-segmented" role="group" aria-label="操作模式切换">
+                        <button type="button" class="quick-mode-segment-btn" data-mode="check" title="切换至登记模式">
                             <svg viewBox="0 0 24 24">
-                                <path d="M12 5v14m-7-7h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+                                <polyline points="9 11 12 14 22 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                            <span>新建</span>
+                            <span>登记</span>
+                        </button>
+                        <button type="button" class="quick-mode-segment-btn" data-mode="grade" title="切换至打分模式">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 20h9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>打分</span>
                         </button>
                     </div>
                 </div>
@@ -87,7 +78,7 @@
         const viewButtons = taskDropdown.querySelectorAll('.quick-view-btn');
         const classComparisonContainer = taskDropdown.querySelector('#quick-class-comparison');
         const modeSegmentButtons = taskDropdown.querySelectorAll('.quick-mode-segment-btn');
-        const newTaskBtn = taskDropdown.querySelector('#quick-new-task-btn');
+        const navNewTaskBtn = document.getElementById('nav-new-task-btn');
 
         // 渲染班级卡片
         function renderClassCards() {
@@ -175,10 +166,11 @@
             });
         });
 
-        // 4. 新建作业按钮点击
-        if (newTaskBtn) {
-            newTaskBtn.addEventListener('click', (e) => {
+        // 4. 顶栏新建作业按钮点击
+        if (navNewTaskBtn) {
+            navNewTaskBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                closeDropdown();
                 openNewTaskModal();
             });
         }
@@ -295,12 +287,6 @@
             }
         }
 
-        if (newTaskBtn) {
-            newTaskBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                openNewTaskModal();
-            });
-        }
 
         if (newTaskCloseBtn) newTaskCloseBtn.addEventListener('click', closeNewTaskModal);
         if (newTaskCancelBtn) newTaskCancelBtn.addEventListener('click', closeNewTaskModal);
