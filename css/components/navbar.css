@@ -17,6 +17,7 @@
 }
 
 .nav-icon {
+    display: flex;
     width: 34px;
     height: 34px;
     align-items: center;
