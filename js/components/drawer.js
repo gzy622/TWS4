@@ -718,16 +718,18 @@
                         ${escapeHtml(p.preview)}
                     </div>
                 `;
-                card.addEventListener('click', () => {
+                card.addEventListener('click', async () => {
                     if (p.id === 'custom') {
                         if (fontCustomSection) fontCustomSection.style.display = 'flex';
                         if (fontCustomInput) {
                             fontCustomInput.value = currentCustomFont;
                             fontCustomInput.focus();
                         }
+                        await fm.preparePreset('custom', currentCustomFont);
                         store.setFontSettings({ preset: 'custom', customFont: currentCustomFont });
                     } else {
                         if (fontCustomSection) fontCustomSection.style.display = 'none';
+                        await fm.preparePreset(p.id);
                         store.setFontSettings({ preset: p.id, customFont: '' });
                         showToast(`已切换界面字体：${p.name}`);
                     }
@@ -761,12 +763,13 @@
             });
         }
         if (fontCustomApplyBtn) {
-            fontCustomApplyBtn.addEventListener('click', () => {
+            fontCustomApplyBtn.addEventListener('click', async () => {
                 const val = fontCustomInput ? fontCustomInput.value.trim() : '';
                 if (!val) {
                     showToast('请输入自定义字体名称');
                     return;
                 }
+                await window.TWS3.fontManager.preparePreset('custom', val);
                 store.setFontSettings({ preset: 'custom', customFont: val });
                 showToast(`已应用自定义字体：${val}`);
                 renderFontModal();
@@ -781,11 +784,12 @@
             });
         }
         if (fontCustomSuggestions) {
-            fontCustomSuggestions.addEventListener('click', (e) => {
+            fontCustomSuggestions.addEventListener('click', async (e) => {
                 const tag = e.target.closest('.font-suggest-tag');
                 if (tag && tag.dataset.font) {
                     const fontName = tag.dataset.font;
                     if (fontCustomInput) fontCustomInput.value = fontName;
+                    await window.TWS3.fontManager.preparePreset('custom', fontName);
                     store.setFontSettings({ preset: 'custom', customFont: fontName });
                     showToast(`已应用自定义字体：${fontName}`);
                     renderFontModal();

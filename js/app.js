@@ -120,6 +120,15 @@
             if (logger && logger.initLogger) {
                 logger.initLogger();
             }
+            const isNative = window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function'
+                ? window.Capacitor.isNativePlatform()
+                : false;
+            if (!isNative && 'serviceWorker' in navigator && window.isSecureContext) {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            }
+            if (navigator.storage && typeof navigator.storage.persist === 'function') {
+                navigator.storage.persist().catch(() => {});
+            }
         });
     });
 })();

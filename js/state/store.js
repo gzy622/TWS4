@@ -17,6 +17,9 @@
         INITIAL_DUTY
     } = window.TWS3.initialData;
     const STORAGE_KEY = 'tws4_grid_seat_store_v1';
+    const STORAGE_PENDING_KEY = `${STORAGE_KEY}_pending`;
+    const RECOVERY_DB_NAME = 'tws4_recovery';
+    const RECOVERY_STORE_NAME = 'snapshots';
     const OLD_STORAGE_KEYS = [];
 
     function getUtcNowIso() {
@@ -317,6 +320,7 @@
             this.listeners = new Set();
             this.storageSaveHandle = null;
             this.deviceId = this._getOrCreateDeviceId();
+            this.loadedFromLocalStorage = false;
             this.state = this._loadFromStorage() || this._getInitialState();
             // 清除旧版本存储以释放空间并避免混淆
             OLD_STORAGE_KEYS.forEach(k => {
@@ -327,6 +331,9 @@
                 if (document.visibilityState === 'hidden') this._flushStorageSave();
             });
             this._applyFontSettings(this.state.fontPreset, this.state.customFont);
+            if (!this.loadedFromLocalStorage) {
+                this._recoverFromIndexedDb();
+            }
         }
 
         _getOrCreateDeviceId() {
@@ -509,21 +516,26 @@
 
         _loadFromStorage() {
             try {
-                let raw = localStorage.getItem(STORAGE_KEY);
+                let parsed = null;
                 let isOld = false;
-                if (!raw) {
-                    for (const oldKey of OLD_STORAGE_KEYS) {
-                        const oldRaw = localStorage.getItem(oldKey);
-                        if (oldRaw) {
-                            raw = oldRaw;
-                            isOld = true;
+                const candidates = [
+                    { raw: localStorage.getItem(STORAGE_KEY), old: false },
+                    { raw: localStorage.getItem(STORAGE_PENDING_KEY), old: false },
+                    ...OLD_STORAGE_KEYS.map(key => ({ raw: localStorage.getItem(key), old: true }))
+                ];
+                for (const candidate of candidates) {
+                    if (!candidate.raw) continue;
+                    try {
+                        const value = JSON.parse(candidate.raw);
+                        if (value && typeof value === 'object') {
+                            parsed = value;
+                            isOld = candidate.old;
                             break;
                         }
-                    }
+                    } catch (_) {}
                 }
-                if (!raw) return null;
-                const parsed = JSON.parse(raw);
-                if (!parsed || typeof parsed !== 'object') return null;
+                if (!parsed) return null;
+                this.loadedFromLocalStorage = true;
 
                 // 旧格式迁移：若无 classes 数组
                 if (!Array.isArray(parsed.classes) || parsed.classes.length === 0) {
@@ -603,10 +615,72 @@
 
         _saveToStorage() {
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+                const serialized = JSON.stringify(this.state);
+                localStorage.setItem(STORAGE_PENDING_KEY, serialized);
+                localStorage.setItem(STORAGE_KEY, serialized);
+                localStorage.removeItem(STORAGE_PENDING_KEY);
+                this._saveToIndexedDb(serialized);
             } catch (e) {
-                console.error('Failed to save to localStorage', e);
+                console.error('Failed to save application state', e);
             }
+        }
+
+        _openRecoveryDb() {
+            if (!window.indexedDB) return Promise.resolve(null);
+            return new Promise(resolve => {
+                const request = window.indexedDB.open(RECOVERY_DB_NAME, 1);
+                request.onupgradeneeded = () => {
+                    const db = request.result;
+                    if (!db.objectStoreNames.contains(RECOVERY_STORE_NAME)) {
+                        db.createObjectStore(RECOVERY_STORE_NAME);
+                    }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => resolve(null);
+            });
+        }
+
+        async _saveToIndexedDb(serialized) {
+            const db = await this._openRecoveryDb();
+            if (!db) return;
+            try {
+                const transaction = db.transaction(RECOVERY_STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(RECOVERY_STORE_NAME);
+                const currentRequest = store.get('current');
+                currentRequest.onsuccess = () => {
+                    if (currentRequest.result) store.put(currentRequest.result, 'previous');
+                    store.put(serialized, 'current');
+                };
+                transaction.oncomplete = () => db.close();
+                transaction.onerror = () => db.close();
+            } catch (_) {
+                db.close();
+            }
+        }
+
+        async _recoverFromIndexedDb() {
+            const db = await this._openRecoveryDb();
+            if (!db || this.loadedFromLocalStorage) return;
+            const read = key => new Promise(resolve => {
+                const transaction = db.transaction(RECOVERY_STORE_NAME, 'readonly');
+                const request = transaction.objectStore(RECOVERY_STORE_NAME).get(key);
+                request.onsuccess = () => resolve(request.result || null);
+                request.onerror = () => resolve(null);
+            });
+            let restored = null;
+            for (const key of ['current', 'previous']) {
+                const raw = await read(key);
+                if (!raw) continue;
+                try {
+                    restored = JSON.parse(raw);
+                    if (restored && typeof restored === 'object') break;
+                } catch (_) {}
+            }
+            db.close();
+            if (!restored || this.loadedFromLocalStorage) return;
+            try {
+                this.overrideWith({ state: restored });
+            } catch (_) {}
         }
 
         _scheduleStorageSave() {

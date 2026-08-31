@@ -73,7 +73,7 @@ function syncVersion(customTime, customVer) {
     const mainCssFile = path.join(rootDir, 'css', 'main.css');
     if (fs.existsSync(mainCssFile)) {
         let mainCss = fs.readFileSync(mainCssFile, 'utf8');
-        mainCss = mainCss.replace(/(\.css\?v=)[^"']+/g, `$1${verStr}`);
+        mainCss = mainCss.replace(/(\.css\?v=)[^"'`]+/g, `$1${verStr}`);
         fs.writeFileSync(mainCssFile, mainCss, 'utf8');
     }
 
@@ -81,8 +81,9 @@ function syncVersion(customTime, customVer) {
     const indexHtmlFile = path.join(rootDir, 'index.html');
     if (fs.existsSync(indexHtmlFile)) {
         let indexHtml = fs.readFileSync(indexHtmlFile, 'utf8');
-        indexHtml = indexHtml.replace(/(\.css\?v=)[^"']+/g, `$1${verStr}`);
-        indexHtml = indexHtml.replace(/(\.js\?v=)[^"']+/g, `$1${verStr}`);
+        indexHtml = indexHtml.replace(/(\.css\?v=)[^"'`]+/g, `$1${verStr}`);
+        indexHtml = indexHtml.replace(/(\.css\?fontv=)[^"'`]+/g, `$1${verStr}`);
+        indexHtml = indexHtml.replace(/(\.js\?v=)[^"'`]+/g, `$1${verStr}`);
         indexHtml = indexHtml.replace(/(<span class="(?:drawer|settings)-footer-text">)[^<]+(<\/span>)/g, `$1v${appVersion} · ${timeStr}$2`);
         fs.writeFileSync(indexHtmlFile, indexHtml, 'utf8');
     }

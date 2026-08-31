@@ -7,10 +7,20 @@
 
     const BUNDLED_FONTS = new Set([
         'noto sans sc',
-        'sarasa ui sc', 'sarasa gothic sc', '更纱黑体', 'sarasa term sc', 'sarasa fixed sc',
-        'lxgw wenkai', 'stkaiti', 'kaiti', '楷体', '楷体_gb2312',
-        'noto serif sc', 'simsun', 'songti sc', 'stsong', '宋体', '新宋体'
+        'sarasa ui sc',
+        'lxgw wenkai',
+        'noto serif sc'
     ]);
+    const FONT_STYLE_MAP = {
+        default: 'sarasa',
+        sarasa: 'sarasa',
+        noto: 'noto-sans',
+        kaiti: 'kaiti',
+        songti: 'songti',
+        custom: 'noto-sans',
+        youyuan: 'noto-sans'
+    };
+
 
     const FONT_PRESETS = [
         {
@@ -19,7 +29,7 @@
             subtitle: '更纱等宽优先 · 内置思源保底 · 系统黑体回退',
             tag: '推荐',
             primaryName: '更纱黑体',
-            stack: '"Sarasa UI SC", "Sarasa Gothic SC", "更纱黑体", "Sarasa Term SC", "Sarasa Fixed SC", "Noto Sans SC", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "MiSans", "HarmonyOS Sans", Roboto, sans-serif',
+            stack: '"Sarasa UI SC", system-ui, sans-serif',
             preview: '高二 (3) 班 · 张三 01 号 · 作业已提交 100 分'
         },
         {
@@ -37,7 +47,7 @@
             subtitle: '内置离线等宽字库 · 中英数 2:1 整齐划一',
             tag: '内置离线',
             primaryName: '更纱黑体',
-            stack: '"Sarasa UI SC", "Sarasa Gothic SC", "更纱黑体", "Sarasa Term SC", "Sarasa Fixed SC", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace, "Noto Sans SC", sans-serif',
+            stack: '"Sarasa UI SC", ui-monospace, monospace',
             preview: '高二 (3) 班 · 王五 03 号 · 作业已提交 95.0 分'
         },
         {
@@ -46,7 +56,7 @@
             subtitle: '内置霞鹜文楷/楷体离线字库 · 清秀书法端庄',
             tag: '内置离线',
             primaryName: '楷体',
-            stack: '"LXGW WenKai", "STKaiti", "KaiTi", "楷体", "楷体_GB2312", serif',
+            stack: '"LXGW WenKai", serif',
             preview: '高二 (3) 班 · 孙七 05 号 · 作业已提交 96.0 分'
         },
         {
@@ -55,7 +65,7 @@
             subtitle: '内置思源宋体离线字库 · 经典印刷衬线质感',
             tag: '内置离线',
             primaryName: '宋体',
-            stack: '"Noto Serif SC", "SimSun", "Songti SC", "STSong", "宋体", serif',
+            stack: '"Noto Serif SC", serif',
             preview: '高二 (3) 班 · 周八 06 号 · 作业已提交 89.5 分'
         },
         {
@@ -435,6 +445,44 @@
         const preset = FONT_PRESETS.find(p => p.id === presetId) || FONT_PRESETS[0];
         return preset.stack;
     }
+    function ensurePresetStylesheet(presetId) {
+        if (typeof document === 'undefined') return Promise.resolve();
+        const family = FONT_STYLE_MAP[presetId];
+        if (!family) return Promise.resolve();
+        const id = `font-style-${family}`;
+        const existing = document.getElementById(id);
+        if (existing) {
+            if (existing.dataset.loaded === 'true' || existing.sheet) return Promise.resolve();
+            return new Promise(resolve => {
+                existing.addEventListener('load', resolve, { once: true });
+                existing.addEventListener('error', resolve, { once: true });
+            });
+        }
+        return new Promise(resolve => {
+            const link = document.createElement('link');
+            const version = window.TWS3.BUILD_INFO && window.TWS3.BUILD_INFO.version ? window.TWS3.BUILD_INFO.version : '1';
+            link.id = id;
+            link.rel = 'stylesheet';
+            link.href = `css/fonts/${family}.css?v=${encodeURIComponent(version)}`;
+            link.addEventListener('load', () => {
+                link.dataset.loaded = 'true';
+                resolve();
+            }, { once: true });
+            link.addEventListener('error', resolve, { once: true });
+            document.head.appendChild(link);
+        });
+    }
+
+    async function preparePreset(presetId, customFont = '') {
+        await ensurePresetStylesheet(presetId);
+        if (!document.fonts || typeof document.fonts.load !== 'function') return;
+        const stack = computeFontFamily(presetId, customFont);
+        await Promise.race([
+            document.fonts.load(`16px ${stack}`, '班级作业 0123456789'),
+            new Promise(resolve => setTimeout(resolve, 3000))
+        ]);
+    }
+
 
     /**
      * 立即应用字体到 DOM 根节点，并同步调整等宽数字特性
@@ -505,6 +553,8 @@
         detectSystemDefaultFont,
         computeFontFamily,
         applyFont,
+        ensurePresetStylesheet,
+        preparePreset,
         subscribe,
         notifyChange
     };

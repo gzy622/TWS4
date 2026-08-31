@@ -10,7 +10,7 @@ function copyStatic() {
     }
     fs.mkdirSync(outDir, { recursive: true });
 
-    const targets = ['index.html', 'css', 'js', 'fonts', 'assets'];
+    const targets = ['index.html', 'sw.js', 'css', 'js', 'fonts', 'assets'];
 
     for (const item of targets) {
         const src = path.join(rootDir, item);

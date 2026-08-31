@@ -257,11 +257,29 @@ const server = http.createServer((request, response) => {
             return;
         }
 
-        const contentType = mimeTypes[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
-        response.writeHead(200, {
+        const extension = path.extname(filePath).toLowerCase();
+        const contentType = mimeTypes[extension] || 'application/octet-stream';
+        const etag = `W/"${stat.size.toString(16)}-${Math.trunc(stat.mtimeMs).toString(16)}"`;
+        const isVersioned = new URL(request.url, 'http://localhost').searchParams.has('v');
+        const isImmutableAsset = extension === '.woff2' || isVersioned;
+        const cacheControl = isImmutableAsset
+            ? 'public, max-age=31536000, immutable'
+            : 'no-cache';
+        const headers = {
             'Content-Type': contentType,
-            'Cache-Control': 'no-cache'
-        });
+            'Content-Length': stat.size,
+            'Cache-Control': cacheControl,
+            'ETag': etag,
+            'Last-Modified': stat.mtime.toUTCString(),
+            ...corsHeaders
+        };
+
+        if (request.headers['if-none-match'] === etag) {
+            response.writeHead(304, headers);
+            response.end();
+            return;
+        }
+        response.writeHead(200, headers);
         fs.createReadStream(filePath).pipe(response);
     });
 });
