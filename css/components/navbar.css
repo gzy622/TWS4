@@ -758,63 +758,74 @@
 /* 快捷面板 - 课程表科目高亮选择区 */
 .quick-highlight-section {
     width: 100%;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--border-light, #e2e8f0);
+    margin-top: 4px;
+    padding: 10px 12px;
+    background: var(--surface-muted, #f8fafc);
+    border: 1px solid var(--border-light, #e8edf3);
+    border-radius: 10px;
     box-sizing: border-box;
 }
 
 .quick-highlight-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
+    gap: 6px;
+    margin-bottom: 8px;
 }
 
 .quick-highlight-title {
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-muted, #64748b);
-    letter-spacing: 0.2px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
 }
 
 .quick-highlight-hint {
-    font-size: 10.5px;
-    font-weight: 600;
-    color: var(--accent-green, #1b3831);
+    display: none;
 }
 
 .quick-highlight-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 4.5px;
+    gap: 5px;
 }
 
 .quick-highlight-chip {
-    height: 25px;
-    padding: 0 8px;
-    border-radius: 6px;
-    border: 1px solid var(--border-light, #e2e8f0);
-    background: var(--surface-muted, #f8fafc);
-    color: var(--text-dark, #1e293b);
-    font-size: 12px;
+    height: 28px;
+    padding: 0 11px;
+    border-radius: 999px;
+    border: 1.5px solid transparent;
+    background: #fff;
+    color: var(--text-secondary, #475569);
+    font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
     user-select: none;
-    transition: all 0.12s ease;
+    transition: background 0.1s, border-color 0.1s, color 0.1s, box-shadow 0.1s;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
 }
 
 .quick-highlight-chip:hover {
-    border-color: #cbd5e1;
+    border-color: #c8d4df;
     background: #f1f5f9;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.09);
 }
 
 .quick-highlight-chip.active {
     background: var(--surface-dark, #1b3831);
     color: #ffffff;
     border-color: var(--surface-dark, #1b3831);
-    box-shadow: 0 1px 4px rgba(27, 56, 49, 0.25);
+    box-shadow: 0 2px 6px rgba(27, 56, 49, 0.28);
+}
+
+/* 「全部」重置 chip — 激活时用浅绿调色以示区分 */
+.quick-highlight-chip[data-highlight-subject=""].active {
+    background: #e8f4ef;
+    color: var(--surface-dark, #1b3831);
+    border-color: #b6d8c8;
+    box-shadow: none;
 }
