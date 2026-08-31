@@ -467,57 +467,45 @@
             bindTableInteractions();
         }
 
-        // 绑定表格单元格手势与交互
+        // 绑定表格单元格手势与交互（支持单击切换状态、长按调出打分面板编辑该作业记录）
         function bindTableInteractions() {
             const bodyContainer = document.getElementById('table-body-container');
-            if (!bodyContainer) return;
+            if (!bodyContainer || bodyContainer._gesturesBound) return;
+            bodyContainer._gesturesBound = true;
 
-            // 1. 点击任务表头切换当前任务
-            const taskHeaders = bodyContainer.querySelectorAll('.task-header-cell');
-            taskHeaders.forEach(th => {
-                th.addEventListener('click', () => {
-                    const taskId = th.dataset.taskId;
-                    if (taskId) {
-                        store.setCurrentTask(taskId);
-                        const task = store.getState().tasks.find(t => t.id === taskId);
-                        showToast(`已切换当前作业为：${task ? task.name : taskId}`);
-                    }
-                });
-            });
+            let pressTimer = null;
+            let startX = 0;
+            let startY = 0;
+            let isLongPressTriggered = false;
+            let suppressClick = false;
 
-            // 2. 单元格手势与点击
-            const scoreCells = bodyContainer.querySelectorAll('.score-cell');
-            scoreCells.forEach(cell => {
-                let pressTimer = null;
-                let touchMoved = false;
-
-                const studentId = cell.dataset.studentId;
-                const taskId = cell.dataset.taskId;
-
-                function handleCellClick() {
-                    const task = store.getState().tasks.find(t => t.id === taskId);
-                    if (task && task.archived) {
-                        showToast('当前任务已归档（只读）');
-                        return;
-                    }
-
-                    const mode = store.getOperationMode();
-                    if (mode === 'grade') {
-                        // 打分模式：切换为该任务并打开打分/备注弹层
-                        store.setCurrentTask(taskId);
-                        if (onOpenEdit) onOpenEdit(studentId);
-                    } else {
-                        // 登记模式：二态切换
-                        if (typeof store.cycleStudentRecord === 'function') {
-                            store.cycleStudentRecord(studentId, taskId);
-                        } else {
-                            store.setCurrentTask(taskId);
-                            store.cycleStudentStatus(studentId);
-                        }
-                    }
+            function cancelPress() {
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
                 }
+            }
 
-                function handleCellLongPress() {
+            function triggerHaptic(strength = 'light') {
+                try {
+                    if (window.TWS3 && typeof window.TWS3.haptics === 'function') {
+                        window.TWS3.haptics(strength);
+                    }
+                } catch (_) {}
+            }
+
+            function onCellLongPress(targetEl) {
+                isLongPressTriggered = true;
+                suppressClick = true;
+                triggerHaptic('medium');
+
+                // 1. 如果长按的是作业成绩单元格
+                const scoreCell = targetEl.closest('.score-cell');
+                if (scoreCell) {
+                    const studentId = Number(scoreCell.dataset.studentId) || scoreCell.dataset.studentId;
+                    const taskId = scoreCell.dataset.taskId;
+                    if (!studentId || !taskId) return;
+
                     const task = store.getState().tasks.find(t => t.id === taskId);
                     if (task && task.archived) {
                         showToast('当前任务已归档（只读）');
@@ -534,57 +522,141 @@
                             store.cycleStudentStatus(studentId);
                         }
                     } else {
-                        // 登记模式下长按：打开打分面板
+                        // 登记模式（默认）下长按：切换为该作业并调出打分/备注编辑面板
                         store.setCurrentTask(taskId);
                         if (onOpenEdit) onOpenEdit(studentId);
                     }
+                    return;
                 }
 
-                cell.addEventListener('click', (e) => {
-                    if (touchMoved) return;
-                    handleCellClick();
-                });
-
-                cell.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    handleCellLongPress();
-                });
-
-                cell.addEventListener('touchstart', () => {
-                    touchMoved = false;
-                    pressTimer = setTimeout(() => {
-                        handleCellLongPress();
-                        pressTimer = null;
-                    }, 500);
-                }, { passive: true });
-
-                cell.addEventListener('touchmove', () => {
-                    touchMoved = true;
-                    if (pressTimer) {
-                        clearTimeout(pressTimer);
-                        pressTimer = null;
-                    }
-                }, { passive: true });
-
-                cell.addEventListener('touchend', () => {
-                    if (pressTimer) {
-                        clearTimeout(pressTimer);
-                        pressTimer = null;
-                    }
-                }, { passive: true });
-            });
-
-            // 3. 点击学生姓名打开编辑面板
-            const nameCells = bodyContainer.querySelectorAll('td.col-sticky-name');
-            nameCells.forEach(td => {
-                td.style.cursor = 'pointer';
-                td.addEventListener('click', () => {
-                    const tr = td.closest('tr');
-                    const studentId = tr ? tr.dataset.studentId : null;
+                // 2. 如果长按的是学生姓名/学号单元格
+                const nameCell = targetEl.closest('td.col-sticky-name, td.col-sticky-no');
+                if (nameCell) {
+                    const tr = nameCell.closest('tr');
+                    const studentId = tr ? (Number(tr.dataset.studentId) || tr.dataset.studentId) : null;
                     if (studentId && onOpenEdit) {
                         onOpenEdit(studentId);
                     }
-                });
+                }
+            }
+
+            function onCellClick(targetEl) {
+                // 1. 点击任务表头切换当前任务
+                const taskHeader = targetEl.closest('.task-header-cell');
+                if (taskHeader) {
+                    const taskId = taskHeader.dataset.taskId;
+                    if (taskId) {
+                        store.setCurrentTask(taskId);
+                        const task = store.getState().tasks.find(t => t.id === taskId);
+                        showToast(`已切换当前作业为：${task ? task.name : taskId}`);
+                    }
+                    return;
+                }
+
+                // 2. 点击成绩单元格
+                const scoreCell = targetEl.closest('.score-cell');
+                if (scoreCell) {
+                    const studentId = Number(scoreCell.dataset.studentId) || scoreCell.dataset.studentId;
+                    const taskId = scoreCell.dataset.taskId;
+                    if (!studentId || !taskId) return;
+
+                    const task = store.getState().tasks.find(t => t.id === taskId);
+                    if (task && task.archived) {
+                        showToast('当前任务已归档（只读）');
+                        return;
+                    }
+
+                    const mode = store.getOperationMode();
+                    if (mode === 'grade') {
+                        // 打分模式：切换为该作业并打开打分/备注面板
+                        store.setCurrentTask(taskId);
+                        if (onOpenEdit) onOpenEdit(studentId);
+                    } else {
+                        // 登记模式（默认）：二态切换
+                        if (typeof store.cycleStudentRecord === 'function') {
+                            store.cycleStudentRecord(studentId, taskId);
+                        } else {
+                            store.setCurrentTask(taskId);
+                            store.cycleStudentStatus(studentId);
+                        }
+                    }
+                    return;
+                }
+
+                // 3. 点击学生姓名单元格打开编辑面板
+                const nameCell = targetEl.closest('td.col-sticky-name, td.col-sticky-no');
+                if (nameCell) {
+                    const tr = nameCell.closest('tr');
+                    const studentId = tr ? (Number(tr.dataset.studentId) || tr.dataset.studentId) : null;
+                    if (studentId && onOpenEdit) {
+                        onOpenEdit(studentId);
+                    }
+                }
+            }
+
+            bodyContainer.addEventListener('touchstart', (e) => {
+                const touch = e.touches[0];
+                if (!touch) return;
+
+                const target = e.target.closest('.score-cell, td.col-sticky-name, td.col-sticky-no, .task-header-cell');
+                if (!target) return;
+
+                startX = touch.clientX;
+                startY = touch.clientY;
+                isLongPressTriggered = false;
+                suppressClick = false;
+
+                cancelPress();
+                if (target.classList.contains('score-cell') || target.classList.contains('col-sticky-name') || target.classList.contains('col-sticky-no')) {
+                    pressTimer = setTimeout(() => {
+                        onCellLongPress(target);
+                    }, 500);
+                }
+            }, { passive: true });
+
+            bodyContainer.addEventListener('touchmove', (e) => {
+                if (pressTimer && e.touches[0]) {
+                    const diffX = Math.abs(e.touches[0].clientX - startX);
+                    const diffY = Math.abs(e.touches[0].clientY - startY);
+                    if (diffX > 8 || diffY > 8) {
+                        cancelPress();
+                    }
+                }
+            }, { passive: true });
+
+            bodyContainer.addEventListener('touchend', () => {
+                cancelPress();
+                if (isLongPressTriggered) {
+                    isLongPressTriggered = false;
+                    suppressClick = true;
+                }
+            }, { passive: true });
+
+            bodyContainer.addEventListener('touchcancel', () => {
+                cancelPress();
+                isLongPressTriggered = false;
+                suppressClick = false;
+            }, { passive: true });
+
+            bodyContainer.addEventListener('contextmenu', (e) => {
+                const target = e.target.closest('.score-cell, td.col-sticky-name, td.col-sticky-no');
+                if (!target) return;
+                e.preventDefault();
+                cancelPress();
+                onCellLongPress(target);
+            });
+
+            bodyContainer.addEventListener('click', (e) => {
+                if (suppressClick) {
+                    suppressClick = false;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                const target = e.target.closest('.score-cell, td.col-sticky-name, td.col-sticky-no, .task-header-cell');
+                if (target) {
+                    onCellClick(target);
+                }
             });
         }
 
