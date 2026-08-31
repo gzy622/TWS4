@@ -478,6 +478,7 @@
             let startY = 0;
             let isLongPressTriggered = false;
             let suppressClick = false;
+            let isTouchActive = false;
 
             function cancelPress() {
                 if (pressTimer) {
@@ -494,11 +495,13 @@
                 } catch (_) {}
             }
 
-            function onCellLongPress(targetEl) {
+            function onCellLongPress(targetEl, shouldVibrate = true) {
+                pressTimer = null;
                 isLongPressTriggered = true;
                 suppressClick = true;
-                triggerHaptic('medium');
-
+                if (shouldVibrate) {
+                    triggerHaptic('medium');
+                }
                 // 1. 如果长按的是作业成绩单元格
                 const scoreCell = targetEl.closest('.score-cell');
                 if (scoreCell) {
@@ -601,6 +604,7 @@
                 const target = e.target.closest('.score-cell, td.col-sticky-name, td.col-sticky-no, .task-header-cell');
                 if (!target) return;
 
+                isTouchActive = true;
                 startX = touch.clientX;
                 startY = touch.clientY;
                 isLongPressTriggered = false;
@@ -609,7 +613,7 @@
                 cancelPress();
                 if (target.classList.contains('score-cell') || target.classList.contains('col-sticky-name') || target.classList.contains('col-sticky-no')) {
                     pressTimer = setTimeout(() => {
-                        onCellLongPress(target);
+                        onCellLongPress(target, true);
                     }, 500);
                 }
             }, { passive: true });
@@ -625,6 +629,7 @@
             }, { passive: true });
 
             bodyContainer.addEventListener('touchend', () => {
+                isTouchActive = false;
                 cancelPress();
                 if (isLongPressTriggered) {
                     isLongPressTriggered = false;
@@ -633,6 +638,7 @@
             }, { passive: true });
 
             bodyContainer.addEventListener('touchcancel', () => {
+                isTouchActive = false;
                 cancelPress();
                 isLongPressTriggered = false;
                 suppressClick = false;
@@ -640,10 +646,16 @@
 
             bodyContainer.addEventListener('contextmenu', (e) => {
                 const target = e.target.closest('.score-cell, td.col-sticky-name, td.col-sticky-no');
-                if (!target) return;
+                if (!target || isLongPressTriggered) return;
                 e.preventDefault();
                 cancelPress();
-                onCellLongPress(target);
+                // 触控触发的原生 contextmenu 已由系统提供长按触感，不重复触发 JS 振动；桌面端右键则主动触发反馈
+                const shouldVibrate = !isTouchActive;
+                onCellLongPress(target, shouldVibrate);
+                if (!isTouchActive) {
+                    isLongPressTriggered = false;
+                    suppressClick = false;
+                }
             });
 
             bodyContainer.addEventListener('click', (e) => {
