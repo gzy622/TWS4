@@ -1551,6 +1551,8 @@
             } else if (
                 eventType === 'CLASS_CHANGED' ||
                 eventType === 'STUDENT_ADDED' ||
+                eventType === 'STUDENT_UPDATED' ||
+                eventType === 'STUDENT_NON_ENGLISH_CHANGED' ||
                 eventType === 'STUDENT_DELETED' ||
                 eventType === 'STORE_OVERRIDDEN' ||
                 eventType === 'STORE_SMART_MERGED'

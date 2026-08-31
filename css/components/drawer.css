@@ -678,8 +678,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: calc(12px + var(--safe-left, 0px));
+    padding-right: calc(12px + var(--safe-right, 0px));
     flex-shrink: 0;
     box-sizing: border-box;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
@@ -737,7 +737,7 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     touch-action: pan-y;
-    padding: 14px 16px calc(64px + var(--safe-bottom, 0px));
+    padding: 14px calc(16px + var(--safe-right, 0px)) calc(64px + var(--safe-bottom, 0px)) calc(16px + var(--safe-left, 0px));
     box-sizing: border-box;
 }
 
@@ -758,10 +758,18 @@
     padding: 16px;
     position: relative;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+    transition: transform 0.1s ease, background-color 0.15s ease;
 }
 
+.settings-card-header:active {
+    transform: scale(0.985);
+    background-color: #fafbfa;
+}
 .settings-card-header .bg-tag {
-    position: absolute;
     right: 14px;
     top: 14px;
     font-size: 11px;
@@ -825,6 +833,9 @@
     gap: 12px;
     cursor: pointer;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
     flex-shrink: 0;
     min-height: 52px;
     box-sizing: border-box;

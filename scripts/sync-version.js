@@ -83,7 +83,7 @@ function syncVersion(customTime, customVer) {
         let indexHtml = fs.readFileSync(indexHtmlFile, 'utf8');
         indexHtml = indexHtml.replace(/(\.css\?v=)[^"']+/g, `$1${verStr}`);
         indexHtml = indexHtml.replace(/(\.js\?v=)[^"']+/g, `$1${verStr}`);
-        indexHtml = indexHtml.replace(/(<span class="drawer-footer-text">)[^<]+(<\/span>)/g, `$1v${appVersion} · ${timeStr}$2`);
+        indexHtml = indexHtml.replace(/(<span class="(?:drawer|settings)-footer-text">)[^<]+(<\/span>)/g, `$1v${appVersion} · ${timeStr}$2`);
         fs.writeFileSync(indexHtmlFile, indexHtml, 'utf8');
     }
 
