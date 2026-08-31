@@ -1,4 +1,4 @@
-/* 宽栏视图（双列排布，每行两个卡片，共 25 行） */
+/* 宽栏视图（双列排布，每行两个卡片，充分利用宽栏水平空间） */
 .wide-view {
     flex: 1;
     min-height: 0;
@@ -17,25 +17,28 @@
     display: none !important;
 }
 
+/* 宽栏卡片主体容器 */
 .wide-card {
     position: relative;
-    height: 56px;
+    height: 58px;
     border-radius: var(--radius-card, 12px);
     display: flex;
     align-items: center;
-    padding: 0 12px;
+    justify-content: space-between;
+    padding: 0 7px;
+    box-sizing: border-box;
     overflow: hidden;
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-card, 0 1px 2px rgba(0, 0, 0, 0.03));
     cursor: pointer;
     -webkit-touch-callout: none;
     touch-action: manipulation;
-    transition: background-color 0.16s ease, transform 0.1s ease, box-shadow 0.16s ease;
+    transition: background-color 0.16s ease, transform 0.1s ease, box-shadow 0.16s ease, border-color 0.16s ease;
     user-select: none;
     -webkit-user-select: none;
 }
 
 .wide-card:active {
-    transform: scale(0.96);
+    transform: scale(0.97);
 }
 
 /* 归档只读模式 */
@@ -47,110 +50,363 @@
     transform: none;
 }
 
-/* 卡片背景与状态色彩 */
-.wide-card.white { background-color: var(--surface-white); }
-.wide-card.dark { background-color: var(--surface-dark); }
-.wide-card.muted { background-color: var(--surface-muted); }
-
-/* 学号水印/序号 */
-.wide-card-number {
-    position: absolute;
-    left: 8px;
-    bottom: -4px;
-    font-size: 30px;
-    font-weight: 900;
-    font-style: italic;
-    font-family: Arial, Helvetica, sans-serif;
-    line-height: 1;
-    pointer-events: none;
-    transition: color 0.16s ease;
-    opacity: 0.85;
+/* 3 种卡片状态背景与边框色彩 */
+.wide-card.white {
+    background-color: var(--surface-white, #ffffff);
+    border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-.wide-card.white .wide-card-number { color: var(--border-light); }
-.wide-card.dark .wide-card-number { color: #2b4f46; }
-.wide-card.muted .wide-card-number { color: #dce1e7; }
-.wide-card.number-hidden .wide-card-number { display: none; }
+.wide-card.dark {
+    background-color: var(--surface-dark, #1b3831);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
 
-/* 卡片主体文本区 */
-.wide-card-content {
-    position: relative;
-    z-index: 2;
+.wide-card.muted {
+    background-color: var(--surface-muted, #f1f3f5);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+/* 1. 左侧：学号 / 序号徽章 */
+.wide-card-num-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 20px;
+    padding: 0 3.5px;
+    border-radius: 5px;
+    flex-shrink: 0;
+    pointer-events: none;
+    transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.wide-card.white .wide-card-num-box {
+    background-color: #f1f4f8;
+    color: #64748b;
+}
+
+.wide-card.dark .wide-card-num-box {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #a7f3d0;
+}
+
+.wide-card.muted .wide-card-num-box {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #8896a6;
+}
+
+.wide-card-no {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.3px;
+}
+
+.wide-card.number-hidden .wide-card-num-box {
+    display: none;
+}
+
+/* 2. 中部：学生主要信息区域 */
+.wide-card-main {
+    flex: 1;
+    min-width: 0;
+    margin-left: 6px;
+    margin-right: 4px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 2px;
-    padding-left: 20px;
-    min-width: 0;
-    flex: 1;
     pointer-events: none;
 }
 
-.wide-card.number-hidden .wide-card-content {
-    padding-left: 0;
+.wide-card.number-hidden .wide-card-main {
+    margin-left: 2px;
+}
+
+/* 姓名与微标签行 */
+.wide-card-name-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
 }
 
 .wide-card-name {
-    font-size: 15px;
+    font-size: 14.5px;
     font-weight: 700;
+    line-height: 1.25;
     letter-spacing: -0.2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-shrink: 0;
+    max-width: 100%;
     transition: color 0.16s ease;
 }
 
-.wide-card.white .wide-card-name { color: var(--text-dark); }
-.wide-card.dark .wide-card-name { color: var(--text-white); }
-.wide-card.muted .wide-card-name { color: var(--text-muted); }
+.wide-card.white .wide-card-name { color: var(--text-dark, #1a1a1a); }
+.wide-card.dark .wide-card-name { color: var(--text-white, #ffffff); }
+.wide-card.muted .wide-card-name { color: var(--text-muted, #8391a1); }
+
+/* 辅助属性与状态微标签 */
+.wide-card-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 1px 3.5px;
+    border-radius: 3.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* 非英语生微标签 */
+.wide-card.white .wide-card-tag.tag-lang,
+.wide-card.muted .wide-card-tag.tag-lang {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.wide-card.dark .wide-card-tag.tag-lang {
+    background-color: rgba(239, 68, 68, 0.28);
+    color: #fca5a5;
+}
+
+/* 成功类辅助微标签（如 全对、优） */
+.wide-card.white .wide-card-tag.tag-success {
+    background-color: #ecfdf5;
+    color: #059669;
+}
+.wide-card.dark .wide-card-tag.tag-success {
+    background-color: rgba(16, 185, 129, 0.25);
+    color: #6ee7b7;
+}
+.wide-card.muted .wide-card-tag.tag-success {
+    background-color: #e6f4ea;
+    color: #2e7d32;
+}
+
+/* 警示类辅助微标签（如 订正） */
+.wide-card.white .wide-card-tag.tag-warning,
+.wide-card.muted .wide-card-tag.tag-warning {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+.wide-card.dark .wide-card-tag.tag-warning {
+    background-color: rgba(245, 158, 11, 0.25);
+    color: #fcd34d;
+}
+
+/* 提醒类辅助微标签（如 迟交、补交） */
+.wide-card.white .wide-card-tag.tag-notice,
+.wide-card.muted .wide-card-tag.tag-notice {
+    background-color: #ffedd5;
+    color: #ea580c;
+}
+.wide-card.dark .wide-card-tag.tag-notice {
+    background-color: rgba(234, 88, 12, 0.25);
+    color: #fdba74;
+}
+
+/* 次级详情与备注信息行 */
+.wide-card-sub-row,
+.wide-card-note-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.wide-card-note-dot {
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.wide-card.white .wide-card-note-dot { background-color: #94a3b8; }
+.wide-card.dark .wide-card-note-dot { background-color: #6ee7b7; }
+.wide-card.muted .wide-card-note-dot { background-color: #94a3b8; }
 
 .wide-card-note {
-    max-width: 100%;
-    overflow: hidden;
     font-size: 10.5px;
     font-weight: 500;
-    line-height: 1.15;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.wide-card.white .wide-card-note { color: #527763; }
-.wide-card.dark .wide-card-note { color: #b6dfc4; }
-.wide-card.muted .wide-card-note { color: #74808c; }
-
-/* 角标 */
-.wide-card .badge {
-    position: absolute;
-    top: 4px;
-    right: 5px;
-    font-size: 9.5px;
-    padding: 1px 5px;
-    border-radius: 10px;
     line-height: 1.2;
-    font-weight: 600;
     white-space: nowrap;
-    z-index: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wide-card.white .wide-card-note { color: #526071; }
+.wide-card.dark .wide-card-note { color: #a7f3d0; }
+.wide-card.muted .wide-card-note { color: #64748b; }
+
+/* 3. 右侧：状态 / 分数 / 徽章区域 */
+.wide-card-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
     pointer-events: none;
-    transition: background-color 0.16s ease, color 0.16s ease, opacity 0.16s ease;
 }
 
-.wide-card.dark .badge {
-    background-color: rgba(255, 255, 255, 0.18);
-    color: #e2f7ea;
+/* 直显无边框分数 */
+.wide-card-score {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 1px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    transition: color 0.16s ease;
 }
 
-.wide-card.white .badge {
-    background-color: #f0f2f5;
-    color: #555b63;
+.wide-card-score-val {
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.1;
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.3px;
 }
 
-.wide-card.muted .badge {
-    background-color: rgba(0, 0, 0, 0.06);
-    color: var(--text-muted);
+.wide-card-score-unit {
+    font-size: 10px;
+    font-weight: 600;
+    opacity: 0.75;
+    margin-left: 0.5px;
 }
 
-.wide-card.muted .badge.non-english {
-    background-color: rgba(239, 68, 68, 0.12);
-    color: #dc2626;
+/* 分数色彩主题（无边框，直接呈现纯粹文字与数值） */
+.wide-card.white .wide-card-score {
+    color: #15803d;
+}
+
+.wide-card.white .wide-card-score.is-perfect {
+    color: #059669;
+}
+
+.wide-card.dark .wide-card-score {
+    color: #a7f3d0;
+}
+
+.wide-card.dark .wide-card-score.is-perfect {
+    color: #6ee7b7;
+}
+
+.wide-card.muted .wide-card-score {
+    color: #475569;
+}
+
+/* 文本徽章 */
+.wide-card-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10.5px;
     font-weight: 700;
+    line-height: 1.2;
+    padding: 3px 7px;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+/* 徽章基础色彩 */
+.wide-card.white .wide-card-badge {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+.wide-card.dark .wide-card-badge {
+    background-color: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+}
+.wide-card.muted .wide-card-badge {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: #64748b;
+}
+
+/* 成功状态徽章（如 全对、优） */
+.wide-card.white .wide-card-badge.badge-success {
+    background-color: #ecfdf5;
+    color: #059669;
+    border: 1px solid #d1fae5;
+}
+.wide-card.dark .wide-card-badge.badge-success {
+    background-color: rgba(16, 185, 129, 0.3);
+    color: #6ee7b7;
+    border: 1px solid rgba(110, 231, 183, 0.3);
+}
+
+/* 警示状态徽章（如 订正中） */
+.wide-card.white .wide-card-badge.badge-warning,
+.wide-card.muted .wide-card-badge.badge-warning {
+    background-color: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+.wide-card.dark .wide-card-badge.badge-warning {
+    background-color: rgba(245, 158, 11, 0.28);
+    color: #fde68a;
+    border: 1px solid rgba(253, 230, 138, 0.3);
+}
+
+/* 提醒状态徽章（如 迟交、补交） */
+.wide-card.white .wide-card-badge.badge-notice,
+.wide-card.muted .wide-card-badge.badge-notice {
+    background-color: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+}
+.wide-card.dark .wide-card-badge.badge-notice {
+    background-color: rgba(234, 88, 12, 0.28);
+    color: #fed7aa;
+    border: 1px solid rgba(254, 215, 170, 0.3);
+}
+
+/* 信息状态徽章（如 请假） */
+.wide-card.white .wide-card-badge.badge-info,
+.wide-card.muted .wide-card-badge.badge-info {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #dbeafe;
+}
+.wide-card.dark .wide-card-badge.badge-info {
+    background-color: rgba(59, 130, 246, 0.28);
+    color: #bfdbfe;
+    border: 1px solid rgba(191, 219, 254, 0.3);
+}
+
+/* 免交徽章（非英语生） */
+.wide-card.white .wide-card-badge.badge-exempt,
+.wide-card.muted .wide-card-badge.badge-exempt {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+.wide-card.dark .wide-card-badge.badge-exempt {
+    background-color: rgba(239, 68, 68, 0.28);
+    color: #fca5a5;
+    border: 1px solid rgba(252, 165, 165, 0.3);
+}
+
+/* 勾选图标（已登记状态） */
+.wide-card-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #a7f3d0;
+}
+
+.wide-card-check svg {
+    width: 14px;
+    height: 14px;
 }

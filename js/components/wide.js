@@ -11,25 +11,122 @@
         const wideContainer = document.getElementById('wide-view');
         if (!wideContainer) return;
 
+        function escapeHtml(str) {
+            return String(str === null || str === undefined ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function getCardInnerHtml(student, record, isEnglishTask) {
-            let badgeHtml = '';
-            const score = record.score !== null && record.score !== undefined && record.score !== ''
+            const rawNo = String(student.studentNo || student.id || '').trim();
+            const formattedNo = /^\d+$/.test(rawNo) && rawNo.length === 1 ? '0' + rawNo : rawNo;
+
+            // 1. 提取分数与状态标识
+            const scoreVal = record.score !== null && record.score !== undefined && record.score !== ''
                 ? record.score
                 : String(record.badge || '').match(/^(\d+(?:\.\d+)?)分?$/)?.[1];
-            const note = record.note || (!score ? record.badge : '');
-            if (score) {
-                badgeHtml = `<span class="badge">${score}</span>`;
-            } else if (isEnglishTask && student.isNonEnglish && record.status === 'muted') {
-                badgeHtml = `<span class="badge non-english">免交</span>`;
+            const hasScore = scoreVal !== null && scoreVal !== undefined && scoreVal !== '';
+
+            // 2. 提取文本徽章（如 全对、优、订正中、补交、迟交、请假、免交 等）
+            let badgeText = '';
+            let isNonEnglishExempt = false;
+
+            if (isEnglishTask && student.isNonEnglish && record.status === 'muted') {
+                badgeText = '免交';
+                isNonEnglishExempt = true;
+            } else if (record.badge && !String(record.badge).match(/^(\d+(?:\.\d+)?)分?$/)) {
+                badgeText = String(record.badge).trim();
             }
-            const noteHtml = note ? `<span class="wide-card-note">${note}</span>` : '';
+
+            // 3. 提取备注
+            let noteText = '';
+            if (record.note) {
+                noteText = String(record.note).trim();
+            }
+
+            // 4. 构建右侧区域 HTML（分数胶囊 / 状态徽章 / 已提交勾选图标）
+            let rightHtml = '';
+            if (hasScore) {
+                const isPerfect = Number(scoreVal) >= 100;
+                const perfectClass = isPerfect ? ' is-perfect' : '';
+                rightHtml = `
+                    <div class="wide-card-score${perfectClass}">
+                        <span class="wide-card-score-val">${escapeHtml(scoreVal)}</span>
+                        <span class="wide-card-score-unit">分</span>
+                    </div>
+                `;
+            } else if (badgeText) {
+                let badgeTypeClass = '';
+                if (isNonEnglishExempt || badgeText === '免交') {
+                    badgeTypeClass = ' badge-exempt';
+                } else if (/全对|优|满分/.test(badgeText)) {
+                    badgeTypeClass = ' badge-success';
+                } else if (/订正|错/.test(badgeText)) {
+                    badgeTypeClass = ' badge-warning';
+                } else if (/迟交|补交/.test(badgeText)) {
+                    badgeTypeClass = ' badge-notice';
+                } else if (/请假|缺席/.test(badgeText)) {
+                    badgeTypeClass = ' badge-info';
+                }
+                rightHtml = `<span class="wide-card-badge${badgeTypeClass}">${escapeHtml(badgeText)}</span>`;
+            } else if (record.status === 'dark') {
+                rightHtml = `
+                    <div class="wide-card-check" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                `;
+            }
+
+            // 5. 第一行（姓名行）：学生姓名优先级最高，仅在英语作业且非免交时附加紧凑「非英」身份标
+            let nameTagHtml = '';
+            if (isEnglishTask && student.isNonEnglish && !isNonEnglishExempt) {
+                nameTagHtml = `<span class="wide-card-tag tag-lang">非英</span>`;
+            }
+
+            // 6. 第二行（次级详情行）：状态标签（如迟交/补交/订正中/全对）与备注信息
+            // 当右侧已有分数展示时，状态徽章下沉至第二行，与备注协同展示，避免姓名行拥挤截断
+            let subRowHtml = '';
+            let statusTagInSub = '';
+            if (hasScore && badgeText) {
+                let tagClass = 'tag-sub';
+                if (/全对|优/.test(badgeText)) tagClass += ' tag-success';
+                else if (/订正/.test(badgeText)) tagClass += ' tag-warning';
+                else if (/迟交|补交/.test(badgeText)) tagClass += ' tag-notice';
+                statusTagInSub = `<span class="wide-card-tag ${tagClass}">${escapeHtml(badgeText)}</span>`;
+            }
+
+            if (statusTagInSub || noteText) {
+                let noteContentHtml = '';
+                if (noteText) {
+                    noteContentHtml = `<span class="wide-card-note">${escapeHtml(noteText)}</span>`;
+                }
+                subRowHtml = `
+                    <div class="wide-card-sub-row">
+                        ${statusTagInSub}
+                        ${noteContentHtml}
+                    </div>
+                `;
+            }
+
             return `
-                ${badgeHtml}
-                <span class="wide-card-number">${student.studentNo || student.id}</span>
-                <span class="wide-card-content">
-                    <span class="wide-card-name">${student.name}</span>
-                    ${noteHtml}
-                </span>
+                <div class="wide-card-num-box">
+                    <span class="wide-card-no">${escapeHtml(formattedNo)}</span>
+                </div>
+                <div class="wide-card-main">
+                    <div class="wide-card-name-row">
+                        <span class="wide-card-name">${escapeHtml(student.name)}</span>
+                        ${nameTagHtml}
+                    </div>
+                    ${subRowHtml}
+                </div>
+                <div class="wide-card-right">
+                    ${rightHtml}
+                </div>
             `;
         }
 
