@@ -2,9 +2,9 @@
     window.TWS3 = window.TWS3 || {};
     window.TWS3.BUILD_INFO = {
         appVersion: "1.0.0",
-        versionCode: 67,
+        versionCode: 68,
         versionName: "1.0.0",
-        time: "2026-08-31 20:55:32",
-        version: "20260831-205532"
+        time: "2026-08-31 20:55:44",
+        version: "20260831-205544"
     };
 })();
