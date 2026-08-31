@@ -27,6 +27,45 @@
 
     function getTargetSummary(target) {
         if (!target) return 'unknown';
+
+        // 1. 快捷面板各控件语义化提炼
+        const quickClassCard = target.closest('.quick-class-card');
+        if (quickClassCard) {
+            return `quickClassCard#${quickClassCard.dataset.classId || '?'}`;
+        }
+        const quickViewBtn = target.closest('.quick-view-btn');
+        if (quickViewBtn) {
+            return `quickViewBtn:${quickViewBtn.dataset.view || '?'}`;
+        }
+        const quickModeBtn = target.closest('.quick-mode-segment-btn');
+        if (quickModeBtn) {
+            return `quickModeBtn:${quickModeBtn.dataset.mode || '?'}`;
+        }
+        const quickNewTaskBtn = target.closest('#quick-new-task-btn');
+        if (quickNewTaskBtn) {
+            return 'quickNewTaskBtn';
+        }
+
+        // 2. 新建作业模态弹窗内控件
+        const subjectChip = target.closest('.new-task-subject-chip');
+        if (subjectChip) {
+            return `subjectChip:${subjectChip.dataset.subject || '?'}`;
+        }
+        const targetClassChip = target.closest('.target-class-chip');
+        if (targetClassChip) {
+            const val = targetClassChip.querySelector('input')?.value || '?';
+            return `targetClassChip#${val}`;
+        }
+
+        // 3. 多视图学生单元与打分控件
+        const scoreCell = target.closest('.score-cell');
+        if (scoreCell) {
+            return `scoreCell#stu:${scoreCell.dataset.studentId || '?'},task:${scoreCell.dataset.taskId || '?'}`;
+        }
+        const seatCard = target.closest('.seat-card');
+        if (seatCard) {
+            return `seatCard#${seatCard.dataset.id || '?'}(${seatCard.className})`;
+        }
         const card = target.closest('.card');
         if (card) {
             return `card#${card.dataset.id || '?'}(${card.className})`;
@@ -35,9 +74,17 @@
         if (taskItem) {
             return `taskItem(${taskItem.className})`;
         }
-        const btn = target.closest('button, .nav-icon, .drawer-menu-item, .keypad-btn');
+
+        // 4. 抽屉与设置开关
+        const drawerToggle = target.closest('.drawer-toggle-item');
+        if (drawerToggle) {
+            return `drawerToggle:${drawerToggle.id || drawerToggle.textContent.trim().slice(0, 12)}`;
+        }
+
+        // 5. 通用按钮与导航控件
+        const btn = target.closest('button, .nav-icon, .drawer-menu-item, .keypad-btn, .modal-btn');
         if (btn) {
-            return `btn:${btn.className || btn.textContent.trim().slice(0, 10)}`;
+            return `btn:${btn.id || btn.className || btn.textContent.trim().slice(0, 10)}`;
         }
         return target.tagName.toLowerCase() + (target.className ? `.${target.className.split(' ')[0]}` : '');
     }
@@ -66,7 +113,11 @@
                 currentTask: currentTask ? currentTask.name : null,
                 isArchived: !!(currentTask && currentTask.archived),
                 operationMode: store.getOperationMode(),
-                studentsCount: store.getState().students.length
+                viewMode: store.getViewMode(),
+                showStudentNumbers: store.getShowStudentNumbers(),
+                showSubjectTags: store.getShowSubjectTags(),
+                studentsCount: (store.getState().students || []).length,
+                classesCount: typeof store.getClasses === 'function' ? store.getClasses().length : 1
             } : {}
         });
 
@@ -177,6 +228,9 @@
         if (window.TWS3.showToast) {
             window.TWS3.showToast('悬浮球已隐藏');
         }
+        if (window.TWS3.drawer && typeof window.TWS3.drawer.renderDebuggerToggle === 'function') {
+            window.TWS3.drawer.renderDebuggerToggle();
+        }
     }
     function isFloatingBtnVisible() {
         return !!(floatingBtnEl && !floatingBtnEl.classList.contains('hidden'));
@@ -198,6 +252,9 @@
         localStorage.setItem(STORAGE_KEY_VIS, 'true');
         if (window.TWS3.showToast) {
             window.TWS3.showToast('悬浮球已显示');
+        }
+        if (window.TWS3.drawer && typeof window.TWS3.drawer.renderDebuggerToggle === 'function') {
+            window.TWS3.drawer.renderDebuggerToggle();
         }
     }
 
@@ -415,7 +472,11 @@
                     eventType,
                     payload: payload || null,
                     currentTaskId: state.currentTaskId,
-                    operationMode: state.operationMode
+                    currentClass: state.currentClass,
+                    operationMode: state.operationMode,
+                    viewMode: state.viewMode,
+                    showStudentNumbers: state.showStudentNumbers,
+                    showSubjectTags: state.showSubjectTags
                 });
             });
         }
