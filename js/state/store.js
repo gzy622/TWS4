@@ -712,7 +712,7 @@
         _applyFontSettings(preset = 'default', customFont = '') {
             if (window.TWS3 && window.TWS3.fontManager && typeof window.TWS3.fontManager.computeFontFamily === 'function') {
                 const fontFamily = window.TWS3.fontManager.computeFontFamily(preset, customFont);
-                window.TWS3.fontManager.applyFont(fontFamily);
+                window.TWS3.fontManager.applyFont(fontFamily, preset);
             }
         }
 

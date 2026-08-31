@@ -175,6 +175,17 @@
     text-overflow: ellipsis;
 }
 
+.font-detected-note {
+    font-size: 11px;
+    color: #92400e;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    padding: 5px 8px;
+    margin-top: 4px;
+    line-height: 1.35;
+}
+
 /* 实时排版预览区域 */
 .font-preview-box {
     background: #ffffff;
@@ -342,6 +353,46 @@
 .font-preset-tag.tag-offline {
     background: #dcfce7;
     color: #15803d;
+}
+
+.font-avail-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.font-avail-badge.tag-primary {
+    background: #e8f3ee;
+    color: #1b3831;
+    border: 1px solid #cce5d8;
+}
+
+.font-avail-badge.tag-offline {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.font-avail-badge.tag-system {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.font-avail-badge.tag-fallback {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.font-avail-badge.tag-custom {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
 }
 
 .font-preset-desc {

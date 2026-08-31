@@ -649,6 +649,15 @@
             if (fontDetectedRaw) {
                 fontDetectedRaw.textContent = `${activeInfo.rawName} · ${activeInfo.sourceText} (${activeInfo.isAvailable ? '✓ 渲染生效中' : '⚠️ 已回退到系统字体'})`;
             }
+            const fontDetectedNote = document.getElementById('font-detected-note');
+            if (fontDetectedNote) {
+                if (activeInfo.note) {
+                    fontDetectedNote.textContent = activeInfo.note;
+                    fontDetectedNote.style.display = 'block';
+                } else {
+                    fontDetectedNote.style.display = 'none';
+                }
+            }
             if (fontDetectedSourceTag) {
                 fontDetectedSourceTag.textContent = activeInfo.sourceText;
                 fontDetectedSourceTag.className = 'font-status-tag';
@@ -686,6 +695,7 @@
                 if (p.tag === '推荐') tagClass += ' tag-primary';
                 if (p.tag === '内置离线') tagClass += ' tag-offline';
 
+                const avail = typeof fm.getPresetAvailability === 'function' ? fm.getPresetAvailability(p) : { available: true, label: p.tag, tagClass: 'tag-primary' };
                 const previewStyle = p.stack ? `style="font-family: ${escapeHtml(p.stack)};"` : '';
 
                 card.innerHTML = `
@@ -698,8 +708,9 @@
                                 <div class="font-preset-name-row">
                                     <span class="font-preset-name">${escapeHtml(p.name)}</span>
                                     <span class="${tagClass}">${escapeHtml(p.tag)}</span>
+                                    <span class="font-avail-badge ${avail.tagClass}">${escapeHtml(avail.label)}</span>
                                 </div>
-                                <span class="font-preset-desc">${escapeHtml(p.subtitle)}</span>
+                                <span class="font-preset-desc">${escapeHtml(avail.note || p.subtitle)}</span>
                             </div>
                         </div>
                     </div>
@@ -707,7 +718,6 @@
                         ${escapeHtml(p.preview)}
                     </div>
                 `;
-
                 card.addEventListener('click', () => {
                     if (p.id === 'custom') {
                         if (fontCustomSection) fontCustomSection.style.display = 'flex';

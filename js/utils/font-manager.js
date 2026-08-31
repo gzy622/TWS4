@@ -11,6 +11,7 @@
             name: '默认智能搭配',
             subtitle: '更纱等宽优先 · 内置思源保底 · 系统黑体回退',
             tag: '推荐',
+            primaryName: '更纱黑体',
             stack: '"Sarasa UI SC", "Sarasa Gothic SC", "更纱黑体", "Sarasa Term SC", "Sarasa Fixed SC", "Noto Sans SC", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "MiSans", "HarmonyOS Sans", Roboto, sans-serif',
             preview: '高二 (3) 班 · 张三 01 号 · 作业已提交 100 分'
         },
@@ -19,15 +20,17 @@
             name: '思源黑体',
             subtitle: 'App 内置离线完整字库 · 跨平台字形高度统一',
             tag: '内置离线',
+            primaryName: '思源黑体',
             stack: '"Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif',
             preview: '高二 (3) 班 · 李四 02 号 · 作业已提交 98.5 分'
         },
         {
             id: 'sarasa',
             name: '更纱黑体 / 等宽黑体',
-            subtitle: '中英数 2:1 等宽规整排版 · 表格与学号整齐划一',
+            subtitle: '中英数 2:1 等宽排版 · 表格与数字整齐划一',
             tag: '等宽排版',
-            stack: '"Sarasa UI SC", "Sarasa Gothic SC", "更纱黑体", "Sarasa Term SC", "Sarasa Fixed SC", "Noto Sans SC", monospace, sans-serif',
+            primaryName: '更纱黑体',
+            stack: '"Sarasa UI SC", "Sarasa Gothic SC", "更纱黑体", "Sarasa Term SC", "Sarasa Fixed SC", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace, "Noto Sans SC", sans-serif',
             preview: '高二 (3) 班 · 王五 03 号 · 作业已提交 95.0 分'
         },
         {
@@ -35,6 +38,7 @@
             name: '系统原生字体',
             subtitle: '完全跟随手机/电脑操作系统原生 UI 界面字体',
             tag: '系统原生',
+            primaryName: '系统原生',
             stack: 'system-ui, -apple-system, "PingFang SC", "HarmonyOS Sans", "MiSans", "Microsoft YaHei", "Segoe UI", sans-serif',
             preview: '高二 (3) 班 · 赵六 04 号 · 作业已提交 92.0 分'
         },
@@ -43,6 +47,7 @@
             name: '楷体 (KaiTi)',
             subtitle: '清秀典雅书写风格 · 端庄优美适合名单卡片',
             tag: '书法体',
+            primaryName: '楷体',
             stack: '"STKaiti", "KaiTi", "楷体", "楷体_GB2312", "Noto Serif SC", "SimSun", serif',
             preview: '高二 (3) 班 · 孙七 05 号 · 作业已提交 96.0 分'
         },
@@ -51,6 +56,7 @@
             name: '宋体 (SongTi)',
             subtitle: '经典印刷报刊衬线风格 · 结构严谨文雅古朴',
             tag: '衬线体',
+            primaryName: '宋体',
             stack: '"SimSun", "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", "新宋体", serif',
             preview: '高二 (3) 班 · 周八 06 号 · 作业已提交 89.5 分'
         },
@@ -59,6 +65,7 @@
             name: '幼圆 (YouYuan)',
             subtitle: '柔和圆润笔触 · 亲和护眼温润风格',
             tag: '圆体',
+            primaryName: '幼圆',
             stack: '"YouYuan", "幼圆", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
             preview: '高二 (3) 班 · 吴九 07 号 · 作业已提交 94.0 分'
         },
@@ -67,6 +74,7 @@
             name: '自定义字体',
             subtitle: '输入任意本地已安装字体名称或字体族',
             tag: '自定义',
+            primaryName: '自定义字体',
             stack: '',
             preview: '高二 (3) 班 · 钱十 08 号 · 自定义渲染测试'
         }
@@ -98,7 +106,13 @@
         '幼圆': '幼圆 (YouYuan)',
         'segoe ui': 'Segoe UI',
         'roboto': 'Roboto',
+        'ui-monospace': '系统等宽 (UI Monospace)',
+        'sfmono-regular': 'SF Mono 等宽',
+        'menlo': 'Menlo 等宽',
+        'monaco': 'Monaco 等宽',
         'consolas': 'Consolas 等宽',
+        'liberation mono': 'Liberation Mono',
+        'courier new': 'Courier New',
         'jetbrains mono': 'JetBrains Mono',
         'fira code': 'Fira Code',
         '霞鹜文楷': '霞鹜文楷 (LXGW WenKai)',
@@ -133,7 +147,7 @@
         if (!cleanName) return false;
 
         const lower = cleanName.toLowerCase();
-        const genericFamilies = ['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui'];
+        const genericFamilies = ['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'ui-monospace'];
         if (genericFamilies.includes(lower)) {
             return true;
         }
@@ -142,7 +156,7 @@
             return typeof navigator !== 'undefined' && /Macintosh|Mac OS|iPhone|iPad|iPod/.test(navigator.userAgent);
         }
 
-        // Web 字体检测：若思源黑体已在字体集加载完毕
+        // Web 离线字体检测：若思源黑体已在字体集加载完毕
         if (lower === 'noto sans sc' && typeof document !== 'undefined' && document.fonts && typeof document.fonts.check === 'function') {
             try {
                 if (document.fonts.check('16px "Noto Sans SC"')) {
@@ -193,6 +207,80 @@
     }
 
     /**
+     * 检测各预设在当前客户端环境下的真实可用状态
+     */
+    function getPresetAvailability(preset) {
+        if (!preset) return { available: true, label: '系统支持', tagClass: 'tag-system' };
+
+        if (preset.id === 'noto') {
+            return {
+                available: true,
+                label: '内置离线',
+                tagClass: 'tag-offline',
+                note: '离线完整字库，100% 渲染生效'
+            };
+        }
+        if (preset.id === 'default') {
+            const hasSarasa = isFontAvailable('Sarasa UI SC') || isFontAvailable('更纱黑体');
+            return {
+                available: true,
+                label: hasSarasa ? '更纱已生效' : '内置思源保底',
+                tagClass: hasSarasa ? 'tag-primary' : 'tag-offline',
+                note: hasSarasa ? '已启用本地更纱黑体' : '未装更纱，已自动启用内置思源黑体'
+            };
+        }
+        if (preset.id === 'sarasa') {
+            const hasSarasa = isFontAvailable('Sarasa UI SC') || isFontAvailable('更纱黑体') || isFontAvailable('Sarasa Term SC');
+            if (hasSarasa) {
+                return {
+                    available: true,
+                    label: '更纱已安装',
+                    tagClass: 'tag-primary',
+                    note: '本地已安装更纱黑体，全字形 2:1 等宽'
+                };
+            }
+            return {
+                available: false,
+                label: '系统等宽回退',
+                tagClass: 'tag-fallback',
+                note: '未装更纱黑体，西文与数字生效系统等宽 (Consolas/Monospace)'
+            };
+        }
+        if (preset.id === 'system') {
+            return {
+                available: true,
+                label: '系统原生',
+                tagClass: 'tag-system',
+                note: '使用当前操作系统原生字体'
+            };
+        }
+        if (preset.id === 'kaiti') {
+            const hasKaiti = isFontAvailable('STKaiti') || isFontAvailable('KaiTi') || isFontAvailable('楷体') || isFontAvailable('楷体_GB2312');
+            return hasKaiti
+                ? { available: true, label: '楷体已安装', tagClass: 'tag-primary', note: '系统已安装楷体书法字库' }
+                : { available: false, label: '系统未安装', tagClass: 'tag-fallback', note: '未装楷体，回退至衬线/思源' };
+        }
+        if (preset.id === 'songti') {
+            const hasSongti = isFontAvailable('SimSun') || isFontAvailable('Songti SC') || isFontAvailable('STSong');
+            return hasSongti
+                ? { available: true, label: '宋体已安装', tagClass: 'tag-primary', note: '系统已安装宋体衬线字库' }
+                : { available: false, label: '系统未安装', tagClass: 'tag-fallback', note: '未装宋体，回退至衬线/思源' };
+        }
+        if (preset.id === 'youyuan') {
+            const hasYouYuan = isFontAvailable('YouYuan') || isFontAvailable('幼圆');
+            return hasYouYuan
+                ? { available: true, label: '幼圆已安装', tagClass: 'tag-primary', note: '系统已安装幼圆字库' }
+                : { available: false, label: '系统未安装', tagClass: 'tag-fallback', note: '未装幼圆，回退至黑体' };
+        }
+        return {
+            available: true,
+            label: '自定义',
+            tagClass: 'tag-custom',
+            note: '自定义字体配置'
+        };
+    }
+
+    /**
      * 检测操作系统的原生默认字体
      */
     function detectSystemDefaultFont(category = 'sans-serif') {
@@ -207,9 +295,9 @@
             return { rawName: 'serif', displayName: '系统衬线体 (Serif)', source: 'system', sourceText: '系统原生' };
         }
         if (category === 'monospace') {
-            if (isWindows && isFontAvailable('Consolas')) return { rawName: 'Consolas', displayName: 'Consolas 等宽', source: 'system', sourceText: '系统原生' };
-            if (isMac && isFontAvailable('Menlo')) return { rawName: 'Menlo', displayName: 'Menlo 等宽', source: 'system', sourceText: '系统原生' };
-            return { rawName: 'monospace', displayName: '系统等宽体 (Monospace)', source: 'system', sourceText: '系统原生' };
+            if (isWindows && isFontAvailable('Consolas')) return { rawName: 'Consolas', displayName: 'Consolas 等宽', source: 'system', sourceText: '系统原生等宽' };
+            if (isMac && isFontAvailable('Menlo')) return { rawName: 'Menlo', displayName: 'Menlo 等宽', source: 'system', sourceText: '系统原生等宽' };
+            return { rawName: 'monospace', displayName: '系统等宽体 (Monospace)', source: 'system', sourceText: '系统原生等宽' };
         }
 
         if (isFontAvailable('Noto Sans SC')) {
@@ -252,6 +340,28 @@
         }
 
         const stack = parseFontStack(stackStr);
+
+        // 特殊检测：等宽混排栈（Sarasa / Monospace + Noto Sans SC）
+        const hasSarasaTarget = stack.some(f => /sarasa|更纱/i.test(f));
+        const hasSarasaInstalled = isFontAvailable('Sarasa UI SC') || isFontAvailable('更纱黑体') || isFontAvailable('Sarasa Term SC');
+        if (hasSarasaTarget && !hasSarasaInstalled) {
+            // 本地未装更纱，检测生效的等宽西文/数字字体
+            let activeMono = 'monospace';
+            if (isFontAvailable('Consolas')) activeMono = 'Consolas';
+            else if (isFontAvailable('Menlo')) activeMono = 'Menlo';
+            else if (isFontAvailable('SFMono-Regular')) activeMono = 'SF Mono';
+
+            return {
+                rawName: `${activeMono} / Noto Sans SC`,
+                displayName: `${getFriendlyFontName(activeMono)} + 思源黑体`,
+                source: 'fallback',
+                sourceText: '系统等宽回退',
+                isAvailable: true,
+                note: '本地未装更纱，西文字母与数字已启用系统等宽对齐，汉字回退思源黑体',
+                stack: stackStr
+            };
+        }
+
         for (const font of stack) {
             const clean = font.trim().replace(/^["']|["']$/g, '');
             if (!clean) continue;
@@ -283,8 +393,8 @@
                 };
             }
 
-            if (lower === 'sans-serif' || lower === 'serif' || lower === 'monospace') {
-                const sys = detectSystemDefaultFont(lower);
+            if (lower === 'sans-serif' || lower === 'serif' || lower === 'monospace' || lower === 'ui-monospace') {
+                const sys = detectSystemDefaultFont(lower === 'serif' ? 'serif' : (lower.includes('mono') ? 'monospace' : 'sans-serif'));
                 return {
                     rawName: sys.rawName,
                     displayName: sys.displayName,
@@ -335,14 +445,23 @@
     }
 
     /**
-     * 立即应用字体到 DOM 根节点
+     * 立即应用字体到 DOM 根节点，并同步调整等宽数字特性
      */
-    function applyFont(fontFamilyStr) {
+    function applyFont(fontFamilyStr, presetId = '') {
         if (typeof document === 'undefined') return;
         const targetFont = fontFamilyStr || FONT_PRESETS[0].stack;
         document.documentElement.style.setProperty('--font-family', targetFont);
         if (document.body) {
             document.body.style.fontFamily = targetFont;
+        }
+
+        // 当选择更纱/等宽预设时，开启全局 tabular-nums 数字等宽特性
+        if (presetId === 'sarasa' || presetId === 'default') {
+            document.documentElement.style.setProperty('--font-numeric', 'tabular-nums');
+            document.documentElement.style.setProperty('--font-features', '"tnum" 1');
+        } else {
+            document.documentElement.style.setProperty('--font-numeric', 'normal');
+            document.documentElement.style.setProperty('--font-features', 'normal');
         }
     }
 
@@ -378,7 +497,7 @@
             if (raw) {
                 const parsed = JSON.parse(raw);
                 if (parsed && (parsed.fontPreset || parsed.customFont)) {
-                    applyFont(computeFontFamily(parsed.fontPreset, parsed.customFont));
+                    applyFont(computeFontFamily(parsed.fontPreset, parsed.customFont), parsed.fontPreset);
                 }
             }
         }
@@ -389,6 +508,7 @@
         isFontAvailable,
         parseFontStack,
         getFriendlyFontName,
+        getPresetAvailability,
         detectActiveFont,
         detectSystemDefaultFont,
         computeFontFamily,

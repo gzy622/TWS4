@@ -21,4 +21,6 @@
     --navbar-height: calc(var(--navbar-content-height) + var(--safe-top, 0px));
     /* 全局字体族栈 */
     --font-family: "Sarasa UI SC", "Sarasa Gothic SC", "更纱黑体", "Sarasa Term SC", "Sarasa Fixed SC", "Noto Sans SC", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "MiSans", "HarmonyOS Sans", Roboto, sans-serif;
+    --font-numeric: normal;
+    --font-features: normal;
 }
