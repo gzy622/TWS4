@@ -104,7 +104,7 @@
         if (!detailModal) {
             detailModal = document.createElement('div');
             detailModal.id = 'schedule-detail-modal';
-            detailModal.className = 'modal-overlay';
+            detailModal.className = 'modal-overlay schedule-modal';
             detailModal.innerHTML = `
                 <div class="schedule-detail-modal-container">
                     <div class="schedule-detail-header">
@@ -112,12 +112,77 @@
                         <button type="button" class="schedule-modal-close" id="schedule-detail-close-btn" aria-label="关闭">✕</button>
                     </div>
                     <div class="schedule-detail-list" id="schedule-detail-info-list"></div>
-                    <button type="button" class="schedule-btn schedule-btn-primary" id="schedule-detail-ok-btn" style="width:100%; justify-content:center; height:34px;">确定</button>
+                    <div class="schedule-detail-actions">
+                        <button type="button" class="schedule-btn schedule-btn-secondary" id="schedule-detail-edit-btn" style="flex: 1; justify-content: center; height: 34px;">
+                            <svg viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span>编辑排课</span>
+                        </button>
+                        <button type="button" class="schedule-btn schedule-btn-primary" id="schedule-detail-ok-btn" style="flex: 1; justify-content: center; height: 34px;">确定</button>
+                    </div>
                 </div>
             `;
             document.body.appendChild(detailModal);
         }
 
+        // 确保课程编辑弹窗存在
+        let editModal = document.getElementById('schedule-edit-modal');
+        if (!editModal) {
+            editModal = document.createElement('div');
+            editModal.id = 'schedule-edit-modal';
+            editModal.className = 'modal-overlay schedule-modal';
+            editModal.innerHTML = `
+                <div class="schedule-edit-modal-container">
+                    <div class="schedule-edit-header">
+                        <div class="schedule-edit-header-text">
+                            <h3 class="schedule-edit-title" id="schedule-edit-title">编辑排课</h3>
+                            <span class="schedule-edit-subtitle" id="schedule-edit-subtitle">初二 (3) 班 · 周一 · 早读</span>
+                        </div>
+                        <button type="button" class="schedule-modal-close" id="schedule-edit-close-btn" aria-label="关闭">✕</button>
+                    </div>
+
+                    <!-- 双班/多班模式下排课的目标班级选择器 -->
+                    <div id="schedule-edit-class-selector-wrap" style="display: none;">
+                        <div class="schedule-edit-section-title">排课目标班级</div>
+                        <div class="schedule-edit-class-selector" id="schedule-edit-class-selector"></div>
+                    </div>
+
+                    <!-- 常用科目快捷选择 -->
+                    <div>
+                        <div class="schedule-edit-section-title">选择科目</div>
+                        <div class="schedule-subject-grid" id="schedule-edit-subject-grid"></div>
+                    </div>
+
+                    <!-- 自定义课程名称与单字 -->
+                    <div>
+                        <div class="schedule-edit-section-title">自定义课程 (选填)</div>
+                        <div class="schedule-edit-custom-group">
+                            <div class="schedule-edit-input-wrap" style="flex: 2;">
+                                <input type="text" id="schedule-edit-custom-name" class="schedule-edit-input" placeholder="输入课程名 (如: 心理/社团/自习)" />
+                            </div>
+                            <div class="schedule-edit-input-wrap" style="flex: 1;">
+                                <input type="text" id="schedule-edit-custom-char" class="schedule-edit-input" maxlength="2" placeholder="简写单字" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 底部操作按钮 -->
+                    <div class="schedule-edit-actions">
+                        <button type="button" class="schedule-btn schedule-btn-danger" id="schedule-edit-clear-btn" title="清空此节课">
+                            <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="10" y1="11" x2="10" y2="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="11" x2="14" y2="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                            <span>留空</span>
+                        </button>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="schedule-btn schedule-btn-secondary" id="schedule-edit-cancel-btn">取消</button>
+                            <button type="button" class="schedule-btn schedule-btn-primary" id="schedule-edit-save-btn">
+                                <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                <span>保存</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(editModal);
+        }
         // 绑定班级弹窗事件
         const modalCloseBtn = classModal.querySelector('#schedule-modal-close-btn');
         if (modalCloseBtn) {
@@ -135,14 +200,245 @@
             });
         }
 
-        // 绑定详情弹窗事件
+        // 详情弹窗上下文与事件
+        let currentDetailContext = null;
         const detailCloseBtn = detailModal.querySelector('#schedule-detail-close-btn');
         const detailOkBtn = detailModal.querySelector('#schedule-detail-ok-btn');
+        const detailEditBtn = detailModal.querySelector('#schedule-detail-edit-btn');
         if (detailCloseBtn) detailCloseBtn.addEventListener('click', () => closeDetailModal());
         if (detailOkBtn) detailOkBtn.addEventListener('click', () => closeDetailModal());
+        if (detailEditBtn) {
+            detailEditBtn.addEventListener('click', () => {
+                if (currentDetailContext) {
+                    const ctx = { ...currentDetailContext };
+                    closeDetailModal();
+                    openEditModal(ctx);
+                }
+            });
+        }
         detailModal.addEventListener('click', (e) => {
             if (e.target === detailModal) closeDetailModal();
         });
+
+        // 常用科目预设配置
+        const PRESET_SUBJECTS = [
+            { name: '语文', char: '语', fullName: '语文', color: 'chinese', courseId: 'c_yw' },
+            { name: '数学', char: '数', fullName: '数学', color: 'math', courseId: 'c_sx' },
+            { name: '英语', char: '英', fullName: '英语', color: 'english', courseId: 'c_yy' },
+            { name: '物理', char: '物', fullName: '物理', color: 'physics', courseId: 'c_wl' },
+            { name: '化学', char: '化', fullName: '化学', color: 'chemistry', courseId: 'c_hx' },
+            { name: '生物', char: '生', fullName: '生物', color: 'biology', courseId: 'c_sw' },
+            { name: '道法', char: '政', fullName: '道法/政治', color: 'politics', courseId: 'c_zz' },
+            { name: '历史', char: '历', fullName: '历史', color: 'history', courseId: 'c_ls' },
+            { name: '地理', char: '地', fullName: '地理', color: 'geography', courseId: 'c_dl' },
+            { name: '体育', char: '体', fullName: '体育', color: 'pe', courseId: 'c_pe' },
+            { name: '音乐', char: '音', fullName: '音乐', color: 'music', courseId: 'c_mu' },
+            { name: '美术', char: '美', fullName: '美术/心理', color: 'art', courseId: 'c_ms' },
+            { name: '信息', char: '信', fullName: '信息技术', color: 'tech', courseId: 'c_xx' },
+            { name: '通用', char: '通', fullName: '通用技术', color: 'tech', courseId: 'c_ty' },
+            { name: '班会', char: '班', fullName: '班会', color: 'class', courseId: 'c_bh' },
+            { name: '自习', char: '习', fullName: '自习', color: 'study', courseId: 'c_zx' }
+        ];
+
+        let editingContext = {
+            classId: '',
+            dayId: '',
+            dayName: '',
+            periodId: '',
+            periodName: '',
+            periodLabel: '',
+            timeSlot: '',
+            selectedSubject: null,
+            isCombined: false
+        };
+
+        function openEditModal({ classId, className, dayId, dayName, periodId, periodName, periodLabel, timeSlot, cellData, isCombined = false }) {
+            editingContext.classId = classId || store.getSelectedScheduleClassId();
+            editingContext.dayId = dayId;
+            editingContext.dayName = dayName || '';
+            editingContext.periodId = periodId;
+            editingContext.periodName = periodName || '';
+            editingContext.periodLabel = periodLabel || periodName || '';
+            editingContext.timeSlot = timeSlot || DEFAULT_PERIOD_TIMES[periodId] || DEFAULT_PERIOD_TIMES[periodName] || '';
+            editingContext.isCombined = isCombined;
+            editingContext.selectedSubject = null;
+
+            const titleEl = editModal.querySelector('#schedule-edit-title');
+            const subtitleEl = editModal.querySelector('#schedule-edit-subtitle');
+            const classSelectorWrap = editModal.querySelector('#schedule-edit-class-selector-wrap');
+            const classSelectorEl = editModal.querySelector('#schedule-edit-class-selector');
+            const subjectGridEl = editModal.querySelector('#schedule-edit-subject-grid');
+            const customNameInput = editModal.querySelector('#schedule-edit-custom-name');
+            const customCharInput = editModal.querySelector('#schedule-edit-custom-char');
+
+            const activeSchedule = store.getActiveSchedule();
+            const currentClassName = className || activeSchedule.name || activeSchedule.shortName || '当前班级';
+
+            if (titleEl) {
+                titleEl.textContent = '编辑排课';
+            }
+            if (subtitleEl) {
+                const timeInfo = editingContext.timeSlot ? ` (${editingContext.timeSlot})` : '';
+                subtitleEl.textContent = `${currentClassName} · ${editingContext.dayName} · ${editingContext.periodLabel}${timeInfo}`;
+            }
+
+            // 处理双班模式下的班级选择器
+            if (isCombined) {
+                const teacherClasses = store.getScheduleTeacherClasses ? store.getScheduleTeacherClasses() : [];
+                if (teacherClasses.length > 0) {
+                    classSelectorWrap.style.display = 'block';
+                    classSelectorEl.innerHTML = teacherClasses.map(c => {
+                        const isSelected = c.id === editingContext.classId || (!editingContext.classId && c.id === teacherClasses[0].id);
+                        if (isSelected) editingContext.classId = c.id;
+                        return `
+                            <button type="button" class="schedule-edit-class-btn ${isSelected ? 'active' : ''}" data-class-id="${escapeHtml(c.id)}">
+                                ${escapeHtml(c.shortName || c.name)}
+                            </button>
+                        `;
+                    }).join('');
+
+                    classSelectorEl.querySelectorAll('.schedule-edit-class-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            classSelectorEl.querySelectorAll('.schedule-edit-class-btn').forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            editingContext.classId = btn.dataset.classId;
+                            const targetClass = teacherClasses.find(c => c.id === editingContext.classId);
+                            if (targetClass && subtitleEl) {
+                                const timeInfo = editingContext.timeSlot ? ` (${editingContext.timeSlot})` : '';
+                                subtitleEl.textContent = `${targetClass.shortName || targetClass.name} · ${editingContext.dayName} · ${editingContext.periodLabel}${timeInfo}`;
+                            }
+                        });
+                    });
+                } else {
+                    classSelectorWrap.style.display = 'none';
+                }
+            } else {
+                classSelectorWrap.style.display = 'none';
+            }
+
+            // 当前单元格数据匹配
+            const curName = cellData?.name || cellData?.fullName || '';
+            const curChar = cellData?.char || (curName ? curName.charAt(0) : '');
+            let matchedSubject = PRESET_SUBJECTS.find(s => s.name === curName || s.fullName === curName || s.char === curChar || (curName && s.fullName.includes(curName)));
+
+            if (matchedSubject) {
+                editingContext.selectedSubject = matchedSubject;
+                if (customNameInput) customNameInput.value = '';
+                if (customCharInput) customCharInput.value = '';
+            } else if (cellData && (cellData.name || cellData.customName)) {
+                editingContext.selectedSubject = null;
+                if (customNameInput) customNameInput.value = cellData.customName || cellData.fullName || cellData.name || '';
+                if (customCharInput) customCharInput.value = cellData.char || '';
+            } else {
+                editingContext.selectedSubject = null;
+                if (customNameInput) customNameInput.value = '';
+                if (customCharInput) customCharInput.value = '';
+            }
+
+            // 渲染科目选择网格
+            if (subjectGridEl) {
+                subjectGridEl.innerHTML = PRESET_SUBJECTS.map(s => {
+                    const isActive = editingContext.selectedSubject && editingContext.selectedSubject.name === s.name;
+                    return `
+                        <button type="button" class="schedule-subject-pill ${isActive ? 'active' : ''}" data-subject-name="${escapeHtml(s.name)}">
+                            <span class="schedule-subject-pill-dot" style="background-color: var(--badge-sub-${s.color}, #3b82f6);"></span>
+                            <span>${escapeHtml(s.name)}</span>
+                        </button>
+                    `;
+                }).join('');
+
+                subjectGridEl.querySelectorAll('.schedule-subject-pill').forEach(pill => {
+                    pill.addEventListener('click', () => {
+                        const subName = pill.dataset.subjectName;
+                        const subObj = PRESET_SUBJECTS.find(s => s.name === subName);
+                        if (subObj) {
+                            editingContext.selectedSubject = subObj;
+                            subjectGridEl.querySelectorAll('.schedule-subject-pill').forEach(p => p.classList.remove('active'));
+                            pill.classList.add('active');
+                            if (customNameInput) customNameInput.value = '';
+                            if (customCharInput) customCharInput.value = '';
+                        }
+                    });
+                });
+            }
+
+            if (customNameInput) {
+                customNameInput.oninput = () => {
+                    if (customNameInput.value.trim()) {
+                        subjectGridEl.querySelectorAll('.schedule-subject-pill').forEach(p => p.classList.remove('active'));
+                        editingContext.selectedSubject = null;
+                        if (!customCharInput.value) {
+                            customCharInput.value = customNameInput.value.trim().charAt(0);
+                        }
+                    }
+                };
+            }
+
+            editModal.classList.add('show');
+        }
+
+        function closeEditModal() {
+            editModal.classList.remove('show');
+        }
+
+        // 绑定编辑弹窗按钮事件
+        const editCloseBtn = editModal.querySelector('#schedule-edit-close-btn');
+        const editCancelBtn = editModal.querySelector('#schedule-edit-cancel-btn');
+        const editClearBtn = editModal.querySelector('#schedule-edit-clear-btn');
+        const editSaveBtn = editModal.querySelector('#schedule-edit-save-btn');
+
+        if (editCloseBtn) editCloseBtn.addEventListener('click', closeEditModal);
+        if (editCancelBtn) editCancelBtn.addEventListener('click', closeEditModal);
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) closeEditModal();
+        });
+
+        if (editClearBtn) {
+            editClearBtn.addEventListener('click', () => {
+                const { dayId, periodId, classId, dayName, periodLabel } = editingContext;
+                store.clearScheduleCell(dayId, periodId, classId);
+                closeEditModal();
+                showToast(`已留空 ${dayName} ${periodLabel} 课程`, 2000);
+                render();
+            });
+        }
+
+        if (editSaveBtn) {
+            editSaveBtn.addEventListener('click', () => {
+                const { dayId, periodId, classId, dayName, periodLabel, selectedSubject } = editingContext;
+                const customName = editModal.querySelector('#schedule-edit-custom-name')?.value.trim() || '';
+                const customChar = editModal.querySelector('#schedule-edit-custom-char')?.value.trim() || '';
+
+                let courseData = {};
+                if (selectedSubject && !customName) {
+                    courseData = {
+                        courseId: selectedSubject.courseId,
+                        name: selectedSubject.name,
+                        fullName: selectedSubject.fullName,
+                        char: selectedSubject.char,
+                        color: selectedSubject.color
+                    };
+                } else if (customName) {
+                    const norm = window.TWS3?.scheduleWorkbook?.normalizeSubject ? window.TWS3.scheduleWorkbook.normalizeSubject(customName) : null;
+                    courseData = {
+                        courseId: norm ? norm.courseId : 'c_custom',
+                        name: customName,
+                        fullName: customName,
+                        char: customChar || (norm ? norm.char : customName.charAt(0)),
+                        color: norm ? norm.color : 'default',
+                        customName
+                    };
+                } else {
+                    showToast('请选择科目或输入课程名称', 2000);
+                    return;
+                }
+
+                store.setScheduleCell(dayId, periodId, courseData, classId);
+                closeEditModal();
+                showToast(`已保存：${dayName} ${periodLabel} -> ${courseData.fullName || courseData.name}`, 2000);
+                render();
+            });
+        }
 
         function openClassModal() {
             classModal.classList.add('show');
@@ -155,17 +451,30 @@
             classModal.classList.remove('show');
         }
 
-        function openDetailModal(course, dayName, periodName, schedule) {
+        function openDetailModal(course, dayName, periodName, schedule, dayId, periodId, timeSlot) {
             const titleEl = detailModal.querySelector('#schedule-detail-course-title');
             const listEl = detailModal.querySelector('#schedule-detail-info-list');
             const isCombined = schedule.isCombined || course.type === 'single' || course.type === 'multi';
+
+            currentDetailContext = {
+                classId: course.classId || schedule.id,
+                className: course.className || schedule.name,
+                dayId: dayId || course.dayId,
+                dayName,
+                periodId: periodId || course.periodId,
+                periodName,
+                periodLabel: periodName,
+                timeSlot: timeSlot || course.timeSlot || DEFAULT_PERIOD_TIMES[periodName] || '',
+                cellData: course,
+                isCombined
+            };
 
             if (isCombined) {
                 if (titleEl) {
                     titleEl.textContent = `${course.fullName || course.name || '任课'} 安排详情`;
                 }
                 if (listEl) {
-                    const timeSlot = course.timeSlot || DEFAULT_PERIOD_TIMES[periodName] || DEFAULT_PERIOD_TIMES[course.periodId] || `第 ${periodName} 节`;
+                    const slot = currentDetailContext.timeSlot || `第 ${periodName} 节`;
                     let classDisplay = '';
                     let teacherDisplay = '';
                     if (course.type === 'single') {
@@ -201,7 +510,7 @@
                         </div>
                         <div class="schedule-detail-item">
                             <span class="schedule-detail-label">上课时间</span>
-                            <span class="schedule-detail-val">${escapeHtml(dayName)} · ${escapeHtml(periodName)} (${escapeHtml(timeSlot)})</span>
+                            <span class="schedule-detail-val">${escapeHtml(dayName)} · ${escapeHtml(periodName)} (${escapeHtml(slot)})</span>
                         </div>
                         <div class="schedule-detail-item">
                             <span class="schedule-detail-label">班主任</span>
@@ -219,7 +528,7 @@
                 titleEl.textContent = `${course.fullName || course.name} 课程详情`;
             }
             if (listEl) {
-                const timeSlot = course.timeSlot || DEFAULT_PERIOD_TIMES[periodName] || DEFAULT_PERIOD_TIMES[course.periodId] || `第 ${periodName} 节`;
+                const slot = currentDetailContext.timeSlot || `第 ${periodName} 节`;
                 listEl.innerHTML = `
                     <div class="schedule-detail-item">
                         <span class="schedule-detail-label">班级</span>
@@ -231,7 +540,7 @@
                     </div>
                     <div class="schedule-detail-item">
                         <span class="schedule-detail-label">时间</span>
-                        <span class="schedule-detail-val">${escapeHtml(dayName)} · ${escapeHtml(periodName)} (${escapeHtml(timeSlot)})</span>
+                        <span class="schedule-detail-val">${escapeHtml(dayName)} · ${escapeHtml(periodName)} (${escapeHtml(slot)})</span>
                     </div>
                     <div class="schedule-detail-item">
                         <span class="schedule-detail-label">课程名称</span>
@@ -250,7 +559,6 @@
         function closeDetailModal() {
             detailModal.classList.remove('show');
         }
-
         // 处理文件上传
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files && e.target.files[0];
@@ -555,10 +863,13 @@
                                                 cellData = grid[`${d.id}_p_${pName}`] || grid[`${d.id}_${pName}`];
                                             }
 
-                                            if (!cellData || (!cellData.name && !cellData.courseId && !cellData.customName && !cellData.type)) {
+                                            const isEmpty = !cellData || (!cellData.name && !cellData.courseId && !cellData.customName && !cellData.type);
+                                            const tdDataAttrs = `data-cell-key="${escapeHtml(cellKey)}" data-day-id="${escapeHtml(d.id)}" data-day-name="${escapeHtml(d.name)}" data-period-id="${escapeHtml(p.id)}" data-period-name="${escapeHtml(pName)}" data-period-label="${escapeHtml(periodLabel)}" data-time="${escapeHtml(rawTime)}"`;
+
+                                            if (isEmpty) {
                                                 return `
-                                                    <td class="schedule-td">
-                                                        <div class="course-empty">—</div>
+                                                    <td class="schedule-td is-empty" ${tdDataAttrs}>
+                                                        <div class="course-empty" title="点击为此节排课">—</div>
                                                     </td>
                                                 `;
                                             }
@@ -567,8 +878,8 @@
                                                 if (cellData.type === 'single') {
                                                     const themeIdx = ((cellData.classIndex || 0) % 4) + 1;
                                                     return `
-                                                        <td class="schedule-td">
-                                                            <div class="schedule-course-card schedule-combined-card class-theme-${themeIdx}" data-cell-key="${escapeHtml(cellKey)}" data-day="${escapeHtml(d.name)}" data-period="${escapeHtml(periodLabel)}">
+                                                        <td class="schedule-td" ${tdDataAttrs}>
+                                                            <div class="schedule-course-card schedule-combined-card class-theme-${themeIdx}" ${tdDataAttrs}>
                                                                 <div class="schedule-combined-card-inner">
                                                                     <span class="schedule-combined-class-badge">${escapeHtml(cellData.classShortName || cellData.className)}</span>
                                                                     <span class="schedule-combined-sub-badge">${escapeHtml(cellData.fullName || cellData.name || '英语')}</span>
@@ -579,8 +890,8 @@
                                                 }
                                                 if (cellData.type === 'multi') {
                                                     return `
-                                                        <td class="schedule-td">
-                                                            <div class="schedule-course-card schedule-combined-card is-multi" data-cell-key="${escapeHtml(cellKey)}" data-day="${escapeHtml(d.name)}" data-period="${escapeHtml(periodLabel)}">
+                                                        <td class="schedule-td" ${tdDataAttrs}>
+                                                            <div class="schedule-course-card schedule-combined-card is-multi" ${tdDataAttrs}>
                                                                 <div class="schedule-combined-card-inner">
                                                                     <div class="schedule-combined-multi-row">
                                                                         ${(cellData.classes || []).map(c => `<span class="schedule-combined-class-badge class-theme-${((c.classIndex || 0) % 4) + 1}">${escapeHtml(c.classShortName)}</span>`).join('')}
@@ -600,8 +911,8 @@
                                             const highlightClass = isHighlighted ? 'is-highlighted' : (isDimmed ? 'is-dimmed' : '');
 
                                             return `
-                                                <td class="schedule-td">
-                                                    <div class="schedule-course-card ${highlightClass}" data-cell-key="${escapeHtml(cellKey)}" data-day="${escapeHtml(d.name)}" data-period="${escapeHtml(periodLabel)}" data-char="${escapeHtml(singleChar)}">
+                                                <td class="schedule-td" ${tdDataAttrs}>
+                                                    <div class="schedule-course-card ${highlightClass}" ${tdDataAttrs} data-char="${escapeHtml(singleChar)}">
                                                         <span class="schedule-course-char">${escapeHtml(singleChar)}</span>
                                                     </div>
                                                 </td>
@@ -617,19 +928,54 @@
                 </div>
             `;
 
-            // 绑定课程卡片点击弹出详情
-            container.querySelectorAll('.schedule-course-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const cellKey = card.dataset.cellKey;
-                    const dayName = card.dataset.day;
-                    const periodNum = card.dataset.period;
+            // 绑定单元格点击事件（支持点击已有课程编辑/查看，或点击空白处排课）
+            container.querySelectorAll('.schedule-td').forEach(td => {
+                td.addEventListener('click', () => {
+                    const cellKey = td.dataset.cellKey;
+                    const dayId = td.dataset.dayId;
+                    const dayName = td.dataset.dayName;
+                    const periodId = td.dataset.periodId;
+                    const periodName = td.dataset.periodName;
+                    const periodLabel = td.dataset.periodLabel;
+                    const timeSlot = td.dataset.time;
+
                     let cellData = grid[cellKey];
                     if (!cellData) {
                         const parts = cellKey.split('_');
                         cellData = grid[`${parts[0]}_${parts[1]}_${parts[2]}`] || grid[`${parts[0]}_${parts[1]}`];
                     }
-                    if (cellData) {
-                        openDetailModal(cellData, dayName, periodNum, activeSchedule);
+
+                    if (activeSchedule.isCombined) {
+                        if (cellData && (cellData.type || cellData.name)) {
+                            // 在双班课表下，点击有课的卡片先打开详情（详情内提供“编辑排课”入口）
+                            openDetailModal(cellData, dayName, periodLabel, activeSchedule, dayId, periodId, timeSlot);
+                        } else {
+                            // 在双班课表下，点击空白格子直接打开排课弹窗，供选择任教班级
+                            openEditModal({
+                                isCombined: true,
+                                dayId,
+                                dayName,
+                                periodId,
+                                periodName,
+                                periodLabel,
+                                timeSlot,
+                                cellData: null
+                            });
+                        }
+                    } else {
+                        // 在单班课表下，点击直接弹出该班排课编辑弹窗
+                        openEditModal({
+                            classId: activeSchedule.id,
+                            className: activeSchedule.name || activeSchedule.shortName,
+                            dayId,
+                            dayName,
+                            periodId,
+                            periodName,
+                            periodLabel,
+                            timeSlot,
+                            cellData,
+                            isCombined: false
+                        });
                     }
                 });
             });
@@ -639,7 +985,16 @@
         store.subscribe((state, eventType) => {
             if (eventType === 'VIEW_MODE_CHANGED' && state.viewMode === 'schedule') {
                 render();
-            } else if (eventType === 'SCHEDULE_CLASS_CHANGED' || eventType === 'SCHEDULE_LIBRARY_UPDATED' || eventType === 'SCHEDULE_CHANGED' || eventType === 'SCHEDULE_HIGHLIGHT_CHANGED' || eventType === 'SCHEDULE_TEACHER_SUBJECT_CHANGED' || eventType === 'SCHEDULE_TEACHER_CLASSES_CHANGED') {
+            } else if (
+                eventType === 'SCHEDULE_CLASS_CHANGED' ||
+                eventType === 'SCHEDULE_LIBRARY_UPDATED' ||
+                eventType === 'SCHEDULE_CHANGED' ||
+                eventType === 'SCHEDULE_GRID_CHANGED' ||
+                eventType === 'SCHEDULE_CLASS_UPDATED' ||
+                eventType === 'SCHEDULE_HIGHLIGHT_CHANGED' ||
+                eventType === 'SCHEDULE_TEACHER_SUBJECT_CHANGED' ||
+                eventType === 'SCHEDULE_TEACHER_CLASSES_CHANGED'
+            ) {
                 if (store.getViewMode() === 'schedule') {
                     render();
                 }
@@ -652,6 +1007,7 @@
         return {
             render,
             openClassModal,
+            openEditModal,
             loadBuiltinSchedule
         };
     }

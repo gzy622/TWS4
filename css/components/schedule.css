@@ -776,3 +776,209 @@
     font-weight: 600;
     color: var(--text-dark);
 }
+
+/* 单元格交互优化与空单元格点击 */
+.schedule-td {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.schedule-td:hover {
+    background-color: rgba(27, 56, 49, 0.04);
+}
+
+.course-empty {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.schedule-td:hover .course-empty {
+    color: var(--surface-dark, #1b3831);
+    font-weight: 700;
+}
+
+/* 课程编辑弹窗 (Course Edit Modal) */
+.schedule-edit-modal-container {
+    width: 90%;
+    max-width: 420px;
+    background: var(--surface-white);
+    border-radius: var(--radius-card, 14px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: scale(0.96) translateY(8px);
+    max-height: 90vh;
+    box-sizing: border-box;
+}
+
+.schedule-modal.show .schedule-edit-modal-container {
+    transform: scale(1) translateY(0);
+}
+
+.schedule-edit-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 2px;
+}
+
+.schedule-edit-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.schedule-edit-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.schedule-edit-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.schedule-edit-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+/* 常用科目快捷选择网格 */
+.schedule-subject-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7px;
+}
+
+.schedule-subject-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 34px;
+    padding: 0 6px;
+    border-radius: var(--radius-inner, 8px);
+    border: 1px solid var(--border-light);
+    background: var(--surface-muted);
+    color: var(--text-dark);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.schedule-subject-pill:hover {
+    border-color: #cbd5e1;
+    background: #eef2f5;
+}
+
+.schedule-subject-pill.active {
+    background: var(--surface-dark, #1b3831);
+    color: #fff;
+    border-color: var(--surface-dark, #1b3831);
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(27, 56, 49, 0.25);
+}
+
+.schedule-subject-pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* 自定义输入区域 */
+.schedule-edit-custom-group {
+    display: flex;
+    gap: 8px;
+}
+
+.schedule-edit-input-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.schedule-edit-input {
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: var(--radius-inner, 8px);
+    border: 1px solid var(--border-light);
+    background: var(--surface-muted);
+    font-size: 13px;
+    color: var(--text-dark);
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.schedule-edit-input:focus {
+    background: #fff;
+    border-color: var(--surface-dark, #1b3831);
+}
+
+/* 班级选择器（在双班模式下排课时） */
+.schedule-edit-class-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.schedule-edit-class-btn {
+    flex: 1;
+    height: 34px;
+    border-radius: var(--radius-inner, 8px);
+    border: 1px solid var(--border-light);
+    background: var(--surface-muted);
+    color: var(--text-dark);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.schedule-edit-class-btn.active {
+    background: var(--surface-dark, #1b3831);
+    color: #fff;
+    border-color: var(--surface-dark, #1b3831);
+    font-weight: 600;
+}
+
+/* 底部操作按钮 */
+.schedule-edit-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.schedule-btn-danger {
+    background: rgba(239, 68, 68, 0.08);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.schedule-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.16);
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+.schedule-detail-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px;
+}

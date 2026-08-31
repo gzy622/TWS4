@@ -1041,26 +1041,85 @@
             return true;
         }
 
-        setScheduleCell(dayId, periodId, { courseId = null, customName = '' } = {}) {
-            const schedule = this.getSchedule();
-            if (!schedule.grid) schedule.grid = {};
+        setScheduleCell(dayId, periodId, cellData = {}, targetClassId = null) {
+            const classId = targetClassId || this.getSelectedScheduleClassId();
+            let targetSchedule = null;
+            const lib = this.getScheduleLibrary();
+
+            if (classId && classId !== 'combined') {
+                targetSchedule = lib.find(c => c.id === classId || c.shortName === classId || c.name === classId);
+            }
+            if (!targetSchedule) {
+                targetSchedule = this.getSchedule();
+            }
+
+            if (!targetSchedule.grid) targetSchedule.grid = {};
             const key = `${dayId}_${periodId}`;
-            schedule.grid[key] = {
-                courseId: courseId || null,
-                customName: String(customName || '').trim()
-            };
-            schedule.updatedAt = getUtcNowIso();
-            this._notify('SCHEDULE_GRID_CHANGED', { key, cell: schedule.grid[key] });
-            return schedule.grid[key];
+
+            const courseId = cellData.courseId || null;
+            const name = String(cellData.name || '').trim();
+            const fullName = String(cellData.fullName || name).trim();
+            const color = cellData.color || 'default';
+            const char = String(cellData.char || (name ? name.charAt(0) : '')).trim();
+            const customName = String(cellData.customName || '').trim();
+
+            if (!name && !courseId && !customName && !char) {
+                delete targetSchedule.grid[key];
+            } else {
+                targetSchedule.grid[key] = {
+                    courseId: courseId || null,
+                    name: name || char || '课',
+                    fullName: fullName || name || '课程',
+                    color: color || 'default',
+                    char: char || (name ? name.charAt(0) : '课'),
+                    customName
+                };
+            }
+
+            // 更新课程总数
+            targetSchedule.totalCourses = Object.keys(targetSchedule.grid).filter(k => {
+                const c = targetSchedule.grid[k];
+                return c && (c.name || c.courseId || c.customName || c.char);
+            }).length;
+            targetSchedule.updatedAt = getUtcNowIso();
+
+            if (this.state.schedule && (this.state.schedule.id === targetSchedule.id || this.state.schedule.name === targetSchedule.name)) {
+                this.state.schedule.grid = targetSchedule.grid;
+                this.state.schedule.totalCourses = targetSchedule.totalCourses;
+                this.state.schedule.updatedAt = targetSchedule.updatedAt;
+            }
+
+            this._scheduleStorageSave();
+            this._notify('SCHEDULE_GRID_CHANGED', { key, cell: targetSchedule.grid[key], classId: targetSchedule.id });
+            this._notify('SCHEDULE_CHANGED', { schedule: targetSchedule });
+            return targetSchedule.grid[key] || null;
         }
 
-        clearScheduleCell(dayId, periodId) {
-            const schedule = this.getSchedule();
-            if (!schedule.grid) return true;
-            const key = `${dayId}_${periodId}`;
-            delete schedule.grid[key];
-            schedule.updatedAt = getUtcNowIso();
-            this._notify('SCHEDULE_GRID_CHANGED', { key, cell: null });
+        clearScheduleCell(dayId, periodId, targetClassId = null) {
+            return this.setScheduleCell(dayId, periodId, {}, targetClassId);
+        }
+
+        updateScheduleClassInfo(classId, updates = {}) {
+            const lib = this.getScheduleLibrary();
+            const target = lib.find(c => c.id === classId || c.name === classId);
+            if (!target) return false;
+            if (updates.name !== undefined) target.name = String(updates.name || '').trim();
+            if (updates.shortName !== undefined) target.shortName = String(updates.shortName || '').trim();
+            if (updates.teacher !== undefined) target.teacher = String(updates.teacher || '').trim();
+            if (updates.grade !== undefined) target.grade = String(updates.grade || '').trim();
+            target.updatedAt = getUtcNowIso();
+
+            if (this.state.schedule && (this.state.schedule.id === classId || this.state.schedule.name === target.name)) {
+                if (updates.name !== undefined) this.state.schedule.name = target.name;
+                if (updates.shortName !== undefined) this.state.schedule.shortName = target.shortName;
+                if (updates.teacher !== undefined) this.state.schedule.teacher = target.teacher;
+                if (updates.grade !== undefined) this.state.schedule.grade = target.grade;
+                this.state.schedule.updatedAt = target.updatedAt;
+            }
+
+            this._scheduleStorageSave();
+            this._notify('SCHEDULE_CLASS_UPDATED', { classId, schedule: target });
+            this._notify('SCHEDULE_CHANGED', { schedule: target });
             return true;
         }
         updateScheduleLunchBreak(updates = {}) {
