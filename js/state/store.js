@@ -607,6 +607,14 @@
                 if (typeof parsed.customFont !== 'string') parsed.customFont = '';
                 if (!Array.isArray(parsed.scheduleLibrary) || parsed.scheduleLibrary.length === 0) {
                     parsed.scheduleLibrary = JSON.parse(JSON.stringify(INITIAL_SCHEDULE_LIBRARY || []));
+                } else {
+                    const isPresetLib = parsed.scheduleLibrary.length === 2 &&
+                        parsed.scheduleLibrary.some(c => c.id === 'class_sched_chu2_3' || c.id === 'class_sched_高二3') &&
+                        parsed.scheduleLibrary.some(c => c.id === 'class_sched_chu2_4' || c.id === 'class_sched_高二4');
+                    if (isPresetLib && (parsed.scheduleLibrary[0].totalCourses === 50 || parsed.scheduleLibrary[0].grid?.['day_1_p_afterschool'] || parsed.scheduleLibrary[0].grid?.['day_1_p_morning']?.name !== '英')) {
+                        parsed.scheduleLibrary = JSON.parse(JSON.stringify(INITIAL_SCHEDULE_LIBRARY || []));
+                        isOld = true;
+                    }
                 }
                 if (typeof parsed.scheduleLibraryTitle !== 'string' || !parsed.scheduleLibraryTitle) {
                     parsed.scheduleLibraryTitle = '畲江中学2026-2027学年第一学期初二课程表';
