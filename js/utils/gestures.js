@@ -288,6 +288,7 @@
             taskDropdown.style.visibility = 'visible';
             taskDropdown.style.pointerEvents = 'none';
             taskDropdown.style.transform = `translate3d(0, ${(progress - 1) * size}px, 0)`;
+            taskDropdown.style.boxShadow = `0 ${(18 * progress).toFixed(1)}px ${(40 * progress).toFixed(1)}px rgba(15, 23, 42, ${(0.16 * progress).toFixed(3)})`;
             taskDropdownOverlay.style.transition = 'none';
             taskDropdownOverlay.style.pointerEvents = 'none';
             taskDropdownOverlay.style.opacity = String(progress);
@@ -484,11 +485,11 @@
                 setDrawerOpen(shouldOpen);
             } else if (axis === 'task') {
                 void taskDropdown.offsetWidth;
-                taskDropdown.style.transition = `transform ${transition}`;
+                taskDropdown.style.transition = `transform ${transition}, box-shadow ${transition}`;
                 taskDropdownOverlay.style.transition = `opacity ${transition}`;
                 taskDropdown.style.transform = `translate3d(0, ${targetProgress === 1 ? 0 : -size}px, 0)`;
                 taskDropdown.style.boxShadow = targetProgress === 1
-                    ? '0 14px 30px rgba(0, 0, 0, 0.12)' : 'none';
+                    ? '0 18px 40px rgba(15, 23, 42, 0.16)' : '0 0 0 rgba(15, 23, 42, 0)';
                 taskDropdownOverlay.style.opacity = String(targetProgress);
                 setTaskDropdownOpen(shouldOpen);
             } else {
