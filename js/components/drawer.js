@@ -631,9 +631,6 @@
                 settingsView.classList.add('show');
                 const scrollArea = settingsView.querySelector('.settings-scroll-area');
                 if (scrollArea) scrollArea.scrollTop = 0;
-                if (window.TWS3.pushGuardState) {
-                    window.TWS3.pushGuardState();
-                }
             }
         }
 

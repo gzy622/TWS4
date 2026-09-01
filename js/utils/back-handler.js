@@ -116,7 +116,7 @@
         const settingsView = document.getElementById('settings-view');
         if (settingsView && settingsView.classList.contains('show')) {
             if (window.TWS3.drawer && typeof window.TWS3.drawer.closeSettingsView === 'function') {
-                window.TWS3.drawer.closeSettingsView(true);
+                window.TWS3.drawer.closeSettingsView(false);
             } else {
                 settingsView.classList.remove('show');
             }
@@ -162,7 +162,6 @@
     function onSystemBackPressed() {
         const consumed = handleBackStep();
         if (consumed) {
-            pushGuardState();
             return 'consumed';
         }
 
@@ -175,7 +174,6 @@
         if (window.TWS3.showToast) {
             window.TWS3.showToast('再按一次退出程序');
         }
-        pushGuardState();
         return 'consumed';
     }
 
@@ -201,7 +199,9 @@
         // 2. 监听浏览器自带后退事件 (popstate)
         window.addEventListener('popstate', () => {
             const result = onSystemBackPressed();
-            if (result === 'exit') {
+            if (result === 'consumed') {
+                pushGuardState();
+            } else if (result === 'exit') {
                 if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
                     window.Capacitor.Plugins.App.exitApp();
                 } else if (window.AndroidApp && typeof window.AndroidApp.exit === 'function') {
