@@ -207,7 +207,7 @@
                 card.className = `drawer-schedule-card ${isActive ? 'active' : ''}`;
                 card.dataset.scheduleClassId = id;
                 card.setAttribute('aria-current', isActive ? 'page' : 'false');
-                card.innerHTML = `<span class="drawer-schedule-card-main"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(description)}</span></span><span class="drawer-schedule-card-count">${getScheduleCourseCount(schedule)} 节</span>`;
+                card.innerHTML = `<span class="drawer-schedule-active-indicator" aria-hidden="true"></span><span class="drawer-schedule-card-main"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(description)}</span></span><span class="drawer-schedule-card-count">${getScheduleCourseCount(schedule)} 节</span>`;
                 card.addEventListener('click', () => {
                     if (store.setSelectedScheduleClassId) store.setSelectedScheduleClassId(id);
                     toggleDrawer(false);

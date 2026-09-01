@@ -645,7 +645,6 @@
     padding: 9px 10px;
     margin: 0 8px;
     border: 0;
-    border-left: 3.5px solid transparent;
     border-radius: 8px;
     background: transparent;
     color: var(--text-dark, #1e293b);
@@ -655,18 +654,29 @@
 }
 
 .drawer-schedule-card:hover {
-    border-left-color: transparent;
     background: var(--surface-muted, #f1f5f3);
 }
 
 .drawer-schedule-card.active {
-    border-left-color: var(--surface-dark, #1b3831);
-    background: #eef7f2;
+    background: #e8f3ee;
     box-shadow: none;
 }
 
 .drawer-schedule-card:active {
     transform: scale(.99);
+}
+
+.drawer-schedule-active-indicator {
+    width: 3.5px;
+    height: 16px;
+    flex-shrink: 0;
+    border-radius: 2px;
+    background: transparent;
+    transition: background-color .15s ease;
+}
+
+.drawer-schedule-card.active .drawer-schedule-active-indicator {
+    background: var(--surface-dark, #1b3831);
 }
 
 .drawer-schedule-card-main {
