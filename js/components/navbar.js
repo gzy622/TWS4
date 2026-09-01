@@ -259,7 +259,7 @@
             }).join('');
         }
 
-        // 分段滑块控制器（支持左右滑动切换与实时跟手物理反馈）
+        // 分段滑块控制器（支持左右滑动切换、磁吸段落感、弹性拉伸与即时触控反馈）
         function createSegmentedSlider({
             container,
             indicator,
@@ -275,12 +275,11 @@
             let startX = 0;
             let startY = 0;
             let startTime = 0;
-            let lastX = 0;
-            let lastTime = 0;
             let initialKey = '';
             let initialIndex = 0;
             let currentHoverIndex = 0;
             let suppressClickUntil = 0;
+            let touchHistory = [];
             let layouts = [];
 
             function getLayouts() {
@@ -327,9 +326,8 @@
                 const touch = e.touches ? e.touches[0] : e;
                 startX = touch.clientX;
                 startY = touch.clientY;
-                lastX = startX;
                 startTime = performance.now();
-                lastTime = startTime;
+                touchHistory = [{ x: startX, t: startTime }];
                 isDragging = false;
                 directionLocked = false;
 
@@ -344,19 +342,40 @@
                 const touch = e.touches ? e.touches[0] : e;
                 const deltaX = touch.clientX - startX;
                 const deltaY = touch.clientY - startY;
+                const now = performance.now();
+
+                touchHistory.push({ x: touch.clientX, t: now });
+                const cutoff = now - 120;
+                while (touchHistory.length > 2 && touchHistory[0].t < cutoff) {
+                    touchHistory.shift();
+                }
 
                 if (!directionLocked) {
                     const absX = Math.abs(deltaX);
                     const absY = Math.abs(deltaY);
-                    if (Math.max(absX, absY) < 5) return;
-                    if (absY >= absX * 1.1) {
+                    if (absX < 5 && absY < 5) return;
+
+                    // 水平滑动意图识别与方向锁定
+                    if (absX >= 5 && absX >= absY * 0.75) {
+                        directionLocked = true;
+                        isDragging = true;
+                        container.classList.add('is-dragging');
+                    } else if (absY >= 8 && absY > absX * 1.5) {
                         directionLocked = true;
                         isDragging = false;
                         return;
+                    } else if (absX + absY > 14) {
+                        directionLocked = true;
+                        if (absX >= absY) {
+                            isDragging = true;
+                            container.classList.add('is-dragging');
+                        } else {
+                            isDragging = false;
+                            return;
+                        }
+                    } else {
+                        return;
                     }
-                    directionLocked = true;
-                    isDragging = true;
-                    container.classList.add('is-dragging');
                 }
 
                 if (!isDragging || layouts.length === 0) return;
@@ -364,43 +383,57 @@
                 e.preventDefault();
                 e.stopPropagation();
 
-                const now = performance.now();
-                lastX = touch.clientX;
-                lastTime = now;
-
                 const startCenter = layouts[initialIndex].center;
                 let targetCenter = startCenter + deltaX;
 
                 const minCenter = layouts[0].center;
                 const maxCenter = layouts[layouts.length - 1].center;
 
-                // 边界阻尼约束
+                // 边界弹性阻尼
                 if (targetCenter < minCenter) {
                     targetCenter = minCenter + (targetCenter - minCenter) * 0.22;
                 } else if (targetCenter > maxCenter) {
                     targetCenter = maxCenter + (targetCenter - maxCenter) * 0.22;
                 }
 
-                // 实时插值计算滑块位置与宽度
+                // 磁吸段落插值与弹性形变计算
                 let segLeft = layouts[0].left;
                 let segWidth = layouts[0].width;
+                let nearestIdx = initialIndex;
 
                 if (targetCenter <= layouts[0].center) {
                     const shift = targetCenter - layouts[0].center;
                     segLeft = layouts[0].left + shift;
                     segWidth = layouts[0].width;
+                    nearestIdx = 0;
                 } else if (targetCenter >= layouts[layouts.length - 1].center) {
                     const shift = targetCenter - layouts[layouts.length - 1].center;
                     segLeft = layouts[layouts.length - 1].left + shift;
                     segWidth = layouts[layouts.length - 1].width;
+                    nearestIdx = layouts.length - 1;
                 } else {
                     for (let i = 0; i < layouts.length - 1; i++) {
                         const c1 = layouts[i].center;
                         const c2 = layouts[i + 1].center;
                         if (targetCenter >= c1 && targetCenter <= c2) {
-                            const ratio = (targetCenter - c1) / Math.max(1, c2 - c1);
-                            segLeft = layouts[i].left + (layouts[i + 1].left - layouts[i].left) * ratio;
-                            segWidth = layouts[i].width + (layouts[i + 1].width - layouts[i].width) * ratio;
+                            const span = Math.max(1, c2 - c1);
+                            const rawRatio = Math.max(0, Math.min(1, (targetCenter - c1) / span));
+
+                            // 磁吸段落 S 曲线变换（两端吸附驻留，中间顺畅吸合）
+                            const steppedRatio = rawRatio - 0.085 * Math.sin(2 * Math.PI * rawRatio);
+
+                            // 跨档微弹性胶囊拉伸
+                            const stretch = Math.sin(Math.PI * rawRatio) * 4.5;
+
+                            const baseWidth = layouts[i].width + (layouts[i + 1].width - layouts[i].width) * steppedRatio;
+                            const baseLeft = layouts[i].left + (layouts[i + 1].left - layouts[i].left) * steppedRatio;
+
+                            segLeft = baseLeft - stretch / 2;
+                            segWidth = baseWidth + stretch;
+
+                            // 动态判定临界档位（降低切换阻力）
+                            const switchThreshold = deltaX > 0 ? 0.38 : 0.62;
+                            nearestIdx = rawRatio >= switchThreshold ? (i + 1) : i;
                             break;
                         }
                     }
@@ -409,20 +442,14 @@
                 indicator.style.transform = `translate3d(${segLeft}px, 0, 0)`;
                 indicator.style.width = `${segWidth}px`;
 
-                // 查找当前手指最接近的项
-                let nearestIdx = 0;
-                let minDist = Infinity;
-                layouts.forEach((item, idx) => {
-                    const dist = Math.abs(targetCenter - item.center);
-                    if (dist < minDist) {
-                        minDist = dist;
-                        nearestIdx = idx;
-                    }
-                });
-
+                // 跨越档位时即时触发段落触感与视觉高亮
                 if (nearestIdx !== currentHoverIndex) {
                     currentHoverIndex = nearestIdx;
-                    try { window.TWS3.haptics?.('light'); } catch (_) {}
+                    try {
+                        if (window.TWS3.haptics?.('selection') === false) {
+                            window.TWS3.haptics?.('light');
+                        }
+                    } catch (_) {}
                     if (onHover) {
                         onHover(layouts[nearestIdx].key, nearestIdx);
                     }
@@ -438,17 +465,41 @@
                 container.classList.remove('is-dragging');
                 isDragging = false;
                 directionLocked = false;
-                suppressClickUntil = performance.now() + 250;
+                suppressClickUntil = performance.now() + 220;
 
                 const touch = e.changedTouches ? e.changedTouches[0] : e;
-                const endX = touch ? touch.clientX : lastX;
+                const endX = touch ? touch.clientX : (touchHistory[touchHistory.length - 1]?.x || startX);
                 const endTime = performance.now();
-                const deltaTime = Math.max(1, endTime - (lastTime || startTime));
-                const vx = (endX - lastX) / deltaTime;
+                touchHistory.push({ x: endX, t: endTime });
+
+                // 基于滑动轨迹采样计算瞬时滑动速度 vx (px/ms)
+                let vx = 0;
+                if (touchHistory.length >= 2) {
+                    const oldest = touchHistory[0];
+                    const newest = touchHistory[touchHistory.length - 1];
+                    const dt = newest.t - oldest.t;
+                    if (dt > 8) {
+                        vx = (newest.x - oldest.x) / dt;
+                    }
+                }
 
                 let finalIndex = currentHoverIndex;
-                if (Math.abs(vx) > 0.28) {
-                    finalIndex = Math.min(layouts.length - 1, Math.max(0, initialIndex + Math.sign(vx)));
+                const absVx = Math.abs(vx);
+                const totalDeltaX = endX - startX;
+                const singleItemWidth = layouts[0]?.width || 45;
+
+                // 快速轻扫触发切换
+                if (absVx > 0.16) {
+                    const dir = Math.sign(vx);
+                    const step = absVx > 0.65 ? 2 : 1;
+                    finalIndex = Math.min(layouts.length - 1, Math.max(0, initialIndex + dir * step));
+                } else if (finalIndex === initialIndex) {
+                    // 常速拖拽容错：位移超过单项宽度的 28% 即判定为切换意图
+                    if (totalDeltaX > singleItemWidth * 0.28) {
+                        finalIndex = Math.min(layouts.length - 1, initialIndex + 1);
+                    } else if (totalDeltaX < -singleItemWidth * 0.28) {
+                        finalIndex = Math.max(0, initialIndex - 1);
+                    }
                 }
 
                 const targetLayout = layouts[finalIndex] || layouts[0];

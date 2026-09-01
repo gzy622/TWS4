@@ -526,8 +526,8 @@
     z-index: 0;
     opacity: 0;
     will-change: transform, width, background-color;
-    transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1),
-                width 0.22s cubic-bezier(0.2, 0, 0, 1),
+    transition: transform 0.24s cubic-bezier(0.25, 1, 0.4, 1),
+                width 0.24s cubic-bezier(0.25, 1, 0.4, 1),
                 opacity 0.15s ease,
                 background-color 0.2s ease,
                 box-shadow 0.2s ease;
@@ -540,23 +540,35 @@
 
 .quick-views-indicator {
     background: #e8f3ee;
-    box-shadow: inset 0 0 0 1px #d5e7de;
+    box-shadow: inset 0 0 0 1px #d5e7de, 0 1px 2px rgba(27, 56, 49, 0.05);
 }
 
 .quick-mode-indicator {
     background: #e8f3ee;
-    box-shadow: inset 0 0 0 1px #d5e7de;
+    box-shadow: inset 0 0 0 1px #d5e7de, 0 1px 2px rgba(27, 56, 49, 0.05);
 }
 
 .quick-mode-indicator.mode-grade {
     background: #fff1e8;
-    box-shadow: inset 0 0 0 1px #fed7aa;
+    box-shadow: inset 0 0 0 1px #fed7aa, 0 1px 2px rgba(194, 65, 12, 0.08);
 }
 
-/* 拖动中禁用平滑过渡，实现实时物理跟手 */
+/* 拖动中禁用平滑过渡，实现实时物理跟手与轻微按压反馈 */
 .quick-views-segmented.is-dragging .quick-views-indicator,
 .quick-mode-segmented.is-dragging .quick-mode-indicator {
     transition: none !important;
+}
+
+.quick-views-segmented.is-dragging .quick-views-indicator {
+    box-shadow: inset 0 0 0 1px #c6ded2, 0 1.5px 4px rgba(27, 56, 49, 0.1);
+}
+
+.quick-mode-segmented.is-dragging .quick-mode-indicator {
+    box-shadow: inset 0 0 0 1px #c6ded2, 0 1.5px 4px rgba(27, 56, 49, 0.1);
+}
+
+.quick-mode-segmented.is-dragging .quick-mode-indicator.mode-grade {
+    box-shadow: inset 0 0 0 1px #fdba74, 0 1.5px 4px rgba(194, 65, 12, 0.12);
 }
 
 .quick-view-btn,
