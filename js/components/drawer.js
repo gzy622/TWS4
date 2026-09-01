@@ -1610,11 +1610,11 @@
                 const confirmed = modal
                     ? await modal.confirm({
                         title: '重置当前作业',
-                        message: `确定清空「${currentTask ? currentTask.name : '当前作业'}」全员提交与打分？此操作不可撤销。`,
+                        message: `确定重置「${currentTask ? currentTask.name : '当前作业'}」？将清空当前作业全部学生的提交状态、分数和备注。`,
                         confirmText: '重置',
                         danger: true
                     })
-                    : confirm(`确定重置「${currentTask ? currentTask.name : '当前作业'}」全员状态？`);
+                    : confirm(`确定重置「${currentTask ? currentTask.name : '当前作业'}」？将清空当前作业全部学生的提交状态、分数和备注。`);
 
                 if (confirmed) {
                     store.resetCurrentTaskRoster();
@@ -1677,10 +1677,8 @@
 
             filtered.forEach(s => {
                 const item = document.createElement('div');
-                item.className = 'roster-student-item';
                 const isNonEng = !!s.isNonEnglish;
-                const langTagClass = isNonEng ? 'roster-lang-tag non-english' : 'roster-lang-tag';
-                const langTagText = isNonEng ? '非英语生' : '英语生';
+                const toggleClass = isNonEng ? 'roster-non-english-btn active' : 'roster-non-english-btn';
 
                 item.innerHTML = `
                     <div class="roster-student-main">
@@ -1688,7 +1686,10 @@
                         <span class="roster-student-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</span>
                     </div>
                     <div class="roster-student-actions">
-                        <span class="${langTagClass}" data-id="${s.id}" title="点击切换是否为英语生">${langTagText}</span>
+                        <button type="button" class="${toggleClass}" data-id="${s.id}" title="点击切换是否为非英语生（英语作业免交）">
+                            <span class="roster-toggle-label">非英语生</span>
+                            ${isNonEng ? '<span class="roster-toggle-desc">英语作业免交</span>' : ''}
+                        </button>
                         <button type="button" class="roster-icon-btn edit-name" data-id="${s.id}" title="修改姓名">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -1756,7 +1757,7 @@
 
         if (rosterListBody) {
             rosterListBody.addEventListener('click', async (e) => {
-                const langTag = e.target.closest('.roster-lang-tag');
+                const langTag = e.target.closest('.roster-non-english-btn, .roster-lang-tag');
                 if (langTag) {
                     const id = Number(langTag.dataset.id);
                     const s = store.getState().students.find(x => x.id === id);
@@ -1764,7 +1765,7 @@
                         const nextVal = !s.isNonEnglish;
                         store.setStudentNonEnglish(id, nextVal);
                         renderRosterList();
-                        showToast(nextVal ? `已将 ${s.name} 设为非英语生` : `已将 ${s.name} 设为英语生`);
+                        showToast(nextVal ? `已将 ${s.name} 设为非英语生（英语作业免交）` : `已将 ${s.name} 设为英语生`);
                     }
                     return;
                 }
@@ -1838,8 +1839,7 @@
             const buildInfo = window.TWS3.BUILD_INFO || {};
             const appVersion = buildInfo.appVersion || '1.0.0';
             const buildTime = buildInfo.time || '2026-08-30 20:39:16';
-            const versionStr = `v${appVersion} · ${buildTime}`;
-
+            const versionStr = `v${appVersion}`;
             const footerEls = document.querySelectorAll('.drawer-footer-text, .settings-footer-text');
             footerEls.forEach(el => {
                 el.textContent = versionStr;

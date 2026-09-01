@@ -551,15 +551,18 @@
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
-    padding: 10px 12px;
+    padding: 0 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     cursor: pointer;
     user-select: none;
     text-align: left;
     transition: all 0.16s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    min-height: 46px;
+    height: 46px;
+    box-sizing: border-box;
 }
 
 .drawer-settings-entry-btn:hover {
@@ -575,8 +578,8 @@
 }
 
 .drawer-settings-btn-icon {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 8px;
     background: #e8f3ee;
     display: flex;
@@ -586,8 +589,8 @@
 }
 
 .drawer-settings-btn-icon svg {
-    width: 17px;
-    height: 17px;
+    width: 16px;
+    height: 16px;
     stroke: var(--surface-dark, #1b3831);
 }
 
@@ -595,24 +598,14 @@
     flex: 1;
     min-width: 0;
     display: flex;
-    flex-direction: column;
-    gap: 1px;
+    align-items: center;
 }
 
 .drawer-settings-btn-title {
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text-dark, #1e293b);
 }
-
-.drawer-settings-btn-desc {
-    font-size: 11px;
-    color: var(--text-muted, #64748b);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 .drawer-settings-chevron {
     width: 13px;
     height: 13px;
@@ -865,17 +858,6 @@
     transform: scale(0.985);
     background-color: #fafbfa;
 }
-.settings-card-header .bg-tag {
-    right: 14px;
-    top: 14px;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    color: var(--surface-dark, #1b3831);
-    background: #e8f3ee;
-    padding: 3px 8px;
-    border-radius: 6px;
-}
 
 .settings-card-title {
     font-size: 18px;
@@ -923,7 +905,7 @@
     border: 0;
     border-bottom: 1px solid #f1f5f9;
     border-radius: 0;
-    padding: 12px 16px;
+    padding: 0 16px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -933,7 +915,8 @@
     -webkit-touch-callout: none;
     touch-action: manipulation;
     flex-shrink: 0;
-    min-height: 52px;
+    height: 50px;
+    min-height: 50px;
     box-sizing: border-box;
     transition: background-color 0.15s ease;
 }
@@ -1046,24 +1029,29 @@
     flex: 1;
     min-width: 0;
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    align-items: center;
 }
 
 .drawer-item-title {
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-dark, #1e293b);
-    line-height: 1.25;
+    line-height: 1.3;
 }
 
-.drawer-item-desc {
-    font-size: 11.5px;
-    color: var(--text-muted, #64748b);
-    line-height: 1.25;
+.font-active-badge {
+    margin-left: auto;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    max-width: 120px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.2;
 }
 
 .drawer-chevron {
@@ -1091,4 +1079,32 @@
     font-size: 11px;
     color: #94a3b8;
     font-weight: 500;
+}
+
+/* 危险操作独立区域 */
+.drawer-section.danger-section {
+    border-color: #fee2e2;
+}
+
+.drawer-section-title.danger-title {
+    color: #dc2626;
+    background: #fff5f5;
+    border-bottom: 1px solid #fee2e2;
+}
+
+.drawer-menu-item.danger-item:hover {
+    background-color: #fff1f2;
+}
+
+.danger-text {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.danger-item .drawer-chevron {
+    stroke: #f87171;
+}
+
+.danger-item:hover .drawer-chevron {
+    stroke: #dc2626;
 }

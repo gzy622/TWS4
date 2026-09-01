@@ -716,26 +716,39 @@
                             <line x1="3" y1="10" x2="21" y2="10"/>
                         </svg>
                     </div>
-                    <h3 class="schedule-empty-title">课程表系统</h3>
-                    <p class="schedule-empty-desc">支持导入《2026-2027学年第一学期初二课程表.xlsx》等多工作表全校排课表格，智能识别班级、班主任与每日课程排期，并保存您的查看选择。</p>
+                    <h3 class="schedule-empty-title">尚未导入课程表</h3>
                     <div class="schedule-empty-btn-group">
-                        <button type="button" class="schedule-btn schedule-btn-primary" id="schedule-empty-load-builtin-btn">
+                        <button type="button" class="schedule-btn schedule-btn-primary" id="schedule-empty-import-btn">
+                            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6m0 0l-3 3m3-3l3 3"/></svg>
+                            <span>导入 .xlsx 课程表</span>
+                        </button>
+                        <button type="button" class="schedule-btn schedule-btn-secondary" id="schedule-empty-load-builtin-btn">
                             <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
                             <span>载入内置初二课程表</span>
                         </button>
-                        <button type="button" class="schedule-btn schedule-btn-secondary" id="schedule-empty-import-btn">
-                            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6m0 0l-3 3m3-3l3 3"/></svg>
-                            <span>选择 .xlsx 文件导入</span>
-                        </button>
+                        <button type="button" class="schedule-empty-help-link" id="schedule-empty-format-help-btn">格式说明</button>
                     </div>
                 </div>
             `;
 
+            const importBtn = container.querySelector('#schedule-empty-import-btn');
+            if (importBtn) importBtn.addEventListener('click', () => fileInput && fileInput.click());
+
             const loadBtn = container.querySelector('#schedule-empty-load-builtin-btn');
             if (loadBtn) loadBtn.addEventListener('click', () => loadBuiltinSchedule());
 
-            const importBtn = container.querySelector('#schedule-empty-import-btn');
-            if (importBtn) importBtn.addEventListener('click', () => fileInput && fileInput.click());
+            const helpBtn = container.querySelector('#schedule-empty-format-help-btn');
+            if (helpBtn) {
+                helpBtn.addEventListener('click', () => {
+                    const modal = window.TWS3.modal;
+                    if (modal) {
+                        modal.alert({
+                            title: '课程表格式说明',
+                            message: '支持多工作表全校排课表格（.xlsx）。每个工作表名称即班级名称，表内包含星期排期与节次课程信息。'
+                        });
+                    }
+                });
+            }
         }
 
         // 主渲染函数
