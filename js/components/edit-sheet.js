@@ -46,6 +46,8 @@
             if (editSheetId) editSheetId.textContent = student.studentNo || student.id;
             if (editSheetTitle) editSheetTitle.textContent = student.name;
             if (nonEnglishToggleBtn) {
+                const showNonEng = store.getShowNonEnglishTags();
+                nonEnglishToggleBtn.style.display = showNonEng ? '' : 'none';
                 const isNonEng = !!student.isNonEnglish;
                 nonEnglishToggleBtn.classList.toggle('active', isNonEng);
                 nonEnglishToggleBtn.textContent = isNonEng ? '非英语生' : '英语生';

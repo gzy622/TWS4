@@ -509,6 +509,7 @@
                 viewMode: 'grid',
                 showStudentNumbers: true,
                 showSubjectTags: true,
+                showNonEnglishTags: true,
                 fontPreset: 'default',
                 customFont: '',
                 scheduleLibrary: JSON.parse(JSON.stringify(INITIAL_SCHEDULE_LIBRARY || [])),
@@ -603,6 +604,7 @@
                 if (!parsed.operationMode) parsed.operationMode = 'check';
                 if (typeof parsed.showStudentNumbers !== 'boolean') parsed.showStudentNumbers = true;
                 if (typeof parsed.showSubjectTags !== 'boolean') parsed.showSubjectTags = true;
+                if (typeof parsed.showNonEnglishTags !== 'boolean') parsed.showNonEnglishTags = true;
                 if (!parsed.fontPreset) parsed.fontPreset = 'default';
                 if (typeof parsed.customFont !== 'string') parsed.customFont = '';
                 if (!Array.isArray(parsed.scheduleLibrary) || parsed.scheduleLibrary.length === 0) {
@@ -822,6 +824,17 @@
             if (this.state.showSubjectTags === nextValue) return;
             this.state.showSubjectTags = nextValue;
             this._notify('SUBJECT_TAG_VISIBILITY_CHANGED', { show: nextValue });
+        }
+
+        getShowNonEnglishTags() {
+            return this.state.showNonEnglishTags !== false;
+        }
+
+        setShowNonEnglishTags(show) {
+            const nextValue = show !== false;
+            if (this.state.showNonEnglishTags === nextValue) return;
+            this.state.showNonEnglishTags = nextValue;
+            this._notify('NON_ENGLISH_TAG_VISIBILITY_CHANGED', { show: nextValue });
         }
 
         // ==========================================
@@ -2381,6 +2394,7 @@
                 this.state.viewMode = incomingState.viewMode || 'grid';
                 this.state.showStudentNumbers = incomingState.showStudentNumbers !== false;
                 this.state.showSubjectTags = incomingState.showSubjectTags !== false;
+                this.state.showNonEnglishTags = incomingState.showNonEnglishTags !== false;
                 if (incomingState.fontPreset) this.state.fontPreset = incomingState.fontPreset;
                 if (typeof incomingState.customFont === 'string') this.state.customFont = incomingState.customFont;
                 this.state.schemaVersion = 4;

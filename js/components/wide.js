@@ -84,7 +84,7 @@
 
             // 5. 第一行（姓名行）：学生姓名优先级最高，仅在英语作业且非免交时附加紧凑「非英」身份标
             let nameTagHtml = '';
-            if (isEnglishTask && student.isNonEnglish && !isNonEnglishExempt) {
+            if (store.getShowNonEnglishTags() && isEnglishTask && student.isNonEnglish && !isNonEnglishExempt) {
                 nameTagHtml = `<span class="wide-card-tag tag-lang">非英</span>`;
             }
 
@@ -296,9 +296,7 @@
                 if (!payload || payload.taskId === state.currentTaskId) {
                     syncArchivedMode();
                 }
-            } else if (eventType === 'ROSTER_RESET') {
-                renderWide(false);
-            } else if (eventType === 'STUDENT_FILTER_CHANGED') {
+            } else if (eventType === 'ROSTER_RESET' || eventType === 'STUDENT_FILTER_CHANGED' || eventType === 'NON_ENGLISH_TAG_VISIBILITY_CHANGED') {
                 renderWide(false);
             } else if (eventType === 'STUDENT_NUMBER_VISIBILITY_CHANGED') {
                 wideContainer.querySelectorAll('.card').forEach(card => {

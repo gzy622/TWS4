@@ -39,6 +39,7 @@
                 <!-- 2. 视图与模式控制行 -->
                 <div class="quick-controls-row">
                     <div class="quick-views-segmented" role="group" aria-label="视图切换">
+                        <div class="quick-views-indicator" aria-hidden="true"></div>
                         <button type="button" class="quick-view-btn" data-view="grid" title="网格视图" aria-pressed="false">
                             <svg viewBox="0 0 24 24"><path d="M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z"/></svg><span>网格</span>
                         </button>
@@ -54,6 +55,7 @@
                     </div>
 
                     <div class="quick-mode-segmented" role="group" aria-label="操作模式切换">
+                        <div class="quick-mode-indicator" aria-hidden="true"></div>
                         <button type="button" class="quick-mode-segment-btn" data-mode="check" title="切换至登记模式" aria-pressed="false">
                             <svg viewBox="0 0 24 24">
                                 <polyline points="9 11 12 14 22 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -71,7 +73,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="task-drag-handle" aria-hidden="true"></div>
         `;
 
@@ -258,6 +259,289 @@
             }).join('');
         }
 
+        // 分段滑块控制器（支持左右滑动切换与实时跟手物理反馈）
+        function createSegmentedSlider({
+            container,
+            indicator,
+            buttons,
+            dataAttr,
+            getActiveKey,
+            onSelect,
+            onHover,
+            onLayoutUpdate
+        }) {
+            let isDragging = false;
+            let directionLocked = false;
+            let startX = 0;
+            let startY = 0;
+            let startTime = 0;
+            let lastX = 0;
+            let lastTime = 0;
+            let initialKey = '';
+            let initialIndex = 0;
+            let currentHoverIndex = 0;
+            let suppressClickUntil = 0;
+            let layouts = [];
+
+            function getLayouts() {
+                return Array.from(buttons).map((btn, index) => {
+                    const key = btn.dataset[dataAttr];
+                    const left = btn.offsetLeft;
+                    const width = btn.offsetWidth;
+                    return {
+                        key,
+                        index,
+                        left,
+                        width,
+                        center: left + width / 2,
+                        element: btn
+                    };
+                });
+            }
+
+            function updateIndicator(targetKey = getActiveKey(), animate = true) {
+                if (!container || !indicator || buttons.length === 0) return;
+                layouts = getLayouts();
+                const activeIndex = layouts.findIndex(item => item.key === targetKey);
+                if (activeIndex < 0 || layouts[activeIndex].width === 0) {
+                    return;
+                }
+                const activeLayout = layouts[activeIndex];
+                if (!animate) {
+                    indicator.style.transition = 'none';
+                }
+                indicator.style.transform = `translate3d(${activeLayout.left}px, 0, 0)`;
+                indicator.style.width = `${activeLayout.width}px`;
+                indicator.classList.add('ready');
+                if (!animate) {
+                    void indicator.offsetWidth;
+                    indicator.style.transition = '';
+                }
+                if (onLayoutUpdate) {
+                    onLayoutUpdate(targetKey, activeIndex);
+                }
+            }
+
+            function onTouchStart(e) {
+                if (e.touches && e.touches.length !== 1) return;
+                const touch = e.touches ? e.touches[0] : e;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                lastX = startX;
+                startTime = performance.now();
+                lastTime = startTime;
+                isDragging = false;
+                directionLocked = false;
+
+                layouts = getLayouts();
+                initialKey = getActiveKey();
+                initialIndex = layouts.findIndex(item => item.key === initialKey);
+                if (initialIndex < 0) initialIndex = 0;
+                currentHoverIndex = initialIndex;
+            }
+
+            function onTouchMove(e) {
+                const touch = e.touches ? e.touches[0] : e;
+                const deltaX = touch.clientX - startX;
+                const deltaY = touch.clientY - startY;
+
+                if (!directionLocked) {
+                    const absX = Math.abs(deltaX);
+                    const absY = Math.abs(deltaY);
+                    if (Math.max(absX, absY) < 5) return;
+                    if (absY >= absX * 1.1) {
+                        directionLocked = true;
+                        isDragging = false;
+                        return;
+                    }
+                    directionLocked = true;
+                    isDragging = true;
+                    container.classList.add('is-dragging');
+                }
+
+                if (!isDragging || layouts.length === 0) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                const now = performance.now();
+                lastX = touch.clientX;
+                lastTime = now;
+
+                const startCenter = layouts[initialIndex].center;
+                let targetCenter = startCenter + deltaX;
+
+                const minCenter = layouts[0].center;
+                const maxCenter = layouts[layouts.length - 1].center;
+
+                // 边界阻尼约束
+                if (targetCenter < minCenter) {
+                    targetCenter = minCenter + (targetCenter - minCenter) * 0.22;
+                } else if (targetCenter > maxCenter) {
+                    targetCenter = maxCenter + (targetCenter - maxCenter) * 0.22;
+                }
+
+                // 实时插值计算滑块位置与宽度
+                let segLeft = layouts[0].left;
+                let segWidth = layouts[0].width;
+
+                if (targetCenter <= layouts[0].center) {
+                    const shift = targetCenter - layouts[0].center;
+                    segLeft = layouts[0].left + shift;
+                    segWidth = layouts[0].width;
+                } else if (targetCenter >= layouts[layouts.length - 1].center) {
+                    const shift = targetCenter - layouts[layouts.length - 1].center;
+                    segLeft = layouts[layouts.length - 1].left + shift;
+                    segWidth = layouts[layouts.length - 1].width;
+                } else {
+                    for (let i = 0; i < layouts.length - 1; i++) {
+                        const c1 = layouts[i].center;
+                        const c2 = layouts[i + 1].center;
+                        if (targetCenter >= c1 && targetCenter <= c2) {
+                            const ratio = (targetCenter - c1) / Math.max(1, c2 - c1);
+                            segLeft = layouts[i].left + (layouts[i + 1].left - layouts[i].left) * ratio;
+                            segWidth = layouts[i].width + (layouts[i + 1].width - layouts[i].width) * ratio;
+                            break;
+                        }
+                    }
+                }
+
+                indicator.style.transform = `translate3d(${segLeft}px, 0, 0)`;
+                indicator.style.width = `${segWidth}px`;
+
+                // 查找当前手指最接近的项
+                let nearestIdx = 0;
+                let minDist = Infinity;
+                layouts.forEach((item, idx) => {
+                    const dist = Math.abs(targetCenter - item.center);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearestIdx = idx;
+                    }
+                });
+
+                if (nearestIdx !== currentHoverIndex) {
+                    currentHoverIndex = nearestIdx;
+                    try { window.TWS3.haptics?.('light'); } catch (_) {}
+                    if (onHover) {
+                        onHover(layouts[nearestIdx].key, nearestIdx);
+                    }
+                }
+            }
+
+            function onTouchEnd(e) {
+                if (!isDragging) {
+                    directionLocked = false;
+                    return;
+                }
+
+                container.classList.remove('is-dragging');
+                isDragging = false;
+                directionLocked = false;
+                suppressClickUntil = performance.now() + 250;
+
+                const touch = e.changedTouches ? e.changedTouches[0] : e;
+                const endX = touch ? touch.clientX : lastX;
+                const endTime = performance.now();
+                const deltaTime = Math.max(1, endTime - (lastTime || startTime));
+                const vx = (endX - lastX) / deltaTime;
+
+                let finalIndex = currentHoverIndex;
+                if (Math.abs(vx) > 0.28) {
+                    finalIndex = Math.min(layouts.length - 1, Math.max(0, initialIndex + Math.sign(vx)));
+                }
+
+                const targetLayout = layouts[finalIndex] || layouts[0];
+                updateIndicator(targetLayout.key, true);
+
+                if (onSelect) {
+                    onSelect(targetLayout.key, targetLayout.element, finalIndex !== initialIndex);
+                }
+            }
+
+            // 触控手势绑定
+            container.addEventListener('touchstart', onTouchStart, { passive: true });
+            container.addEventListener('touchmove', onTouchMove, { passive: false });
+            container.addEventListener('touchend', onTouchEnd, { passive: false });
+            container.addEventListener('touchcancel', onTouchEnd, { passive: false });
+
+            // 点击事件支持
+            buttons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    if (performance.now() < suppressClickUntil) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        return;
+                    }
+                    const key = btn.dataset[dataAttr];
+                    if (!key) return;
+                    updateIndicator(key, true);
+                    if (onSelect) {
+                        onSelect(key, btn, key !== getActiveKey());
+                    }
+                });
+            });
+
+            return {
+                update: updateIndicator
+            };
+        }
+
+        const viewsIndicator = taskDropdown.querySelector('.quick-views-indicator');
+        const viewsContainer = taskDropdown.querySelector('.quick-views-segmented');
+        const modeIndicator = taskDropdown.querySelector('.quick-mode-indicator');
+        const modeContainer = taskDropdown.querySelector('.quick-mode-segmented');
+
+        const viewsSlider = createSegmentedSlider({
+            container: viewsContainer,
+            indicator: viewsIndicator,
+            buttons: viewButtons,
+            dataAttr: 'view',
+            getActiveKey: () => store.getViewMode(),
+            onHover: (key) => {
+                viewButtons.forEach(btn => {
+                    const isActive = btn.dataset.view === key;
+                    btn.classList.toggle('active', isActive);
+                    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                });
+            },
+            onSelect: (viewKey, btn, hasChanged) => {
+                if (!viewKey) return;
+                store.setViewMode(viewKey);
+                renderViewSwitcher();
+                closeDropdown();
+            }
+        });
+
+        const modeSlider = createSegmentedSlider({
+            container: modeContainer,
+            indicator: modeIndicator,
+            buttons: modeSegmentButtons,
+            dataAttr: 'mode',
+            getActiveKey: () => store.getOperationMode(),
+            onLayoutUpdate: (key) => {
+                modeIndicator.classList.toggle('mode-grade', key === 'grade');
+            },
+            onHover: (key) => {
+                modeIndicator.classList.toggle('mode-grade', key === 'grade');
+                modeSegmentButtons.forEach(btn => {
+                    const isActive = btn.dataset.mode === key;
+                    btn.classList.toggle('active', isActive);
+                    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                });
+            },
+            onSelect: (modeKey, btn, hasChanged) => {
+                if (!modeKey) return;
+                updateModeButton(modeKey);
+                if (hasChanged) {
+                    try { window.TWS3.haptics?.('light'); } catch (_) {}
+                    queueMicrotask(() => {
+                        store.setOperationMode(modeKey);
+                    });
+                }
+            }
+        });
+
         // 渲染视图切换高亮与控制行可见性
         function renderViewSwitcher() {
             const currentView = store.getViewMode();
@@ -270,6 +554,9 @@
                 btn.classList.toggle('active', isActive);
                 btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
+            if (viewsSlider) {
+                viewsSlider.update(currentView, true);
+            }
         }
 
         // 渲染模式切换按钮状态与可见性
@@ -293,6 +580,9 @@
             if (progressWrapper) progressWrapper.dataset.mode = mode;
             const navbarEl = document.querySelector('.navbar');
             if (navbarEl) navbarEl.dataset.mode = mode;
+            if (modeSlider) {
+                modeSlider.update(mode, true);
+            }
         }
 
         // 更新左侧操作按钮图标与功能提示
@@ -333,17 +623,7 @@
                 `;
             }
         }
-        // 1. 视图切换点击
-        viewButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const view = btn.dataset.view;
-                if (!view) return;
-                store.setViewMode(view);
-                renderViewSwitcher();
-                closeDropdown();
-            });
-        });
+
         // 2. 班级切换与科目高亮点击（支持作业班级、课表班级与科目突出显示）
         if (classComparisonContainer) {
             classComparisonContainer.addEventListener('click', (e) => {
@@ -402,21 +682,6 @@
             });
         }
 
-        // 3. 操作模式分段切换点击
-        modeSegmentButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const targetMode = btn.dataset.mode;
-                if (!targetMode || targetMode === store.getOperationMode()) return;
-                updateModeButton(targetMode);
-                setTimeout(() => {
-                    try { window.TWS3.haptics?.('light'); } catch (_) {}
-                }, 30);
-                queueMicrotask(() => {
-                    store.setOperationMode(targetMode);
-                });
-            });
-        });
 
         // 4. 顶栏右侧按钮点击（课程表视图触发导入，其他视图触发新建作业）
         if (navNewTaskBtn) {
@@ -638,9 +903,12 @@
                 renderClassCards();
                 renderViewSwitcher();
                 updateModeButton();
+                requestAnimationFrame(() => {
+                    viewsSlider?.update(store.getViewMode(), false);
+                    modeSlider?.update(store.getOperationMode(), false);
+                });
             }
         }
-
         function closeDropdown() {
             taskDropdown.classList.remove('show');
             navTitleTrigger.classList.remove('active');
@@ -719,6 +987,12 @@
             }
         });
 
+        window.addEventListener('resize', () => {
+            if (taskDropdown.classList.contains('show')) {
+                viewsSlider?.update(store.getViewMode(), false);
+                modeSlider?.update(store.getOperationMode(), false);
+            }
+        });
         // 初始渲染
         renderClassCards();
         renderViewSwitcher();

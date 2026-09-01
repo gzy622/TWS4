@@ -1013,8 +1013,8 @@
 .drawer-item-icon.icon-csv { background: #ffedd5; }
 .drawer-item-icon.icon-reset { background: #fee2e2; }
 .drawer-item-icon.icon-subject { background: #f0fdf4; }
+.drawer-item-icon.icon-lang { background: #fdf2f8; }
 .drawer-item-icon.icon-debug { background: #f1f5f9; }
-
 .drawer-item-icon svg {
     width: 17px;
     height: 17px;

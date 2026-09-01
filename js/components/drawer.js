@@ -70,6 +70,7 @@
         const resetRosterBtn = document.getElementById('drawer-reset-roster-btn');
         const studentNumberToggle = document.getElementById('drawer-student-number-toggle');
         const subjectTagToggle = document.getElementById('drawer-subject-tag-toggle');
+        const nonEnglishTagToggle = document.getElementById('drawer-non-english-tag-toggle');
         const toggleDebuggerBtn = document.getElementById('drawer-toggle-debugger-btn');
         const fontSwitchBtn = document.getElementById('drawer-font-switch-btn');
         const drawerCurrentFontBadge = document.getElementById('drawer-current-font-badge');
@@ -626,6 +627,7 @@
             renderSettingsHeader();
             renderStudentNumberToggle();
             renderSubjectTagToggle();
+            renderNonEnglishTagToggle();
             renderDebuggerToggle();
             if (settingsView) {
                 settingsView.classList.add('show');
@@ -676,6 +678,12 @@
             subjectTagToggle.classList.toggle('active', isVisible);
             subjectTagToggle.setAttribute('aria-pressed', String(isVisible));
         }
+        function renderNonEnglishTagToggle() {
+            if (!nonEnglishTagToggle) return;
+            const isVisible = store.getShowNonEnglishTags();
+            nonEnglishTagToggle.classList.toggle('active', isVisible);
+            nonEnglishTagToggle.setAttribute('aria-pressed', String(isVisible));
+        }
         function renderDebuggerToggle() {
             if (!toggleDebuggerBtn) return;
             const isVisible = window.TWS3.logger && typeof window.TWS3.logger.isFloatingBtnVisible === 'function'
@@ -694,6 +702,14 @@
         if (subjectTagToggle) {
             subjectTagToggle.addEventListener('click', () => {
                 store.setShowSubjectTags(!store.getShowSubjectTags());
+            });
+        }
+
+        if (nonEnglishTagToggle) {
+            nonEnglishTagToggle.addEventListener('click', () => {
+                const nextVal = !store.getShowNonEnglishTags();
+                store.setShowNonEnglishTags(nextVal);
+                showToast(nextVal ? '已开启英语生标签显示' : '已关闭英语生标签显示');
             });
         }
         // 0. 字体设置与弹窗
@@ -1877,7 +1893,8 @@
             } else if (eventType === 'SUBJECT_TAG_VISIBILITY_CHANGED') {
                 renderSubjectTagToggle();
                 if (store.getViewMode() !== 'schedule') renderDrawerTaskList();
-            } else if (eventType === 'FONT_SETTINGS_CHANGED') {
+            } else if (eventType === 'NON_ENGLISH_TAG_VISIBILITY_CHANGED') {
+                renderNonEnglishTagToggle();
                 renderFontStatus();
                 if (fontModal && fontModal.classList.contains('show')) {
                     renderFontModal();
@@ -1922,7 +1939,7 @@
         renderSettingsHeader();
         renderStudentNumberToggle();
         renderSubjectTagToggle();
-        renderDebuggerToggle();
+        renderNonEnglishTagToggle();
         renderFontStatus();
         updateVersionFooters();
 

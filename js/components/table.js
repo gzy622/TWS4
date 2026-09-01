@@ -384,11 +384,12 @@
 
                 tableHtml += `<tr data-student-id="${student.id}">`;
                 tableHtml += `<td class="col-sticky-no">${escapeHtml(studentNo)}</td>`;
+                const showNonEngTag = store.getShowNonEnglishTags();
                 tableHtml += `
-                    <td class="col-sticky-name" title="${escapeHtml(student.name)}${isNonEng ? ' (非英语生)' : ''}">
+                    <td class="col-sticky-name" title="${escapeHtml(student.name)}${showNonEngTag && isNonEng ? ' (非英语生)' : ''}">
                         <div class="student-name-cell">
                             <span class="student-name-text">${escapeHtml(student.name)}</span>
-                            ${isNonEng ? '<span class="student-tag-non-english">免</span>' : ''}
+                            ${showNonEngTag && isNonEng ? '<span class="student-tag-non-english">免</span>' : ''}
                         </div>
                     </td>
                 `;
@@ -694,7 +695,7 @@
                 if (btn) btn.classList.toggle('active', show);
                 const tbl = document.querySelector('.score-table');
                 if (tbl) tbl.classList.toggle('hide-student-no', !show);
-            } else if (eventType === 'SUBJECT_TAG_VISIBILITY_CHANGED') {
+            } else if (eventType === 'SUBJECT_TAG_VISIBILITY_CHANGED' || eventType === 'NON_ENGLISH_TAG_VISIBILITY_CHANGED') {
                 requestRender();
             } else if (
                 eventType === 'TASK_CHANGED' ||
