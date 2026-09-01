@@ -468,7 +468,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    width: 100%;
+    width: calc(100% - 16px);
     padding: 7px 10px;
     border: none;
     background: transparent;
@@ -637,15 +637,17 @@
 
 /* 课程表状态下的上下文导航 */
 .drawer-schedule-card {
-    width: 100%;
+    width: calc(100% - 16px);
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 13px;
-    margin-bottom: 8px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    background: #fff;
+    box-sizing: border-box;
+    padding: 9px 10px;
+    margin: 0 8px;
+    border: 0;
+    border-left: 3.5px solid transparent;
+    border-radius: 8px;
+    background: transparent;
     color: var(--text-dark, #1e293b);
     text-align: left;
     cursor: pointer;
@@ -653,14 +655,18 @@
 }
 
 .drawer-schedule-card:hover {
-    border-color: #b8d2c7;
-    background: #f8fbf9;
+    border-left-color: transparent;
+    background: var(--surface-muted, #f1f5f3);
 }
 
 .drawer-schedule-card.active {
-    border-color: #5d927c;
+    border-left-color: var(--surface-dark, #1b3831);
     background: #eef7f2;
-    box-shadow: inset 3px 0 0 #5d927c;
+    box-shadow: none;
+}
+
+.drawer-schedule-card:active {
+    transform: scale(.99);
 }
 
 .drawer-schedule-card-main {
@@ -675,8 +681,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 13px;
-    font-weight: 650;
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.drawer-schedule-card.active .drawer-schedule-card-main strong {
+    color: var(--surface-dark, #1b3831);
+    font-weight: 700;
 }
 
 .drawer-schedule-card-main span {
@@ -689,9 +701,17 @@
 
 .drawer-schedule-card-count {
     flex-shrink: 0;
-    color: #527667;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: #e2e8f0;
+    color: #475569;
     font-size: 11px;
     font-weight: 600;
+}
+
+.drawer-schedule-card.active .drawer-schedule-card-count {
+    background: #d5eade;
+    color: #35634f;
 }
 
 .drawer-schedule-empty {
