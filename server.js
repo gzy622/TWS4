@@ -83,7 +83,7 @@ function ensureGitHooks() {
     const gitHooksDir = path.join(__dirname, '.git', 'hooks');
     if (!fs.existsSync(gitHooksDir)) return;
     const preCommitPath = path.join(gitHooksDir, 'pre-commit');
-    const hookScript = `#!/bin/sh\nnode scripts/sync-version.js\ngit add js/config/version.js index.html css/main.css js/components/drawer.js\n`;
+    const hookScript = `#!/bin/sh\nnode scripts/sync-version.js\ngit add js/config/version.js index.html css/main.css js/components/drawer.js android/app/build.gradle\n`;
     try {
         fs.writeFileSync(preCommitPath, hookScript, { mode: 0o755 });
     } catch (_) {}
