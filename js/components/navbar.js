@@ -34,34 +34,34 @@
         taskDropdown.innerHTML = `
             <div class="quick-panel-body">
                 <!-- 1. 授课班级卡片网格 -->
-                <div class="quick-classes" id="quick-class-comparison" aria-label="授课班级切换"></div>
+                <div class="quick-classes" id="quick-class-comparison" role="group" aria-label="授课班级切换"></div>
 
                 <!-- 2. 视图与模式控制行 -->
                 <div class="quick-controls-row">
                     <div class="quick-views-segmented" role="group" aria-label="视图切换">
-                        <button type="button" class="quick-view-btn" data-view="grid" title="网格视图">
+                        <button type="button" class="quick-view-btn" data-view="grid" title="网格视图" aria-pressed="false">
                             <svg viewBox="0 0 24 24"><path d="M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z"/></svg><span>网格</span>
                         </button>
-                        <button type="button" class="quick-view-btn" data-view="wide" title="宽栏视图">
+                        <button type="button" class="quick-view-btn" data-view="wide" title="宽栏视图" aria-pressed="false">
                             <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></svg><span>宽栏</span>
                         </button>
-                        <button type="button" class="quick-view-btn" data-view="seat" title="座位视图">
+                        <button type="button" class="quick-view-btn" data-view="seat" title="座位视图" aria-pressed="false">
                             <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14m8-14v14M4 12h16"/></svg><span>座位</span>
                         </button>
-                        <button type="button" class="quick-view-btn" data-view="table" title="表格视图">
+                        <button type="button" class="quick-view-btn" data-view="table" title="表格视图" aria-pressed="false">
                             <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 10h18M9 5v14M15 5v14"/></svg><span>表格</span>
                         </button>
                     </div>
 
                     <div class="quick-mode-segmented" role="group" aria-label="操作模式切换">
-                        <button type="button" class="quick-mode-segment-btn" data-mode="check" title="切换至登记模式">
+                        <button type="button" class="quick-mode-segment-btn" data-mode="check" title="切换至登记模式" aria-pressed="false">
                             <svg viewBox="0 0 24 24">
                                 <polyline points="9 11 12 14 22 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                                 <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                             <span>登记</span>
                         </button>
-                        <button type="button" class="quick-mode-segment-btn" data-mode="grade" title="切换至打分模式">
+                        <button type="button" class="quick-mode-segment-btn" data-mode="grade" title="切换至打分模式" aria-pressed="false">
                             <svg viewBox="0 0 24 24">
                                 <path d="M12 20h9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -113,13 +113,13 @@
                     const totalCombinedCount = combinedSchedule ? (combinedSchedule.totalCourses || 0) : 0;
                     const classNamesStr = (teacherClasses.length > 0 ? teacherClasses : library).map(c => c.shortName || c.name).join(' · ');
                     const combinedCardHtml = `
-                        <button type="button" class="quick-class-card quick-combined-card ${isCombined ? 'active' : ''}" data-schedule-class-id="combined" style="grid-column: 1 / -1; margin-bottom: 2px;">
+                        <button type="button" class="quick-class-card quick-combined-card ${isCombined ? 'active' : ''}" data-schedule-class-id="combined" aria-pressed="${isCombined ? 'true' : 'false'}" title="双班任课总览">
                             <div class="quick-class-card-head">
                                 <strong class="quick-class-name">双班任课总览</strong>
                                 <span class="quick-class-badge">${totalCombinedCount} 节 · ${escapeHtml(teacherSubject)}</span>
                             </div>
                             <div class="quick-class-card-metrics">
-                                <span class="quick-class-label" style="text-align:left; font-size:11px;">合并 ${escapeHtml(classNamesStr)} (${escapeHtml(teacherSubject)}周课表)</span>
+                                <span class="quick-class-label">合并 ${escapeHtml(classNamesStr)} (${escapeHtml(teacherSubject)}周课表)</span>
                             </div>
                             <span class="quick-class-progress"><i style="width:${isCombined ? 100 : 0}%"></i></span>
                         </button>
@@ -130,13 +130,13 @@
                         const courseCount = cls.totalCourses || Object.keys(cls.grid || {}).length;
                         const teacherText = cls.teacher ? `班主任: ${escapeHtml(cls.teacher)}` : (cls.grade || '班级课表');
                         return `
-                            <button type="button" class="quick-class-card ${isSelected ? 'active' : ''}" data-schedule-class-id="${escapeHtml(cls.id)}">
+                            <button type="button" class="quick-class-card ${isSelected ? 'active' : ''}" data-schedule-class-id="${escapeHtml(cls.id)}" aria-pressed="${isSelected ? 'true' : 'false'}" title="${escapeHtml(cls.name || cls.shortName)} (${courseCount} 节)">
                                 <div class="quick-class-card-head">
                                     <strong class="quick-class-name">${escapeHtml(cls.name || cls.shortName)}</strong>
                                     <span class="quick-class-badge">${courseCount} 节</span>
                                 </div>
                                 <div class="quick-class-card-metrics">
-                                    <span class="quick-class-label" style="text-align:left; font-size:11px;">${teacherText}</span>
+                                    <span class="quick-class-label">${teacherText}</span>
                                 </div>
                                 <span class="quick-class-progress"><i style="width:${isSelected ? 100 : 0}%"></i></span>
                             </button>
@@ -148,13 +148,13 @@
                     const name = activeSchedule.name || activeSchedule.shortName || store.getState().currentClass || '默认课表';
                     const courseCount = Object.keys(activeSchedule.grid || {}).length;
                     classCardsHtml = `
-                        <button type="button" class="quick-class-card active" data-schedule-class-id="${escapeHtml(activeSchedule.id || 'default')}">
+                        <button type="button" class="quick-class-card active" data-schedule-class-id="${escapeHtml(activeSchedule.id || 'default')}" aria-pressed="true" title="${escapeHtml(name)} (${courseCount} 节)">
                             <div class="quick-class-card-head">
                                 <strong class="quick-class-name">${escapeHtml(name)}</strong>
                                 <span class="quick-class-badge">${courseCount} 节</span>
                             </div>
                             <div class="quick-class-card-metrics">
-                                <span class="quick-class-label" style="text-align:left; font-size:11px;">当前活跃课表</span>
+                                <span class="quick-class-label">当前活跃课表</span>
                             </div>
                             <span class="quick-class-progress"><i style="width:100%"></i></span>
                         </button>
@@ -169,22 +169,26 @@
                         const normSub = sub.replace(/（.*）|\(.*\)/g, '');
                         const isActive = teacherSubject === sub || teacherSubject === normSub || sub.startsWith(teacherSubject) || teacherSubject.startsWith(sub);
                         return `
-                            <button type="button" class="quick-highlight-chip ${isActive ? 'active' : ''}" data-teacher-subject="${escapeHtml(sub)}">
+                            <button type="button" class="quick-highlight-chip ${isActive ? 'active' : ''}" data-teacher-subject="${escapeHtml(sub)}" aria-pressed="${isActive ? 'true' : 'false'}" title="${escapeHtml(sub)}">
                                 ${escapeHtml(sub)}
                             </button>
                         `;
                     }).join('');
                 } else {
                     sectionTitle = '突出显示科目';
+                    const isAllActive = !highlighted;
                     chipsHtml = `
-                        <button type="button" class="quick-highlight-chip ${!highlighted ? 'active' : ''}" data-highlight-subject="">
+                        <button type="button" class="quick-highlight-chip ${isAllActive ? 'active' : ''}" data-highlight-subject="" aria-pressed="${isAllActive ? 'true' : 'false'}" title="全部科目">
                             全部
                         </button>
-                        ${subjectsList.map(sub => `
-                            <button type="button" class="quick-highlight-chip ${highlighted === sub || (sub.length > 1 && highlighted === sub.charAt(0)) ? 'active' : ''}" data-highlight-subject="${escapeHtml(sub)}">
-                                ${escapeHtml(sub)}
-                            </button>
-                        `).join('')}
+                        ${subjectsList.map(sub => {
+                            const isActive = highlighted === sub || (sub.length > 1 && highlighted === sub.charAt(0));
+                            return `
+                                <button type="button" class="quick-highlight-chip ${isActive ? 'active' : ''}" data-highlight-subject="${escapeHtml(sub)}" aria-pressed="${isActive ? 'true' : 'false'}" title="${escapeHtml(sub)}">
+                                    ${escapeHtml(sub)}
+                                </button>
+                            `;
+                        }).join('')}
                     `;
                 }
                 let classTogglesSection = '';
@@ -192,7 +196,7 @@
                     const teacherClasses = store.getScheduleTeacherClasses ? store.getScheduleTeacherClasses() : library;
                     const teacherClassIds = new Set(teacherClasses.map(c => c.id));
                     classTogglesSection = `
-                        <div class="quick-highlight-section" style="margin-top: 6px;">
+                        <div class="quick-highlight-section quick-teacher-classes-section" role="group" aria-label="任教班级选择">
                             <div class="quick-highlight-header">
                                 <span class="quick-highlight-title">任教班级选择 (${teacherClasses.length}/${library.length})</span>
                             </div>
@@ -200,7 +204,7 @@
                                 ${library.map(cls => {
                                     const isChecked = teacherClassIds.has(cls.id);
                                     return `
-                                        <button type="button" class="quick-highlight-chip ${isChecked ? 'active' : ''}" data-toggle-teacher-class="${escapeHtml(cls.id)}">
+                                        <button type="button" class="quick-highlight-chip ${isChecked ? 'active' : ''}" data-toggle-teacher-class="${escapeHtml(cls.id)}" aria-pressed="${isChecked ? 'true' : 'false'}" title="${escapeHtml(cls.shortName || cls.name)}">
                                             ${isChecked ? '✓ ' : ''}${escapeHtml(cls.shortName || cls.name)}
                                         </button>
                                     `;
@@ -211,11 +215,11 @@
                 }
 
                 classComparisonContainer.innerHTML = `
-                    <div class="quick-schedule-cards-grid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px; width:100%;">
+                    <div class="quick-schedule-cards-grid" role="group" aria-label="课程表班级选择">
                         ${classCardsHtml}
                     </div>
                     ${classTogglesSection}
-                    <div class="quick-highlight-section">
+                    <div class="quick-highlight-section" role="group" aria-label="${escapeHtml(sectionTitle)}">
                         <div class="quick-highlight-header">
                             <span class="quick-highlight-title">${escapeHtml(sectionTitle)}</span>
                             ${!isCombined && highlighted ? `<span class="quick-highlight-hint">当前高亮: ${escapeHtml(highlighted)}</span>` : ''}
@@ -236,8 +240,9 @@
                 const actionLabel = mode === 'grade' ? '已评' : '已交';
                 const badgeText = hasTask ? `${count}/${cls.required}` : '未分配';
                 const percentageText = hasTask ? `${Math.round(cls.percentage || 0)}%` : '—';
+                const isCurrent = !!cls.isCurrent;
                 return `
-                    <button type="button" class="quick-class-card ${cls.isCurrent ? 'active' : ''}" data-class-id="${escapeHtml(cls.id)}">
+                    <button type="button" class="quick-class-card ${isCurrent ? 'active' : ''}" data-class-id="${escapeHtml(cls.id)}" aria-pressed="${isCurrent ? 'true' : 'false'}" title="${escapeHtml(cls.name)} (${badgeText})">
                         <div class="quick-class-card-head">
                             <strong class="quick-class-name">${escapeHtml(cls.name)}</strong>
                             <span class="quick-class-badge">${badgeText}</span>
@@ -260,7 +265,9 @@
                 controlsRow.style.display = currentView === 'schedule' ? 'none' : '';
             }
             viewButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.view === currentView);
+                const isActive = btn.dataset.view === currentView;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
         }
 
@@ -276,7 +283,9 @@
                 modeSegmentWrap.style.display = currentView === 'schedule' ? 'none' : '';
             }
             modeSegmentButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.mode === mode);
+                const isActive = btn.dataset.mode === mode;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
             taskDropdown.dataset.mode = mode;
             const progressWrapper = document.querySelector('.tab-indicator-wrapper');

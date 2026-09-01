@@ -282,7 +282,17 @@
     box-sizing: border-box;
 }
 
-/* 1. 授课班级卡片网格 */
+/* 选择控件基础焦点环与按压反馈 */
+.quick-class-card:focus-visible,
+.quick-view-btn:focus-visible,
+.quick-mode-segment-btn:focus-visible,
+.quick-highlight-chip:focus-visible {
+    outline: 2px solid var(--surface-dark, #1b3831);
+    outline-offset: 1px;
+    z-index: 2;
+}
+
+/* 1. 授课班级卡片网格与课程表卡片容器 */
 .quick-classes {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -291,10 +301,23 @@
     box-sizing: border-box;
 }
 
-/* 课表视图下的两个子容器各自占满整行，避免被 auto-fit 并排 */
+/* 课表视图下的子容器各自占满整行，避免被 auto-fit 并排 */
 .quick-schedule-cards-grid,
 .quick-highlight-section {
     grid-column: 1 / -1;
+}
+
+.quick-schedule-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.quick-schedule-cards-grid .quick-class-label {
+    text-align: left;
+    font-size: 11px;
 }
 
 .quick-class-card {
@@ -311,7 +334,7 @@
     overflow: hidden;
     user-select: none;
     box-shadow: var(--shadow-card, 0 1px 3px rgba(15, 23, 42, 0.08));
-    transition: transform 0.1s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.1s ease, border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     box-sizing: border-box;
 }
 
@@ -361,10 +384,11 @@
     font-weight: 700;
     line-height: 1.35;
     flex-shrink: 0;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .quick-class-card.active .quick-class-badge {
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.18);
     color: #e2f7ea;
 }
 
@@ -384,6 +408,7 @@
     font-size: 10.5px;
     font-weight: 600;
     color: #74808c;
+    transition: color 0.15s ease;
 }
 
 .quick-class-card.active .quick-class-label {
@@ -398,13 +423,14 @@
     height: 3px;
     overflow: hidden;
     background: #e5e9ed;
+    transition: background-color 0.15s ease;
 }
 
 .quick-class-progress i {
     display: block;
     height: 100%;
     background: #527763;
-    transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.15s ease;
 }
 
 .quick-class-card.active .quick-class-progress {
@@ -416,6 +442,8 @@
 }
 
 .quick-class-card.quick-combined-card {
+    grid-column: 1 / -1;
+    margin-bottom: 2px;
     background: #f0fdf4;
     border: 1.5px dashed #86efac;
 }
@@ -444,14 +472,13 @@
 }
 
 .quick-class-card.quick-combined-card.active .quick-class-badge {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.18);
     color: #e2f7ea;
 }
 
 .quick-class-card.quick-combined-card.active .quick-class-label {
     color: #b6dfc4;
 }
-
 
 /* 2. 视图与模式控制行 */
 .quick-controls-row {
@@ -522,7 +549,7 @@
 
 .quick-view-btn:active,
 .quick-mode-segment-btn:active {
-    transform: scale(0.94);
+    transform: scale(0.95);
 }
 
 .quick-view-btn.active,
@@ -560,6 +587,14 @@
 }
 
 @media (max-width: 360px) {
+    .quick-classes {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-schedule-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
     .quick-controls-row {
         grid-template-columns: 1fr;
         gap: 6px;
@@ -569,6 +604,12 @@
     .quick-mode-segment-btn {
         height: 34px;
         font-size: 11px;
+    }
+
+    .quick-highlight-chip {
+        height: 26px;
+        font-size: 11.5px;
+        padding: 0 8px;
     }
 }
 
@@ -799,7 +840,7 @@
     padding: 2px 4px;
 }
 
-/* 快捷面板 - 课程表科目高亮选择区 */
+/* 快捷面板 - 课程表科目与班级选择区 */
 .quick-highlight-section {
     width: 100%;
     margin-top: 4px;
@@ -808,6 +849,10 @@
     border: 1px solid var(--border-light, #e8edf3);
     border-radius: 10px;
     box-sizing: border-box;
+}
+
+.quick-highlight-section.quick-teacher-classes-section {
+    margin-top: 6px;
 }
 
 .quick-highlight-header {
@@ -832,38 +877,43 @@
 .quick-highlight-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 6px;
 }
 
 .quick-highlight-chip {
     height: 28px;
-    padding: 0 11px;
-    border-radius: 999px;
-    border: 1.5px solid transparent;
-    background: #fff;
-    color: var(--text-secondary, #475569);
-    font-size: 12.5px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     user-select: none;
-    transition: background 0.1s, border-color 0.1s, color 0.1s, box-shadow 0.1s;
+    transition: transform 0.1s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    box-sizing: border-box;
 }
 
 .quick-highlight-chip:hover {
-    border-color: #c8d4df;
-    background: #f1f5f9;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.09);
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+.quick-highlight-chip:active {
+    transform: scale(0.95);
 }
 
 .quick-highlight-chip.active {
     background: var(--surface-dark, #1b3831);
     color: #ffffff;
     border-color: var(--surface-dark, #1b3831);
-    box-shadow: 0 2px 6px rgba(27, 56, 49, 0.28);
+    box-shadow: 0 2px 6px rgba(27, 56, 49, 0.22);
 }
 
 /* 「全部」重置 chip — 激活时用浅绿调色以示区分 */
@@ -872,4 +922,5 @@
     color: var(--surface-dark, #1b3831);
     border-color: #b6d8c8;
     box-shadow: none;
+    font-weight: 700;
 }
