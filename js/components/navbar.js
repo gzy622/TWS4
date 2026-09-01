@@ -285,29 +285,18 @@
             if (navbarEl) navbarEl.dataset.mode = mode;
         }
 
-        // 更新左侧操作按钮图标与功能提示（菜单 vs 返回作业）
+        // 更新左侧操作按钮图标与功能提示
         function updateLeftNavButton() {
             if (!navDrawerBtn) return;
-            const isSchedule = store.getViewMode() === 'schedule';
-            if (isSchedule) {
-                navDrawerBtn.setAttribute('title', '返回作业');
-                navDrawerBtn.setAttribute('aria-label', '返回作业');
-                navDrawerBtn.innerHTML = `
-                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M15 18l-6-6 6-6"/>
-                    </svg>
-                `;
-            } else {
-                navDrawerBtn.setAttribute('title', '打开菜单');
-                navDrawerBtn.setAttribute('aria-label', '打开菜单');
-                navDrawerBtn.innerHTML = `
-                    <div class="nav-menu-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                `;
-            }
+            navDrawerBtn.setAttribute('title', '打开菜单');
+            navDrawerBtn.setAttribute('aria-label', '打开菜单');
+            navDrawerBtn.innerHTML = `
+                <div class="nav-menu-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
         }
 
         // 更新右侧操作按钮图标与功能提示（新建 vs 导入）

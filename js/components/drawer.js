@@ -37,12 +37,16 @@
         const navDrawerBtn = document.getElementById('nav-drawer-btn');
         const drawer = document.getElementById('drawer');
         const drawerOverlay = document.getElementById('drawer-overlay');
+        const drawerTitle = document.getElementById('drawer-title');
+        const drawerBgTag = drawer ? drawer.querySelector('.bg-tag') : null;
         const drawerTaskSubtitle = document.getElementById('drawer-task-subtitle');
         const drawerTaskList = document.getElementById('drawer-task-list');
         const drawerSearchInput = document.getElementById('drawer-task-search-input');
         const drawerSearchClear = document.getElementById('drawer-task-search-clear');
         const drawerActionMenu = document.getElementById('drawer-task-action-menu');
         const drawerOpenSettingsBtn = document.getElementById('drawer-open-settings-btn');
+        const drawerScheduleEntryTitle = document.getElementById('drawer-schedule-entry-title');
+        const drawerScheduleEntryDesc = document.getElementById('drawer-schedule-entry-desc');
 
         // 二级全屏设置界面节点
         const settingsView = document.getElementById('settings-view');
@@ -124,6 +128,7 @@
         let diffVisibleCount = 40;
 
         let taskSearchQuery = '';
+        let scheduleSearchQuery = '';
         let isArchivedGroupExpanded = null;
         let activeMenuTaskId = null;
         let activeMoreBtn = null;
@@ -141,9 +146,9 @@
                 closeAllActionMenus();
                 if (drawerSearchInput) drawerSearchInput.value = '';
                 taskSearchQuery = '';
+                scheduleSearchQuery = '';
                 if (drawerSearchClear) drawerSearchClear.style.display = 'none';
-                renderDrawerTaskList();
-                renderDrawerHeader();
+                renderDrawerContent();
             } else {
                 closeAllActionMenus();
             }
@@ -151,11 +156,89 @@
 
         function renderDrawerHeader() {
             const state = store.getState();
+            const isSchedule = store.getViewMode() === 'schedule';
+            if (drawerTitle) drawerTitle.textContent = isSchedule ? '课程表' : '作业列表';
+            if (drawerBgTag) drawerBgTag.textContent = isSchedule ? 'SCHEDULE' : 'TASKS';
+            if (drawerSearchInput) {
+                drawerSearchInput.placeholder = isSchedule ? '搜索班级...' : '搜索作业...';
+                drawerSearchInput.setAttribute('aria-label', isSchedule ? '搜索班级' : '搜索作业');
+            }
+            if (drawerScheduleEntryTitle) drawerScheduleEntryTitle.textContent = isSchedule ? '返回作业列表' : '课程表';
+            if (drawerScheduleEntryDesc) {
+                const modeNames = { grid: '网格', wide: '宽栏', seat: '座位表', table: '表格' };
+                const lastMode = store.getLastHomeworkViewMode ? store.getLastHomeworkViewMode() : 'grid';
+                drawerScheduleEntryDesc.textContent = isSchedule
+                    ? `恢复上次${modeNames[lastMode] || '作业'}视图`
+                    : '周课程排期及双班任课总览';
+            }
             const currentClass = state.currentClass || '班级';
             const tasksCount = (state.tasks || []).length;
             if (drawerTaskSubtitle) {
-                drawerTaskSubtitle.textContent = `${currentClass} · 共 ${tasksCount} 项作业`;
+                if (isSchedule) {
+                    const library = store.getScheduleLibrary ? store.getScheduleLibrary() : [];
+                    const selected = store.getActiveSchedule ? store.getActiveSchedule() : null;
+                    const selectedName = selected && (selected.name || selected.shortName) ? (selected.name || selected.shortName) : '当前课表';
+                    drawerTaskSubtitle.textContent = `${selectedName} · ${library.length || 1} 个课表`;
+                } else {
+                    drawerTaskSubtitle.textContent = `${currentClass} · 共 ${tasksCount} 项作业`;
+                }
             }
+        }
+
+        function getScheduleCourseCount(schedule) {
+            if (!schedule) return 0;
+            return Number(schedule.totalCourses) || Object.keys(schedule.grid || {}).length;
+        }
+
+        function renderScheduleNavigation() {
+            if (!drawerTaskList) return;
+            const library = store.getScheduleLibrary ? store.getScheduleLibrary() : [];
+            const selectedId = store.getSelectedScheduleClassId ? store.getSelectedScheduleClassId() : '';
+            const activeSchedule = store.getActiveSchedule ? store.getActiveSchedule() : null;
+            const query = scheduleSearchQuery;
+            const filtered = (library || []).filter(cls => {
+                if (!query) return true;
+                return [cls.name, cls.shortName, cls.grade, cls.teacher].some(value => String(value || '').toLowerCase().includes(query));
+            });
+            const fragment = document.createDocumentFragment();
+            const addCard = (schedule, id, label, description, isActive) => {
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = `drawer-schedule-card ${isActive ? 'active' : ''}`;
+                card.dataset.scheduleClassId = id;
+                card.setAttribute('aria-current', isActive ? 'page' : 'false');
+                card.innerHTML = `<span class="drawer-schedule-card-main"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(description)}</span></span><span class="drawer-schedule-card-count">${getScheduleCourseCount(schedule)} 节</span>`;
+                card.addEventListener('click', () => {
+                    if (store.setSelectedScheduleClassId) store.setSelectedScheduleClassId(id);
+                    toggleDrawer(false);
+                });
+                fragment.appendChild(card);
+            };
+
+            if (library.length > 1 && store.getCombinedSchedule) {
+                const combined = store.getCombinedSchedule(store.getScheduleTeacherSubject ? store.getScheduleTeacherSubject() : '英语');
+                const teacherClasses = store.getScheduleTeacherClasses ? store.getScheduleTeacherClasses() : library;
+                const names = teacherClasses.map(cls => cls.shortName || cls.name).join(' · ');
+                const combinedDescription = `${names || '合并显示任教班级'} · ${store.getScheduleTeacherSubject ? store.getScheduleTeacherSubject() : '英语'}`;
+                if (!query || `双班任课总览 ${combinedDescription}`.toLowerCase().includes(query)) {
+                    addCard(combined, 'combined', '双班任课总览', combinedDescription, selectedId === 'combined');
+                }
+            }
+            filtered.forEach(cls => addCard(cls, cls.id, cls.name || cls.shortName || '未命名班级', cls.teacher || cls.grade || '班级课表', cls.id === selectedId));
+
+            if (!fragment.childNodes.length) {
+                const empty = document.createElement('div');
+                empty.className = 'drawer-schedule-empty';
+                empty.textContent = library.length ? '未找到匹配的班级' : '尚未导入课程表';
+                fragment.appendChild(empty);
+            }
+            drawerTaskList.replaceChildren(fragment);
+        }
+
+        function renderDrawerContent() {
+            renderDrawerHeader();
+            if (store.getViewMode() === 'schedule') renderScheduleNavigation();
+            else renderDrawerTaskList();
         }
 
         function closeAllActionMenus() {
@@ -486,11 +569,13 @@
         // 搜索事件监听
         if (drawerSearchInput) {
             drawerSearchInput.addEventListener('input', (e) => {
-                taskSearchQuery = e.target.value.trim().toLowerCase();
+                const query = e.target.value.trim().toLowerCase();
+                if (store.getViewMode() === 'schedule') scheduleSearchQuery = query;
+                else taskSearchQuery = query;
                 if (drawerSearchClear) {
-                    drawerSearchClear.style.display = taskSearchQuery ? 'flex' : 'none';
+                    drawerSearchClear.style.display = query ? 'flex' : 'none';
                 }
-                renderDrawerTaskList();
+                renderDrawerContent();
             });
         }
 
@@ -500,20 +585,17 @@
                 if (drawerSearchInput) {
                     drawerSearchInput.value = '';
                     taskSearchQuery = '';
+                    scheduleSearchQuery = '';
                     drawerSearchClear.style.display = 'none';
                     drawerSearchInput.focus();
                 }
-                renderDrawerTaskList();
+                renderDrawerContent();
             });
         }
 
         if (navDrawerBtn) {
             navDrawerBtn.addEventListener('click', () => {
-                if (store.getViewMode() === 'schedule') {
-                    store.setViewMode(store.getLastHomeworkViewMode ? store.getLastHomeworkViewMode() : 'grid');
-                } else {
-                    toggleDrawer(true);
-                }
+                toggleDrawer(true);
             });
         }
 
@@ -1493,7 +1575,7 @@
         // 7.1 班级课程表跳转与导入
         if (scheduleViewBtn) {
             scheduleViewBtn.addEventListener('click', () => {
-                closeSettingsView();
+                closeSettingsView(false);
                 toggleDrawer(false);
                 if (store.getViewMode() === 'schedule') {
                     store.setViewMode(store.getLastHomeworkViewMode ? store.getLastHomeworkViewMode() : 'grid');
@@ -1780,11 +1862,24 @@
 
         // 12. 订阅 store 数据变更
         store.subscribe((state, eventType, payload) => {
-            if (eventType === 'STUDENT_NUMBER_VISIBILITY_CHANGED') {
+            if (eventType === 'VIEW_MODE_CHANGED') {
+                if (drawer && drawer.classList.contains('show')) {
+                    if (drawerSearchInput) drawerSearchInput.value = '';
+                    taskSearchQuery = '';
+                    scheduleSearchQuery = '';
+                    if (drawerSearchClear) drawerSearchClear.style.display = 'none';
+                    renderDrawerContent();
+                } else {
+                    renderDrawerHeader();
+                }
+            } else if (eventType === 'SCHEDULE_CLASS_CHANGED' || eventType === 'SCHEDULE_LIBRARY_UPDATED' || eventType === 'SCHEDULE_CHANGED' || eventType === 'SCHEDULE_TEACHER_SUBJECT_CHANGED' || eventType === 'SCHEDULE_TEACHER_CLASSES_CHANGED') {
+                renderDrawerHeader();
+                if (drawer && drawer.classList.contains('show') && store.getViewMode() === 'schedule') renderScheduleNavigation();
+            } else if (eventType === 'STUDENT_NUMBER_VISIBILITY_CHANGED') {
                 renderStudentNumberToggle();
             } else if (eventType === 'SUBJECT_TAG_VISIBILITY_CHANGED') {
                 renderSubjectTagToggle();
-                renderDrawerTaskList();
+                if (store.getViewMode() !== 'schedule') renderDrawerTaskList();
             } else if (eventType === 'FONT_SETTINGS_CHANGED') {
                 renderFontStatus();
                 if (fontModal && fontModal.classList.contains('show')) {
@@ -1799,7 +1894,7 @@
                 eventType === 'TASK_ARCHIVE_TOGGLED'
             ) {
                 renderDrawerHeader();
-                renderDrawerTaskList();
+                renderDrawerContent();
             } else if (
                 eventType === 'CLASS_CHANGED' ||
                 eventType === 'STUDENT_ADDED' ||
@@ -1810,7 +1905,7 @@
                 eventType === 'STORE_SMART_MERGED'
             ) {
                 renderDrawerHeader();
-                renderDrawerTaskList();
+                renderDrawerContent();
                 renderSettingsHeader();
                 renderFontStatus();
                 if (rosterView && rosterView.classList.contains('show')) {
@@ -1826,8 +1921,7 @@
         });
 
         // 初始渲染
-        renderDrawerHeader();
-        renderDrawerTaskList();
+        renderDrawerContent();
         renderSettingsHeader();
         renderStudentNumberToggle();
         renderSubjectTagToggle();

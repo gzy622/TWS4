@@ -131,11 +131,14 @@
             if (drawerOverlay) drawerOverlay.classList.remove('show');
             return true;
         }
-        // 8. 若当前处于非网格视图（如座位表、课程表、班干部表、值日生表），返回网格视图（首页）
+        // 8. 非作业视图返回最近使用的作业视图；课程表与作业之间保持导航连续
         if (store && typeof store.getViewMode === 'function') {
             const currentView = store.getViewMode();
             if (currentView !== 'grid') {
-                store.setViewMode('grid');
+                const targetView = currentView === 'schedule' && typeof store.getLastHomeworkViewMode === 'function'
+                    ? store.getLastHomeworkViewMode()
+                    : 'grid';
+                store.setViewMode(targetView);
                 return true;
             }
         }

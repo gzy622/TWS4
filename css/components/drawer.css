@@ -1,4 +1,4 @@
-/* 侧边抽屉菜单 (作业列表) 与 二级全屏界面 (数据管理与设置) */
+/* 侧边抽屉菜单（作业/课程表）与二级全屏界面（数据管理与设置） */
 
 /* 抽屉背景遮罩 */
 .drawer-overlay {
@@ -632,6 +632,72 @@
     font-size: 10.5px;
     color: #94a3b8;
     font-weight: 500;
+    text-align: center;
+}
+
+/* 课程表状态下的上下文导航 */
+.drawer-schedule-card {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 13px;
+    margin-bottom: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--text-dark, #1e293b);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+
+.drawer-schedule-card:hover {
+    border-color: #b8d2c7;
+    background: #f8fbf9;
+}
+
+.drawer-schedule-card.active {
+    border-color: #5d927c;
+    background: #eef7f2;
+    box-shadow: inset 3px 0 0 #5d927c;
+}
+
+.drawer-schedule-card-main {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.drawer-schedule-card-main strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.drawer-schedule-card-main span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted, #64748b);
+    font-size: 11px;
+}
+
+.drawer-schedule-card-count {
+    flex-shrink: 0;
+    color: #527667;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.drawer-schedule-empty {
+    padding: 36px 16px;
+    color: var(--text-muted, #64748b);
+    font-size: 12px;
     text-align: center;
 }
 
