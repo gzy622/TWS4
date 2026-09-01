@@ -104,6 +104,7 @@
         }
 
         function close() {
+            if (editRemarkInput) editRemarkInput.blur();
             editSheetOverlay.classList.remove('show');
             currentStudentId = null;
             currentScoreStr = '';

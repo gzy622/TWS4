@@ -329,6 +329,9 @@
             } else {
                 gesture.initialProgress = 1;
                 gesture.size = Math.max(1, editSheetPanel.getBoundingClientRect().height);
+                if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                    document.activeElement.blur();
+                }
             }
 
             gesture.samples = [{ x: currentX, y: currentY, time }];
@@ -518,7 +521,9 @@
                 return;
             }
             const target = event.target instanceof Element ? event.target : app;
-            if (target.closest('input, textarea, select, [contenteditable="true"], .debugger-floating-btn, .fullscreen-panel')) {
+            const isRemarkInput = !!target.closest('#edit-remark-input, .sheet-remark-input');
+            if (target.closest('.debugger-floating-btn, .fullscreen-panel') ||
+                (target.closest('input, textarea, select, [contenteditable="true"]') && !isRemarkInput)) {
                 gesture = null;
                 return;
             }
