@@ -164,7 +164,7 @@
                 let chipsHtml = '';
                 let sectionTitle = '';
                 if (isCombined) {
-                    sectionTitle = `任课科目切换 (当前显示: ${escapeHtml(teacherSubject)})`;
+                    sectionTitle = '任课科目';
                     chipsHtml = subjectsList.map(sub => {
                         const normSub = sub.replace(/（.*）|\(.*\)/g, '');
                         const isActive = teacherSubject === sub || teacherSubject === normSub || sub.startsWith(teacherSubject) || teacherSubject.startsWith(sub);
@@ -219,9 +219,10 @@
                         ${classCardsHtml}
                     </div>
                     ${classTogglesSection}
-                    <div class="quick-highlight-section" role="group" aria-label="${escapeHtml(sectionTitle)}">
+                    <div class="quick-highlight-section ${isCombined ? 'quick-teacher-subject-section' : ''}" role="group" aria-label="${escapeHtml(sectionTitle)}">
                         <div class="quick-highlight-header">
                             <span class="quick-highlight-title">${escapeHtml(sectionTitle)}</span>
+                            ${isCombined ? `<span class="quick-highlight-current">当前：${escapeHtml(teacherSubject)}</span>` : ''}
                             ${!isCombined && highlighted ? `<span class="quick-highlight-hint">当前高亮: ${escapeHtml(highlighted)}</span>` : ''}
                         </div>
                         <div class="quick-highlight-chips">

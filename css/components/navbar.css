@@ -874,6 +874,17 @@
     display: none;
 }
 
+.quick-highlight-current {
+    margin-left: auto;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #e8f3ee;
+    color: var(--surface-dark, #1b3831);
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
 .quick-highlight-chips {
     display: flex;
     flex-wrap: wrap;
@@ -922,5 +933,51 @@
     color: var(--surface-dark, #1b3831);
     border-color: #b6d8c8;
     box-shadow: none;
+    font-weight: 700;
+}
+
+/* 双班总览中的科目切换与视图、模式分段控件保持同一结构 */
+.quick-teacher-subject-section {
+    padding: 4px;
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.quick-teacher-subject-section .quick-highlight-header {
+    min-height: 28px;
+    margin: 0;
+    padding: 0 7px 4px;
+}
+
+.quick-teacher-subject-section .quick-highlight-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
+    gap: 3px;
+}
+
+.quick-teacher-subject-section .quick-highlight-chip {
+    width: 100%;
+    height: 36px;
+    padding: 0 6px;
+    border-color: transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: #64748b;
+    font-size: 11.5px;
+    box-shadow: none;
+}
+
+.quick-teacher-subject-section .quick-highlight-chip:hover {
+    border-color: transparent;
+    background: #f1f5f3;
+    color: #1e293b;
+}
+
+.quick-teacher-subject-section .quick-highlight-chip.active {
+    border-color: #d5e7de;
+    background: #e8f3ee;
+    color: var(--surface-dark, #1b3831);
+    box-shadow: inset 0 0 0 1px #d5e7de;
     font-weight: 700;
 }
