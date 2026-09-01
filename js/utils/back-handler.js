@@ -60,6 +60,25 @@
             return true;
         }
 
+        // 4.5. 关闭课程表相关弹窗
+        const scheduleEditModal = document.getElementById('schedule-edit-modal');
+        if (scheduleEditModal && scheduleEditModal.classList.contains('show')) {
+            scheduleEditModal.classList.remove('show');
+            return true;
+        }
+
+        const scheduleDetailModal = document.getElementById('schedule-detail-modal');
+        if (scheduleDetailModal && scheduleDetailModal.classList.contains('show')) {
+            scheduleDetailModal.classList.remove('show');
+            return true;
+        }
+
+        const scheduleClassModal = document.getElementById('schedule-class-modal');
+        if (scheduleClassModal && scheduleClassModal.classList.contains('show')) {
+            scheduleClassModal.classList.remove('show');
+            return true;
+        }
+
         // 5. 关闭二级全屏花名册管理界面（返回设置页）
         const rosterView = document.getElementById('roster-view');
         if (rosterView && rosterView.classList.contains('show')) {
@@ -88,7 +107,6 @@
             return true;
         }
 
-
         // 7. 关闭差异比对合并弹窗
         const diffModal = document.getElementById('diff-modal');
         if (diffModal && diffModal.classList.contains('show')) {
@@ -111,7 +129,6 @@
             }
             return true;
         }
-
         // 9. 关闭二级全屏设置界面
         const settingsView = document.getElementById('settings-view');
         if (settingsView && settingsView.classList.contains('show')) {
@@ -162,19 +179,36 @@
     function onSystemBackPressed() {
         const consumed = handleBackStep();
         if (consumed) {
+            lastBackPressTime = 0;
             return 'consumed';
         }
 
         const now = Date.now();
         if (now - lastBackPressTime < DOUBLE_PRESS_INTERVAL) {
+            lastBackPressTime = 0;
             return 'exit';
         }
 
         lastBackPressTime = now;
         if (window.TWS3.showToast) {
-            window.TWS3.showToast('再按一次退出程序');
+            window.TWS3.showToast('再按一次退出程序', 2000);
         }
         return 'consumed';
+    }
+
+    /**
+     * 执行退出程序
+     */
+    function exitApplication() {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App && typeof window.Capacitor.Plugins.App.exitApp === 'function') {
+            window.Capacitor.Plugins.App.exitApp();
+        } else if (window.AndroidApp && typeof window.AndroidApp.exit === 'function') {
+            window.AndroidApp.exit();
+        } else if (window.AndroidFiles && typeof window.AndroidFiles.exit === 'function') {
+            window.AndroidFiles.exit();
+        } else {
+            history.back();
+        }
     }
 
     /**
@@ -190,7 +224,7 @@
                 window.Capacitor.Plugins.App.addListener('backButton', () => {
                     const result = onSystemBackPressed();
                     if (result === 'exit') {
-                        window.Capacitor.Plugins.App.exitApp();
+                        exitApplication();
                     }
                 });
             } catch (_) {}
@@ -202,15 +236,7 @@
             if (result === 'consumed') {
                 pushGuardState();
             } else if (result === 'exit') {
-                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
-                    window.Capacitor.Plugins.App.exitApp();
-                } else if (window.AndroidApp && typeof window.AndroidApp.exit === 'function') {
-                    window.AndroidApp.exit();
-                } else if (window.AndroidFiles && typeof window.AndroidFiles.exit === 'function') {
-                    window.AndroidFiles.exit();
-                } else {
-                    history.back();
-                }
+                exitApplication();
             }
         });
     }
